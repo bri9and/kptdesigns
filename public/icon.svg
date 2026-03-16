@@ -1,0 +1,20 @@
+<svg width="32" height="32" viewBox="-15 -10 230 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="-15" y="-10" width="230" height="200" rx="30" fill="#041B41"/>
+  <defs>
+    <linearGradient id="g" x1="20" y1="160" x2="180" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0561EA"/>
+      <stop offset="1" stop-color="#0AB6E7"/>
+    </linearGradient>
+  </defs>
+  <!-- Signal/design bars -->
+  <ellipse cx="8" cy="90" rx="4" ry="16" fill="url(#g)"/>
+  <ellipse cx="22" cy="90" rx="5.5" ry="28" fill="url(#g)"/>
+  <ellipse cx="38" cy="90" rx="7" ry="42" fill="url(#g)"/>
+  <ellipse cx="55" cy="90" rx="9" ry="54" fill="url(#g)"/>
+  <!-- Bridge connecting bars to E curve -->
+  <path d="M58 38 C66 30 70 55 70 90 C70 125 66 150 58 142 L54 132 C60 126 64 112 64 90 C64 68 60 54 54 48 Z" fill="url(#g)"/>
+  <!-- Thick C/E curve -->
+  <path d="M170 33 A70 70 0 1 0 170 147 L154 124 A42 42 0 1 1 154 56 Z" fill="url(#g)"/>
+  <!-- Cursor pointer (web design) -->
+  <path d="M158 38 L158 118 L172 103 L186 126 L194 120 L180 97 L196 93 Z" fill="url(#g)"/>
+</svg>

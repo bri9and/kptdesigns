@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0a0d12"/>
+
+  <!-- Subtle grid pattern -->
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#1a1f2a" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+
+  <!-- Accent glow -->
+  <ellipse cx="600" cy="315" rx="400" ry="200" fill="#f59e0b" opacity="0.05"/>
+
+  <!-- Main content area -->
+  <rect x="100" y="140" width="1000" height="350" rx="24" fill="#12161d" stroke="#2d3548" stroke-width="2"/>
+
+  <!-- Drone icon -->
+  <g transform="translate(180, 250)">
+    <rect x="30" y="30" width="40" height="40" rx="8" fill="#f59e0b"/>
+    <line x1="40" y1="40" x2="10" y2="10" stroke="#e8edf5" stroke-width="6" stroke-linecap="round"/>
+    <line x1="60" y1="40" x2="90" y2="10" stroke="#e8edf5" stroke-width="6" stroke-linecap="round"/>
+    <line x1="40" y1="60" x2="10" y2="90" stroke="#e8edf5" stroke-width="6" stroke-linecap="round"/>
+    <line x1="60" y1="60" x2="90" y2="90" stroke="#e8edf5" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="10" cy="10" r="18" fill="none" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="90" cy="10" r="18" fill="none" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="10" cy="90" r="18" fill="none" stroke="#f59e0b" stroke-width="4"/>
+    <circle cx="90" cy="90" r="18" fill="none" stroke="#f59e0b" stroke-width="4"/>
+  </g>
+
+  <!-- Text -->
+  <text x="380" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="#e8edf5">Part 107</text>
+  <text x="380" y="370" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" fill="#f59e0b">Drill</text>
+  <text x="380" y="430" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#6b7a94">FAA Drone Pilot Exam Prep</text>
+
+  <!-- Stats badges -->
+  <g transform="translate(720, 200)">
+    <rect width="280" height="60" rx="12" fill="#1a1f2a"/>
+    <text x="20" y="40" font-family="ui-monospace, monospace" font-size="24" font-weight="bold" fill="#f59e0b">268+</text>
+    <text x="100" y="40" font-family="system-ui, sans-serif" font-size="20" fill="#6b7a94">Questions</text>
+  </g>
+
+  <g transform="translate(720, 280)">
+    <rect width="280" height="60" rx="12" fill="#1a1f2a"/>
+    <text x="20" y="40" font-family="ui-monospace, monospace" font-size="24" font-weight="bold" fill="#10b981">70%</text>
+    <text x="90" y="40" font-family="system-ui, sans-serif" font-size="20" fill="#6b7a94">Pass Rate Target</text>
+  </g>
+
+  <g transform="translate(720, 360)">
+    <rect width="280" height="60" rx="12" fill="#1a1f2a"/>
+    <text x="20" y="40" font-family="ui-monospace, monospace" font-size="24" font-weight="bold" fill="#e8edf5">5</text>
+    <text x="50" y="40" font-family="system-ui, sans-serif" font-size="20" fill="#6b7a94">FAA Domains</text>
+  </g>
+
+  <!-- Bottom tagline -->
+  <text x="600" y="560" text-anchor="middle" font-family="system-ui, sans-serif" font-size="22" fill="#4a5568">Master the FAA Part 107 Knowledge Test</text>
+</svg>
