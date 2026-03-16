@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/logo";
+import { VERSION } from "@/lib/version";
 
 const links = [
   { href: "/#services", label: "Services" },
@@ -76,6 +77,9 @@ export function Header() {
           >
             Get a Quote
           </Link>
+          <span className="ml-3 text-[10px] text-qwhite/25 font-mono select-none">
+            v{VERSION}
+          </span>
         </nav>
 
         <Sheet open={open} onOpenChange={setOpen}>
