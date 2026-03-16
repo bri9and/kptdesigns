@@ -62,21 +62,45 @@ async function checkDomains(domains: string[]): Promise<{ available: AvailableDo
 
 function generateSuggestions(baseName: string, alreadyChecked: Set<string>): string[] {
   const prefixes = ["get", "my", "the", "go", "try", "use", "hey"];
-  const suffixes = ["hq", "app", "site", "now", "online", "pro", "hub"];
+  const suffixes = ["hq", "app", "site", "now", "zone", "hub", "spot", "lab", "club", "place"];
+  const topTlds = [".com", ".net", ".io"];
 
   const suggestions: string[] = [];
   const seen = new Set(alreadyChecked);
 
   const add = (d: string) => {
-    if (!seen.has(d)) {
+    if (!seen.has(d) && suggestions.length < 40) {
       seen.add(d);
       suggestions.push(d);
     }
   };
 
-  // Prefix/suffix variations — only .com (the most popular TLD)
-  for (const pre of prefixes) add(`${pre}${baseName}.com`);
-  for (const suf of suffixes) add(`${baseName}${suf}.com`);
+  // 1. Prefix variations across top TLDs
+  for (const pre of prefixes) {
+    for (const tld of topTlds) add(`${pre}${baseName}${tld}`);
+  }
+
+  // 2. Suffix variations across top TLDs
+  for (const suf of suffixes) {
+    for (const tld of topTlds) add(`${suf !== "app" ? baseName + suf : baseName + suf}${tld}`);
+  }
+
+  // 3. Hyphenated split — try inserting a hyphen at each vowel/consonant boundary
+  for (let i = 2; i < baseName.length - 2; i++) {
+    const left = baseName.slice(0, i);
+    const right = baseName.slice(i);
+    // Only split at natural word boundaries (crude check: both parts 3+ chars)
+    if (left.length >= 3 && right.length >= 3) {
+      add(`${left}-${right}.com`);
+      if (suggestions.length >= 40) break;
+    }
+  }
+
+  // 4. Plural / minor mutations
+  if (!baseName.endsWith("s")) {
+    add(`${baseName}s.com`);
+    add(`${baseName}s.net`);
+  }
 
   return suggestions;
 }
@@ -121,10 +145,17 @@ export async function POST(req: NextRequest) {
 
       if (toCheck.length > 0) {
         try {
-          const sugResult = await checkDomains(toCheck);
-          suggestions = sugResult.available;
+          // Check in batches of 20 (NameSilo limit), max 2 batches sequentially
+          const batch1 = toCheck.slice(0, 20);
+          const batch2 = toCheck.slice(20, 40);
+          const r1 = await checkDomains(batch1);
+          suggestions.push(...r1.available);
+          if (batch2.length > 0) {
+            const r2 = await checkDomains(batch2);
+            suggestions.push(...r2.available);
+          }
           suggestions.sort((a, b) => a.price - b.price);
-          suggestions = suggestions.slice(0, 12);
+          suggestions = suggestions.slice(0, 15);
         } catch {
           // Suggestion check failed — still return the main results
         }
