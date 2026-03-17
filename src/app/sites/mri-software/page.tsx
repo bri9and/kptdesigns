@@ -192,7 +192,7 @@ export default function MRISoftware() {
       <header style={{ background: C.navy }} className="border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={`${IMG}/logo-white.svg`} alt="MRI Software" className="h-10 w-auto" />
+            <img src={`${IMG}/logo-white.svg`} alt="MRI Software" className="h-12 w-auto" />
             <div className="hidden sm:block w-px h-8 bg-white/15" />
             <span className="hidden sm:block text-white/40 text-[11px] tracking-[0.2em] uppercase">
               Real Estate Software
