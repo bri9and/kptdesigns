@@ -214,12 +214,7 @@ export default function MBARealEstate() {
         <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center font-black text-sm tracking-tight"
-                style={{ backgroundColor: C.accent, color: "#fff" }}
-              >
-                MBA
-              </div>
+              <img src={`${IMG}/logo.gif`} alt="MBA Real Estate" className="h-10 w-auto" />
               <div>
                 <div className="text-white text-lg font-bold tracking-tight leading-none">
                   MBA Real Estate

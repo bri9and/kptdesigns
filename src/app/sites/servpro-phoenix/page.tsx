@@ -161,10 +161,8 @@ export default function ServproPhoenix() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center gap-3">
-              <div>
-                <div className="text-lg sm:text-xl font-black uppercase tracking-wider">SERVPRO</div>
-                <div className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/60">of Phoenix</div>
-              </div>
+              <img src={`${IMG}/logo.png`} alt="SERVPRO of Phoenix" className="h-10 w-auto" />
+              <div className="text-[10px] sm:text-xs uppercase tracking-[0.2em] text-white/60">of Phoenix</div>
             </div>
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center gap-2 text-xs text-white/60">

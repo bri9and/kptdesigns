@@ -151,18 +151,18 @@ export default function CMPHoldings() {
             </div>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-[13px] font-medium" style={{ color: "#666666" }}>
-            <span className="hover:text-[#1A1A1A] transition-colors cursor-default">Divisions</span>
-            <span className="hover:text-[#1A1A1A] transition-colors cursor-default">Portfolio</span>
-            <span className="hover:text-[#1A1A1A] transition-colors cursor-default">Leadership</span>
-            <span className="hover:text-[#1A1A1A] transition-colors cursor-default">About</span>
+            <a href="#divisions" className="hover:text-[#1A1A1A] transition-colors">Divisions</a>
+            <a href="#portfolio" className="hover:text-[#1A1A1A] transition-colors">Portfolio</a>
+            <a href="#leadership" className="hover:text-[#1A1A1A] transition-colors">Leadership</a>
+            <a href="#about" className="hover:text-[#1A1A1A] transition-colors">About</a>
           </nav>
           <a
-            href="tel:4125550100"
+            href="mailto:info@cmpholdings.net"
             className="flex items-center gap-2 text-[13px] font-medium transition-colors"
             style={{ color: "#1A1A1A" }}
           >
             <Phone className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">(412) 555-0100</span>
+            <span className="hidden sm:inline">Contact Us</span>
           </a>
         </div>
       </header>
@@ -212,7 +212,7 @@ export default function CMPHoldings() {
       <div className="h-px" style={{ background: "linear-gradient(90deg, #1A1A1A, #D4AF37, #1A1A1A)" }} />
 
       {/* Divisions */}
-      <section className="py-24" style={{ backgroundColor: "#FFFFFF" }}>
+      <section id="divisions" className="py-24" style={{ backgroundColor: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-16">
             <p className="text-[11px] font-semibold tracking-[0.25em] uppercase mb-4" style={{ color: "#999999" }}>
@@ -250,7 +250,7 @@ export default function CMPHoldings() {
       </section>
 
       {/* Portfolio / Investments */}
-      <section className="py-24" style={{ backgroundColor: "#F7F7F7" }}>
+      <section id="portfolio" className="py-24" style={{ backgroundColor: "#F7F7F7" }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-14 gap-4">
             <div>
@@ -295,7 +295,7 @@ export default function CMPHoldings() {
       </section>
 
       {/* Leadership */}
-      <section className="py-24" style={{ backgroundColor: "#FFFFFF" }}>
+      <section id="leadership" className="py-24" style={{ backgroundColor: "#FFFFFF" }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="mb-16">
             <p className="text-[11px] font-semibold tracking-[0.25em] uppercase mb-4" style={{ color: "#999999" }}>
@@ -338,7 +338,7 @@ export default function CMPHoldings() {
       </section>
 
       {/* About */}
-      <section className="py-24" style={{ backgroundColor: "#0D0D0D" }}>
+      <section id="about" className="py-24" style={{ backgroundColor: "#0D0D0D" }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -391,12 +391,12 @@ export default function CMPHoldings() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="tel:4125550100"
+              href="mailto:info@cmpholdings.net"
               className="inline-flex items-center gap-2.5 px-8 py-4 text-sm font-semibold tracking-wide transition-all"
               style={{ backgroundColor: "#1A1A1A", color: "#FFFFFF" }}
             >
               <Phone className="w-4 h-4" />
-              (412) 555-0100
+              Contact Us
             </a>
             <a
               href="mailto:info@cmpholdings.net"
@@ -447,9 +447,9 @@ export default function CMPHoldings() {
                 Contact
               </p>
               <div className="space-y-3 text-[13px]" style={{ color: "rgba(255,255,255,0.45)" }}>
-                <a href="tel:4125550100" className="flex items-center gap-2.5 hover:text-white transition-colors">
+                <a href="mailto:info@cmpholdings.net" className="flex items-center gap-2.5 hover:text-white transition-colors">
                   <Phone className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.25)" }} />
-                  (412) 555-0100
+                  Contact Us
                 </a>
                 <a href="mailto:info@cmpholdings.net" className="flex items-center gap-2.5 hover:text-white transition-colors">
                   <Mail className="w-3.5 h-3.5" style={{ color: "rgba(255,255,255,0.25)" }} />

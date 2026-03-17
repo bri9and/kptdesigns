@@ -158,9 +158,7 @@ export default function EastValleyMediator() {
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#FAF8F5]/90 border-b border-[#E8E2D8]">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full evm-olive-bg flex items-center justify-center">
-              <Scale className="w-5 h-5 text-white" />
-            </div>
+            <img src={`${IMG}/logo.png`} alt="East Valley Mediator" className="h-10 w-auto" />
             <div>
               <span
                 className="text-[#2C2C2C] text-sm font-semibold tracking-wide block leading-tight"
@@ -529,9 +527,7 @@ export default function EastValleyMediator() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#5C6B54] flex items-center justify-center">
-                  <Scale className="w-5 h-5 text-white" />
-                </div>
+                <img src={`${IMG}/logo.png`} alt="East Valley Mediator" className="h-10 w-auto brightness-200" />
                 <div>
                   <h3 className="text-lg font-semibold text-white" style={{ fontFamily: ff }}>
                     East Valley Mediator
