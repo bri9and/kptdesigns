@@ -102,7 +102,7 @@ const monthlyPlans = [
       "1 hr dev/design time per month",
       "Speed Insights monitoring",
       "Performance observability",
-      "Quarterly strategy call",
+      "Monthly performance report",
       "48-hour priority response",
     ],
   },
