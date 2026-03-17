@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
+import { useAuth, UserButton } from "@clerk/nextjs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -68,15 +70,45 @@ export function Header() {
               )}
             </Link>
           ))}
-          <Link
-            href="/contact"
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "ml-3 bg-qyellow hover:bg-qyellow-light text-qblack-dark shadow-md hover:shadow-lg transition-all duration-200"
-            )}
-          >
-            Get a Quote
-          </Link>
+          {!isSignedIn ? (
+            <Link
+              href="/contact"
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "ml-3 bg-qyellow hover:bg-qyellow-light text-qblack-dark shadow-md hover:shadow-lg transition-all duration-200"
+              )}
+            >
+              Get a Quote
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "ml-3 text-sm px-3 py-2 rounded-md transition-all duration-200 hover:text-qwhite hover:bg-qwhite/10",
+                  pathname.startsWith("/dashboard")
+                    ? "text-qwhite bg-qwhite/10"
+                    : "text-qwhite/90"
+                )}
+              >
+                Dashboard
+              </Link>
+              <div className="ml-3">
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8",
+                      userButtonPopoverCard: "bg-qblack-light border border-white/10",
+                      userButtonPopoverActionButton: "text-qwhite hover:bg-qwhite/10",
+                      userButtonPopoverActionButtonText: "text-qwhite",
+                      userButtonPopoverActionButtonIcon: "text-qwhite/60",
+                      userButtonPopoverFooter: "hidden",
+                    },
+                  }}
+                />
+              </div>
+            </>
+          )}
           <span className="ml-3 text-[10px] text-qwhite/25 font-mono select-none">
             v{VERSION}
           </span>
@@ -105,16 +137,47 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/contact"
-                onClick={() => setOpen(false)}
-                className={cn(
-                  buttonVariants(),
-                  "bg-qyellow hover:bg-qyellow-light text-qblack-dark mt-4"
-                )}
-              >
-                Get a Quote
-              </Link>
+              {!isSignedIn ? (
+                <Link
+                  href="/contact"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    buttonVariants(),
+                    "bg-qyellow hover:bg-qyellow-light text-qblack-dark mt-4"
+                  )}
+                >
+                  Get a Quote
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "text-lg py-2 px-3 rounded-lg transition-all duration-200 hover:text-qwhite hover:bg-qwhite/5",
+                      pathname.startsWith("/dashboard")
+                        ? "text-qwhite bg-qwhite/10"
+                        : "text-qwhite/90"
+                    )}
+                  >
+                    Dashboard
+                  </Link>
+                  <div className="mt-4 px-3">
+                    <UserButton
+                      appearance={{
+                        elements: {
+                          avatarBox: "w-9 h-9",
+                          userButtonPopoverCard: "bg-qblack-light border border-white/10",
+                          userButtonPopoverActionButton: "text-qwhite hover:bg-qwhite/10",
+                          userButtonPopoverActionButtonText: "text-qwhite",
+                          userButtonPopoverActionButtonIcon: "text-qwhite/60",
+                          userButtonPopoverFooter: "hidden",
+                        },
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </nav>
           </SheetContent>
         </Sheet>

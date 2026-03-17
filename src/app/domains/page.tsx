@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth, useUser } from "@clerk/nextjs";
 import {
   Search,
   Globe,
@@ -14,6 +15,9 @@ import {
   Lock,
   Loader2,
   ShoppingCart,
+  LogIn,
+  Package,
+  X,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,6 +30,39 @@ interface DomainResult {
   premium: boolean;
 }
 
+const SITE_PACKAGES = [
+  {
+    id: "starter",
+    name: "Starter",
+    price: 1650_00, // cents
+    display: "$1,650",
+    tagline: "3-5 page custom website",
+    turnaround: "1 week",
+    features: ["Mobile-responsive design", "Basic SEO setup", "Contact form", "Full source code"],
+  },
+  {
+    id: "professional",
+    name: "Professional",
+    price: 2750_00,
+    display: "$2,750",
+    tagline: "5-10 page site with CMS & SEO",
+    turnaround: "2 weeks",
+    features: ["Custom design from scratch", "Content management system", "SEO optimization", "Analytics integration"],
+    popular: true,
+  },
+  {
+    id: "premium",
+    name: "Premium",
+    price: 5500_00,
+    display: "$5,500",
+    tagline: "10+ pages, ecommerce & integrations",
+    turnaround: "4 weeks",
+    features: ["Ecommerce integration", "Third-party integrations", "Brand strategy", "Advanced animations"],
+  },
+] as const;
+
+type SitePackageId = (typeof SITE_PACKAGES)[number]["id"];
+
 function DomainsContent() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DomainResult[]>([]);
@@ -34,17 +71,31 @@ function DomainsContent() {
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
   const [checkingOut, setCheckingOut] = useState<string | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<SitePackageId | null>(null);
+  const [showBundles, setShowBundles] = useState(false);
+  const [bundleDomain, setBundleDomain] = useState<DomainResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
   const cancelled = searchParams.get("cancelled");
 
-  const handleCheckout = async (domain: string, price: number) => {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+
+  const handleCheckout = async (domain: string, price: number, sitePackage?: SitePackageId) => {
+    if (!isSignedIn) return;
+
     setCheckingOut(domain);
     try {
       const res = await fetch("/api/domains/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ domain, wholesalePrice: price, years: 1 }),
+        body: JSON.stringify({
+          domain,
+          wholesalePrice: price,
+          years: 1,
+          customerId: user?.id,
+          ...(sitePackage ? { sitePackage } : {}),
+        }),
       });
       const data = await res.json();
       if (data.url) {
@@ -59,6 +110,17 @@ function DomainsContent() {
     }
   };
 
+  const handleBundleCheckout = (domainResult: DomainResult) => {
+    if (!selectedPackage) return;
+    handleCheckout(domainResult.domain, domainResult.price, selectedPackage);
+  };
+
+  const openBundlePanel = (domainResult: DomainResult) => {
+    setBundleDomain(domainResult);
+    setShowBundles(true);
+    setSelectedPackage(null);
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     const q = query.trim();
@@ -69,6 +131,8 @@ function DomainsContent() {
     setResults([]);
     setSuggestions([]);
     setSearched(true);
+    setShowBundles(false);
+    setBundleDomain(null);
 
     try {
       const res = await fetch("/api/domains", {
@@ -118,6 +182,37 @@ function DomainsContent() {
               Search for available domains and register them instantly.
               Free WHOIS privacy included with every domain.
             </motion.p>
+
+            {/* Auth banner */}
+            {!isSignedIn && (
+              <motion.div
+                variants={fadeUp}
+                className="mb-4 px-4 py-3 rounded-lg bg-qyellow/5 border border-qyellow/20 text-sm text-qwhite/70"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <LogIn className="h-4 w-4 text-qyellow" />
+                  <span>
+                    <Link href="/sign-in" className="text-qyellow hover:text-qyellow-light underline underline-offset-2 font-medium">
+                      Sign in
+                    </Link>
+                    {" "}to purchase domains
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Signed-in welcome */}
+            {isSignedIn && user && (
+              <motion.div
+                variants={fadeUp}
+                className="mb-4 px-4 py-2 rounded-lg bg-green-500/5 border border-green-500/20 text-sm text-qwhite/70 inline-flex items-center gap-2"
+              >
+                <Check className="h-4 w-4 text-green-400" />
+                <span>
+                  Signed in as <span className="text-qwhite font-medium">{user.firstName || user.emailAddresses[0]?.emailAddress}</span>
+                </span>
+              </motion.div>
+            )}
 
             {cancelled && (
               <motion.div
@@ -208,7 +303,7 @@ function DomainsContent() {
                   )}
                 </p>
                 <button
-                  onClick={() => { setResults([]); setSuggestions([]); setSearched(false); setQuery(""); inputRef.current?.focus(); }}
+                  onClick={() => { setResults([]); setSuggestions([]); setSearched(false); setQuery(""); setShowBundles(false); setBundleDomain(null); inputRef.current?.focus(); }}
                   className="text-sm text-qwhite/40 hover:text-qwhite/70 transition-colors"
                 >
                   New search
@@ -243,30 +338,58 @@ function DomainsContent() {
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-4 shrink-0">
+                          <div className="flex items-center gap-3 shrink-0">
                             <div className="text-right">
                               <p className="text-lg font-bold text-qwhite">
                                 ${(result.price * 1.30).toFixed(2)}
                               </p>
                               <p className="text-xs text-qwhite/30">/year</p>
                             </div>
-                            <button
-                              onClick={() => handleCheckout(result.domain, result.price)}
-                              disabled={checkingOut === result.domain}
-                              className={cn(
-                                buttonVariants({ size: "sm" }),
-                                "bg-qyellow hover:bg-qyellow-light text-qblack-dark font-semibold disabled:opacity-50"
-                              )}
-                            >
-                              {checkingOut === result.domain ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
+                            <div className="flex items-center gap-2">
+                              {isSignedIn ? (
                                 <>
-                                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                                  Register
+                                  <button
+                                    onClick={() => handleCheckout(result.domain, result.price)}
+                                    disabled={checkingOut === result.domain}
+                                    className={cn(
+                                      buttonVariants({ size: "sm" }),
+                                      "bg-qyellow hover:bg-qyellow-light text-qblack-dark font-semibold disabled:opacity-50"
+                                    )}
+                                  >
+                                    {checkingOut === result.domain ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                                        Register
+                                      </>
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => openBundlePanel(result)}
+                                    className={cn(
+                                      buttonVariants({ size: "sm" }),
+                                      "bg-qwhite/10 hover:bg-qwhite/20 text-qwhite text-xs font-medium transition-all"
+                                    )}
+                                    title="Add a site build package"
+                                  >
+                                    <Package className="h-3.5 w-3.5 mr-1" />
+                                    + Site
+                                  </button>
                                 </>
+                              ) : (
+                                <Link
+                                  href="/sign-in"
+                                  className={cn(
+                                    buttonVariants({ size: "sm" }),
+                                    "bg-qwhite/10 hover:bg-qyellow hover:text-qblack-dark text-qwhite/70 font-medium transition-all"
+                                  )}
+                                >
+                                  <LogIn className="h-3.5 w-3.5 mr-1.5" />
+                                  Sign in to buy
+                                </Link>
                               )}
-                            </button>
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -274,6 +397,104 @@ function DomainsContent() {
                   </AnimatePresence>
                 </div>
               )}
+
+              {/* Bundle panel */}
+              <AnimatePresence>
+                {showBundles && bundleDomain && isSignedIn && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-6 rounded-xl border border-qyellow/20 bg-qblack-light/80 p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <Package className="h-5 w-5 text-qyellow" />
+                          <h3 className="text-base font-semibold text-qwhite">
+                            Domain + Site Bundle
+                          </h3>
+                        </div>
+                        <button
+                          onClick={() => { setShowBundles(false); setBundleDomain(null); setSelectedPackage(null); }}
+                          className="text-qwhite/40 hover:text-qwhite/70 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-qwhite/50 mb-4">
+                        Register <span className="text-qyellow font-medium">{bundleDomain.domain}</span> and get a professionally built website delivered in weeks.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        {SITE_PACKAGES.map((pkg) => (
+                          <button
+                            key={pkg.id}
+                            onClick={() => setSelectedPackage(pkg.id)}
+                            className={cn(
+                              "relative rounded-lg border p-3 text-left transition-all",
+                              selectedPackage === pkg.id
+                                ? "border-qyellow bg-qyellow/5"
+                                : "border-qwhite/10 hover:border-qwhite/20 bg-qblack/40"
+                            )}
+                          >
+                            {"popular" in pkg && pkg.popular && (
+                              <span className="absolute -top-2 right-2 text-[10px] font-bold uppercase tracking-wider bg-qyellow text-qblack-dark px-2 py-0.5 rounded-full">
+                                Popular
+                              </span>
+                            )}
+                            <p className="text-sm font-semibold text-qwhite">{pkg.name}</p>
+                            <p className="text-lg font-bold text-qyellow mt-1">{pkg.display}</p>
+                            <p className="text-xs text-qwhite/40 mt-0.5">{pkg.tagline}</p>
+                            <p className="text-xs text-qwhite/30 mt-1">{pkg.turnaround} delivery</p>
+                            <ul className="mt-2 space-y-1">
+                              {pkg.features.map((f) => (
+                                <li key={f} className="text-xs text-qwhite/50 flex items-start gap-1.5">
+                                  <Check className="h-3 w-3 text-qyellow/60 mt-0.5 shrink-0" />
+                                  {f}
+                                </li>
+                              ))}
+                            </ul>
+                          </button>
+                        ))}
+                      </div>
+
+                      {selectedPackage && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-center justify-between pt-3 border-t border-qwhite/10"
+                        >
+                          <div className="text-sm text-qwhite/60">
+                            <span className="text-qwhite font-medium">{bundleDomain.domain}</span>
+                            {" "}+{" "}
+                            <span className="text-qyellow font-medium">
+                              {SITE_PACKAGES.find((p) => p.id === selectedPackage)?.name} Site
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleBundleCheckout(bundleDomain)}
+                            disabled={checkingOut === bundleDomain.domain}
+                            className={cn(
+                              buttonVariants({ size: "sm" }),
+                              "bg-qyellow hover:bg-qyellow-light text-qblack-dark font-semibold disabled:opacity-50"
+                            )}
+                          >
+                            {checkingOut === bundleDomain.domain ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                                Checkout Bundle
+                              </>
+                            )}
+                          </button>
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Suggestions */}
               {suggestions.length > 0 && (
@@ -307,20 +528,44 @@ function DomainsContent() {
                               <p className="text-sm font-semibold text-qwhite/70">
                                 ${(sug.price * 1.30).toFixed(2)}<span className="text-xs text-qwhite/30 font-normal">/yr</span>
                               </p>
-                              <button
-                                onClick={() => handleCheckout(sug.domain, sug.price)}
-                                disabled={checkingOut === sug.domain}
-                                className={cn(
-                                  buttonVariants({ size: "sm" }),
-                                  "bg-qwhite/10 hover:bg-qyellow hover:text-qblack-dark text-qwhite/70 text-xs font-medium disabled:opacity-50 transition-all"
-                                )}
-                              >
-                                {checkingOut === sug.domain ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  "Register"
-                                )}
-                              </button>
+                              {isSignedIn ? (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleCheckout(sug.domain, sug.price)}
+                                    disabled={checkingOut === sug.domain}
+                                    className={cn(
+                                      buttonVariants({ size: "sm" }),
+                                      "bg-qwhite/10 hover:bg-qyellow hover:text-qblack-dark text-qwhite/70 text-xs font-medium disabled:opacity-50 transition-all"
+                                    )}
+                                  >
+                                    {checkingOut === sug.domain ? (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                      "Register"
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => openBundlePanel(sug)}
+                                    className={cn(
+                                      buttonVariants({ size: "sm" }),
+                                      "bg-qwhite/5 hover:bg-qwhite/10 text-qwhite/50 text-xs font-medium transition-all"
+                                    )}
+                                    title="Add a site build package"
+                                  >
+                                    + Site
+                                  </button>
+                                </div>
+                              ) : (
+                                <Link
+                                  href="/sign-in"
+                                  className={cn(
+                                    buttonVariants({ size: "sm" }),
+                                    "bg-qwhite/10 hover:bg-qyellow hover:text-qblack-dark text-qwhite/70 text-xs font-medium transition-all"
+                                  )}
+                                >
+                                  Sign in
+                                </Link>
+                              )}
                             </div>
                           </div>
                         </motion.div>

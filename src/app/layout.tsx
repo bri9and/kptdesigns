@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { LayoutShell } from "@/components/layout-shell";
 
@@ -98,8 +99,21 @@ export default function RootLayout({
         />
       </head>
       <body className={`${spaceGrotesk.variable} antialiased`}>
-        <span style={{ position: 'fixed', top: 8, right: 12, fontSize: 11, color: 'rgba(0, 0, 0, 0.25)', zIndex: 9999, fontFamily: 'monospace', pointerEvents: 'none' }}>v2.0</span>
-        <LayoutShell>{children}</LayoutShell>
+        <ClerkProvider
+          appearance={{
+            variables: {
+              colorPrimary: "#0562EA",
+              colorBackground: "#062a5e",
+              colorText: "#ffffff",
+              colorTextSecondary: "rgba(255, 255, 255, 0.6)",
+              colorInputBackground: "#041B41",
+              colorInputText: "#ffffff",
+            },
+          }}
+        >
+          <span style={{ position: 'fixed', top: 8, right: 12, fontSize: 11, color: 'rgba(0, 0, 0, 0.25)', zIndex: 9999, fontFamily: 'monospace', pointerEvents: 'none' }}>v2.0</span>
+          <LayoutShell>{children}</LayoutShell>
+        </ClerkProvider>
       </body>
     </html>
   );

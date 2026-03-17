@@ -9,8 +9,10 @@ import { PageTransition } from "@/components/page-transition";
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isSitePage = pathname.startsWith("/sites/");
+  const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
+  const isDashboard = pathname.startsWith("/dashboard");
 
-  if (isSitePage) {
+  if (isSitePage || isAuthPage || isDashboard) {
     return <>{children}</>;
   }
 

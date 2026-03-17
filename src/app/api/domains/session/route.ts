@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       domain: session.metadata?.domain ?? null,
       email: session.customer_email ?? session.customer_details?.email ?? null,
       status: session.payment_status,
+      sitePackage: session.metadata?.site_package ?? null,
     });
   } catch {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "@clerk/nextjs";
 import {
   Check,
   ArrowRight,
@@ -129,6 +130,9 @@ function Expandable({ label, children }: { label: string; children: React.ReactN
 /* ── Page ── */
 
 export default function PricingPage() {
+  const { isSignedIn } = useAuth();
+  const hostingCta = isSignedIn ? "/dashboard" : "/sign-up";
+
   return (
     <>
       {/* Hero — compact */}
@@ -260,6 +264,20 @@ export default function PricingPage() {
                     ))}
                   </ul>
                 </Expandable>
+              </div>
+
+              <div className="mt-4">
+                <Link
+                  href={hostingCta}
+                  className={cn(
+                    "w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                    (plan as { popular?: boolean }).popular
+                      ? "bg-qyellow hover:bg-qyellow-light text-qblack-dark"
+                      : "bg-qwhite/10 hover:bg-qwhite/15 text-qwhite border border-qwhite/10"
+                  )}
+                >
+                  Get Started <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </motion.div>
           ))}
