@@ -4,7 +4,6 @@ import {
   Users,
   Trophy,
   Star,
-  Phone,
   Clock,
   Wine,
   Target,
@@ -21,6 +20,8 @@ import {
   Shield,
 } from "lucide-react";
 
+const IMG = "/sites/three-rivers-pickleball";
+
 export const metadata = {
   title: "Three Rivers Pickleball Club | Robinson Township, PA",
   description:
@@ -34,9 +35,7 @@ export default function ThreeRiversPickleball() {
       <header className="sticky top-0 z-50 bg-[#00695C] shadow-lg">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFC107]">
-              <Target className="h-6 w-6 text-[#00695C]" />
-            </div>
+            <img src={`${IMG}/logo.jpg`} alt="Three Rivers Pickleball Club" className="h-10 w-auto rounded-full" />
             <div className="leading-tight">
               <span className="block text-xl font-extrabold tracking-tight text-white">
                 Three Rivers
@@ -70,18 +69,14 @@ export default function ThreeRiversPickleball() {
 
       {/* ─── HERO ─── */}
       <section className="relative overflow-hidden bg-[#00695C] pb-24 pt-20">
-        {/* Decorative ball pattern */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.04]">
-          {Array.from({ length: 40 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute h-16 w-16 rounded-full border-4 border-white"
-              style={{
-                top: `${Math.floor(i / 8) * 25}%`,
-                left: `${(i % 8) * 14}%`,
-              }}
-            />
-          ))}
+        {/* Hero background image */}
+        <div className="pointer-events-none absolute inset-0">
+          <img
+            src={`${IMG}/hero.jpg`}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-[#00695C]/80" />
         </div>
 
         <div className="relative mx-auto max-w-5xl px-6 text-center">
@@ -156,6 +151,15 @@ export default function ThreeRiversPickleball() {
             <h2 className="text-4xl font-extrabold text-[#37474F] md:text-5xl">
               Everything under one roof
             </h2>
+          </div>
+
+          {/* Armstrong Park facility photo */}
+          <div className="mb-16 overflow-hidden rounded-2xl shadow-xl">
+            <img
+              src={`${IMG}/armstrong-park.jpg`}
+              alt="Armstrong Park — Three Rivers Pickleball Club facility"
+              className="h-64 w-full object-cover md:h-96"
+            />
           </div>
 
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -637,17 +641,16 @@ export default function ThreeRiversPickleball() {
 
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <a
-              href="tel:+14125551234"
+              href="mailto:play@3riverspickleball.com"
               className="inline-flex items-center gap-2 rounded-full bg-[#00695C] px-8 py-4 text-lg font-bold text-white shadow-xl transition-all hover:bg-[#004D40] hover:shadow-2xl"
             >
-              <Phone className="h-5 w-5" />
-              (412) 555-1234
+              <Mail className="h-5 w-5" />
+              Contact Us
             </a>
             <a
               href="mailto:play@3riverspickleball.com"
               className="inline-flex items-center gap-2 rounded-full border-2 border-[#00695C] px-8 py-4 text-lg font-semibold text-[#00695C] transition-all hover:bg-[#00695C] hover:text-white"
             >
-              <Mail className="h-5 w-5" />
               play@3riverspickleball.com
             </a>
           </div>
@@ -661,9 +664,7 @@ export default function ThreeRiversPickleball() {
             {/* Brand */}
             <div className="md:col-span-1">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FFC107]">
-                  <Target className="h-5 w-5 text-[#00695C]" />
-                </div>
+                <img src={`${IMG}/logo.jpg`} alt="Three Rivers Pickleball Club" className="h-9 w-auto rounded-full" />
                 <div className="leading-tight">
                   <span className="block text-lg font-bold text-white">
                     Three Rivers
@@ -694,12 +695,10 @@ export default function ThreeRiversPickleball() {
                   </span>
                 </p>
                 <p className="flex items-start gap-2">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#FFC107]" />
-                  (412) 555-1234
-                </p>
-                <p className="flex items-start gap-2">
                   <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#FFC107]" />
-                  play@3riverspickleball.com
+                  <a href="mailto:play@3riverspickleball.com" className="transition-colors hover:text-[#FFC107]">
+                    play@3riverspickleball.com
+                  </a>
                 </p>
               </div>
             </div>
@@ -763,10 +762,14 @@ export default function ThreeRiversPickleball() {
             </div>
           </div>
 
-          <div className="mt-12 border-t border-white/10 pt-8">
-            <p className="text-center text-sm text-white/30">
+          <div className="mt-12 border-t border-white/10 pt-8 text-center">
+            <p className="text-sm text-white/30">
               &copy; {new Date().getFullYear()} Three Rivers Pickleball Club.
               All rights reserved. Robinson Township, PA.
+            </p>
+            <p className="text-xs text-white/30 mt-2">
+              Website by{" "}
+              <a href="/" className="text-white/40 hover:text-white transition-colors">Ego Web Design</a>
             </p>
           </div>
         </div>
