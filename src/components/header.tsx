@@ -112,10 +112,8 @@ export function Header() {
         </nav>
 
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger className="md:hidden">
-            <button className="p-2 rounded-md hover:bg-qwhite/10 transition-colors">
-              <Menu className="h-5 w-5 text-qwhite" />
-            </button>
+          <SheetTrigger className="md:hidden p-2 rounded-md hover:bg-qwhite/10 transition-colors">
+            <Menu className="h-5 w-5 text-qwhite" />
           </SheetTrigger>
           <SheetContent side="right" className="w-72 bg-qblack-dark border-qwhite/10">
             <nav className="flex flex-col gap-2 mt-8">
