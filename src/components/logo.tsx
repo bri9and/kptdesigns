@@ -53,8 +53,9 @@ export function Logo({ variant = "mark", className, size = "md" }: LogoProps) {
       <path d="M58 38 C66 30 70 55 70 90 C70 125 66 150 58 142 L54 132 C60 126 64 112 64 90 C64 68 60 54 54 48 Z" fill="url(#ego-g)" />
       {/* Thick C/E curve */}
       <path d="M170 33 A70 70 0 1 0 170 147 L154 124 A42 42 0 1 1 154 56 Z" fill="url(#ego-g)" />
-      {/* Cursor pointer */}
-      <path d="M158 38 L158 118 L172 103 L186 126 L194 120 L180 97 L196 93 Z" fill="url(#ego-g)" />
+      {/* Code brackets <> */}
+      <path d="M168 50 L148 90 L168 130" stroke="url(#ego-g)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M184 50 L204 90 L184 130" stroke="url(#ego-g)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
 
       {/* === "Ego" — Space Grotesk Bold (700), paths at fontSize 90 === */}
       {/* E */}
@@ -117,7 +118,8 @@ function LogoIcon({ className }: { className?: string }) {
       <ellipse cx="55" cy="90" rx="9" ry="54" fill="url(#ego-icon-g)" />
       <path d="M58 38 C66 30 70 55 70 90 C70 125 66 150 58 142 L54 132 C60 126 64 112 64 90 C64 68 60 54 54 48 Z" fill="url(#ego-icon-g)" />
       <path d="M170 33 A70 70 0 1 0 170 147 L154 124 A42 42 0 1 1 154 56 Z" fill="url(#ego-icon-g)" />
-      <path d="M158 38 L158 118 L172 103 L186 126 L194 120 L180 97 L196 93 Z" fill="url(#ego-icon-g)" />
+      <path d="M168 50 L148 90 L168 130" stroke="url(#ego-icon-g)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M184 50 L204 90 L184 130" stroke="url(#ego-icon-g)" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
