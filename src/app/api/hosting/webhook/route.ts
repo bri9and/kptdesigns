@@ -24,7 +24,14 @@ export async function POST(req: NextRequest) {
   // ── Verify webhook signature ──
   let event: Stripe.Event;
 
-  if (WEBHOOK_SECRET) {
+  if (!WEBHOOK_SECRET) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Hosting Webhook] STRIPE_HOSTING_WEBHOOK_SECRET is not set in production");
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+    // In development without webhook secret, parse directly
+    event = JSON.parse(body) as Stripe.Event;
+  } else {
     const sig = req.headers.get("stripe-signature");
     if (!sig) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
@@ -35,9 +42,6 @@ export async function POST(req: NextRequest) {
       console.error("[Hosting Webhook] Signature verification failed:", err);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
-  } else {
-    // In development without webhook secret, parse directly
-    event = JSON.parse(body) as Stripe.Event;
   }
 
   const supabase = createServiceClient();
@@ -96,10 +100,6 @@ async function handleCheckoutCompleted(
   // Determine amount from plan
   const amountCents = isValidPlan(plan) ? HOSTING_PLANS[plan].priceMonthly : 0;
 
-  console.log(
-    `[Hosting Webhook] New subscription for site ${siteId}, plan: ${plan}, subscription: ${subscriptionId}`
-  );
-
   // Create order record
   const { error: orderErr } = await (supabase.from("orders") as any).insert({
     customer_id: customerId,
@@ -116,8 +116,6 @@ async function handleCheckoutCompleted(
 
   if (orderErr) {
     console.error("[Hosting Webhook] Failed to create order:", orderErr.message);
-  } else {
-    console.log(`[Hosting Webhook] Order created for site ${siteId}`);
   }
 }
 
@@ -167,10 +165,6 @@ async function handleInvoicePaid(
 
   const amountCents = invoice.amount_paid ?? 0;
 
-  console.log(
-    `[Hosting Webhook] Recurring payment for subscription ${subscriptionId}: ${amountCents} cents`
-  );
-
   // Extract payment intent ID from the payments list if available
   const paymentIntentId = invoice.payments?.data?.[0]?.payment?.payment_intent
     ? (typeof invoice.payments.data[0].payment.payment_intent === "string"
@@ -202,8 +196,6 @@ async function handleSubscriptionDeleted(
   supabase: ReturnType<typeof createServiceClient>
 ) {
   const subscriptionId = subscription.id;
-
-  console.log(`[Hosting Webhook] Subscription deleted: ${subscriptionId}`);
 
   // Find the order(s) tied to this subscription
   const { data: orders } = await (supabase.from("orders") as any)
@@ -238,8 +230,6 @@ async function handleSubscriptionDeleted(
 
     if (siteErr) {
       console.error("[Hosting Webhook] Failed to suspend site:", siteErr.message);
-    } else {
-      console.log(`[Hosting Webhook] Site ${siteId} suspended (subscription cancelled)`);
     }
   }
 }
@@ -254,10 +244,6 @@ async function handleSubscriptionUpdated(
 ) {
   const subscriptionId = subscription.id;
   const status = subscription.status;
-
-  console.log(
-    `[Hosting Webhook] Subscription updated: ${subscriptionId}, status: ${status}`
-  );
 
   // If the subscription became active again (e.g., reactivated after past_due)
   if (status === "active") {
@@ -280,7 +266,6 @@ async function handleSubscriptionUpdated(
           .update({ status: "live" })
           .eq("id", order.site_id);
 
-        console.log(`[Hosting Webhook] Site ${order.site_id} reactivated`);
       }
     }
   }

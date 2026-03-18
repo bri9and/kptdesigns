@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log(`[DNS] Configuring DNS for ${cleanDomain}...`);
     await configureDNS(cleanDomain);
 
     return NextResponse.json({

@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { UserMenu } from "@/components/user-menu";
 import { useUser } from "@clerk/nextjs";
+import { useEffect } from "react";
 import {
   LayoutDashboard,
   Globe,
@@ -28,7 +29,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const { user } = useUser();
+  const router = useRouter();
+  const { user, isLoaded } = useUser();
+
+  // Redirect SSO users without a name to complete their profile
+  useEffect(() => {
+    if (isLoaded && user && !user.firstName && !user.lastName) {
+      router.replace("/complete-profile");
+    }
+  }, [isLoaded, user, router]);
 
   const isActive = (href: string, exact: boolean) => {
     if (exact) return pathname === href;
@@ -56,12 +65,16 @@ export default function DashboardLayout({
             <UserMenu size="md" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {user?.firstName
-                  ? `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`
-                  : user?.emailAddresses?.[0]?.emailAddress ?? "Account"}
+                {user?.fullName
+                  || (user?.primaryEmailAddress?.emailAddress?.includes("privaterelay")
+                    ? "Apple User"
+                    : user?.primaryEmailAddress?.emailAddress?.split("@")[0])
+                  || "Account"}
               </p>
               <p className="text-xs text-white/50 truncate">
-                {user?.emailAddresses?.[0]?.emailAddress ?? ""}
+                {user?.primaryEmailAddress?.emailAddress?.includes("privaterelay")
+                  ? "Apple Private Email"
+                  : user?.primaryEmailAddress?.emailAddress ?? ""}
               </p>
             </div>
           </div>

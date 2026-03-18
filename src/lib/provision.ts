@@ -237,8 +237,6 @@ export async function configureDNS(domain: string): Promise<void> {
       `[DNS] A record for ${domain} failed: ${aData.reply?.detail || `code ${aCode}`}`
     );
     // Don't throw — try www anyway
-  } else {
-    console.log(`[DNS] A record for ${domain} → 76.76.21.21 added`);
   }
 
   // Add CNAME for www subdomain
@@ -257,7 +255,6 @@ export async function configureDNS(domain: string): Promise<void> {
     );
   }
 
-  console.log(`[DNS] CNAME www.${domain} → ${vercelCname} added`);
 }
 
 // ─── Cleanup helpers ────────────────────────────────────────────────────────
@@ -273,9 +270,7 @@ async function deleteGitHubRepo(repoFullName: string): Promise<void> {
         "X-GitHub-Api-Version": "2022-11-28",
       },
     });
-    if (res.ok) {
-      console.log(`[Cleanup] Deleted GitHub repo ${repoFullName}`);
-    } else {
+    if (!res.ok) {
       console.error(`[Cleanup] Failed to delete GitHub repo ${repoFullName}: ${res.status}`);
     }
   } catch (err) {
@@ -294,9 +289,7 @@ async function deleteVercelProject(projectId: string): Promise<void> {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    if (res.ok) {
-      console.log(`[Cleanup] Deleted Vercel project ${projectId}`);
-    } else {
+    if (!res.ok) {
       console.error(`[Cleanup] Failed to delete Vercel project ${projectId}: ${res.status}`);
     }
   } catch (err) {
@@ -330,7 +323,6 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
   let vercelUrl: string | null = null;
 
   // ── Step 1: Create GitHub repo ──
-  console.log(`[Provision] Step 1: Creating GitHub repo for ${domainName}...`);
   try {
     const repo = await createGitHubRepo(domainName);
     repoFullName = repo.fullName;
@@ -339,7 +331,6 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
       success: true,
       data: { fullName: repo.fullName, cloneUrl: repo.cloneUrl, htmlUrl: repo.htmlUrl },
     };
-    console.log(`[Provision] Step 1 complete: ${repo.fullName}`);
   } catch (err) {
     result.steps.github = { success: false, error: String(err) };
     console.error(`[Provision] Step 1 failed:`, err);
@@ -348,7 +339,6 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
   }
 
   // ── Step 2: Create Vercel project ──
-  console.log(`[Provision] Step 2: Creating Vercel project for ${repoName}...`);
   try {
     const vercel = await createVercelProject(repoName!, domainName);
     vercelProjectId = vercel.projectId;
@@ -357,7 +347,6 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
       success: true,
       data: { projectId: vercel.projectId, deploymentUrl: vercel.deploymentUrl },
     };
-    console.log(`[Provision] Step 2 complete: project ${vercel.projectId}`);
   } catch (err) {
     result.steps.vercel = { success: false, error: String(err) };
     console.error(`[Provision] Step 2 failed — cleaning up GitHub repo:`, err);
@@ -366,11 +355,9 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
   }
 
   // ── Step 3: Configure DNS ──
-  console.log(`[Provision] Step 3: Configuring DNS for ${domainName}...`);
   try {
     await configureDNS(domainName);
     result.steps.dns = { success: true };
-    console.log(`[Provision] Step 3 complete: DNS configured`);
   } catch (err) {
     result.steps.dns = { success: false, error: String(err) };
     console.error(`[Provision] Step 3 failed — cleaning up:`, err);
@@ -380,7 +367,6 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
   }
 
   // ── Step 4: Update Supabase ──
-  console.log(`[Provision] Step 4: Updating database records...`);
   try {
     // Look up the domain record
     const { data: domainRecord } = await (supabase
@@ -431,7 +417,6 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
     }
 
     result.steps.database = { success: true, data: { siteId } };
-    console.log(`[Provision] Step 4 complete: site ${siteId}`);
   } catch (err) {
     result.steps.database = { success: false, error: String(err) };
     console.error(`[Provision] Step 4 (database) failed:`, err);
@@ -441,6 +426,5 @@ export async function provisionSite(params: ProvisionParams): Promise<ProvisionR
   }
 
   result.success = true;
-  console.log(`[Provision] All steps complete for ${domainName}`);
   return result;
 }

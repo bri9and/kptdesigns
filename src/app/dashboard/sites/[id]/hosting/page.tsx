@@ -12,7 +12,7 @@ import {
   Shield,
   Zap,
 } from "lucide-react";
-import { createBrowserClient } from "@/lib/supabase";
+import { useSupabase } from "@/lib/useSupabase";
 import { HOSTING_PLANS, type HostingPlanSlug } from "@/lib/hosting-plans";
 import type { Site, Order } from "@/lib/supabase-types";
 import { cn } from "@/lib/utils";
@@ -41,6 +41,7 @@ function HostingContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { supabase, isLoaded } = useSupabase();
   const siteId = params.id as string;
 
   const [site, setSite] = useState<Site | null>(null);
@@ -54,12 +55,12 @@ function HostingContent() {
   const hostingStatus = searchParams.get("hosting");
 
   useEffect(() => {
+    if (!isLoaded || !supabase) return;
+
     async function fetchData() {
       try {
-        const supabase = createBrowserClient();
-
         // Fetch site
-        const { data: siteData } = await supabase
+        const { data: siteData } = await supabase!
           .from("sites")
           .select("*")
           .eq("id", siteId)
@@ -69,7 +70,7 @@ function HostingContent() {
           setSite(siteData);
 
           // Fetch active hosting order for this site
-          const { data: orders } = await supabase
+          const { data: orders } = await supabase!
             .from("orders")
             .select("*")
             .eq("site_id", siteId)
@@ -89,7 +90,7 @@ function HostingContent() {
       }
     }
     fetchData();
-  }, [siteId]);
+  }, [siteId, isLoaded, supabase]);
 
   // Derive current plan from active order amount
   const currentPlan: HostingPlanSlug | null = activeOrder

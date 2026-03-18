@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getStripe } from "@/lib/stripe";
 import { createServiceClient } from "@/lib/supabase";
+import rateLimit from "@/lib/rate-limit";
+
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const NAMESILO_KEY = process.env.NAMESILO_API_KEY;
+const NAMESILO_BASE = "https://www.namesilo.com/api";
 const MARKUP_MULTIPLIER = 1.30; // 30% markup on wholesale price
 
 // Site package pricing (in cents)
@@ -27,6 +31,43 @@ const SITE_PACKAGES: Record<string, { name: string; priceCents: number; descript
   },
 };
 
+/**
+ * Fetch the wholesale price for a domain directly from NameSilo.
+ * This ensures the price is authoritative and cannot be tampered with by the client.
+ */
+async function getVerifiedWholesalePrice(domain: string): Promise<number | null> {
+  try {
+    const url = `${NAMESILO_BASE}/checkRegisterAvailability?version=1&type=json&key=${NAMESILO_KEY}&domains=${encodeURIComponent(domain)}`;
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    const reply = data.reply;
+
+    if (String(reply?.code) !== "300") {
+      return null;
+    }
+
+    // NameSilo returns available domains in inconsistent formats
+    const avail = reply.available;
+    if (!avail) return null;
+
+    // Normalize: could be a single object or an array
+    const entries = Array.isArray(avail) ? avail : avail.domain ? [avail] : [];
+
+    for (const entry of entries) {
+      const entryDomain = typeof entry === "string" ? entry : entry.domain;
+      if (entryDomain === domain) {
+        const price = typeof entry.price === "number" ? entry.price : parseFloat(entry.price);
+        if (!isNaN(price) && price > 0) return price;
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.error("[Checkout] NameSilo price verification failed:", err);
+    return null;
+  }
+}
+
 export async function POST(req: NextRequest) {
   // ── Auth check ──
   const { userId } = await auth();
@@ -37,11 +78,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = await req.json();
-  const { domain, wholesalePrice, years = 1, customerId, sitePackage } = body;
+  // ── Rate limit by authenticated user ──
+  const { success } = limiter.check(30, userId);
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429 }
+    );
+  }
 
-  if (!domain || !wholesalePrice) {
-    return NextResponse.json({ error: "domain and wholesalePrice are required" }, { status: 400 });
+  const body = await req.json();
+  const { domain, years = 1, customerId, sitePackage } = body;
+
+  if (!domain) {
+    return NextResponse.json({ error: "domain is required" }, { status: 400 });
   }
 
   if (!NAMESILO_KEY) {
@@ -56,6 +106,17 @@ export async function POST(req: NextRequest) {
   // Validate site package if provided
   if (sitePackage && !SITE_PACKAGES[sitePackage]) {
     return NextResponse.json({ error: "Invalid site package" }, { status: 400 });
+  }
+
+  // ── Server-side price verification ──
+  // SECURITY: Never trust client-provided prices. Always verify with NameSilo.
+  const wholesalePrice = await getVerifiedWholesalePrice(domain);
+
+  if (wholesalePrice === null) {
+    return NextResponse.json(
+      { error: "Unable to verify domain price. The domain may no longer be available." },
+      { status: 422 }
+    );
   }
 
   // ── Ensure customer exists in Supabase ──

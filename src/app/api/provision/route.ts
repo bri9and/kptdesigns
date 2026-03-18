@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { provisionSite } from "@/lib/provision";
+import { createServiceClient } from "@/lib/supabase";
+import rateLimit from "@/lib/rate-limit";
+
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 /**
  * POST /api/provision
@@ -15,6 +19,15 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // ── Rate limit by authenticated user ──
+  const { success } = limiter.check(30, userId);
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429 }
+    );
   }
 
   // ── Parse + validate input ──
@@ -45,6 +58,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "orderId is required" }, { status: 400 });
   }
 
+  // ── Ownership check: verify the authenticated user owns this customer record ──
+  const supabase = createServiceClient();
+  const { data: customer, error: customerError } = await supabase
+    .from("customers")
+    .select("clerk_id")
+    .eq("id", customerId)
+    .single();
+
+  if (customerError || !customer) {
+    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+  }
+
+  if ((customer as { clerk_id: string }).clerk_id !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   // ── Sanitize domain ──
   const cleanDomain = domainName
     .trim()
@@ -58,8 +87,6 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Run provisioning pipeline ──
-  console.log(`[Provision] Starting pipeline for ${cleanDomain} (customer: ${customerId})`);
-
   try {
     const result = await provisionSite({
       customerId,

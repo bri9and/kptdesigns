@@ -3,6 +3,9 @@ import { auth } from "@clerk/nextjs/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createServiceClient } from "@/lib/supabase";
 import { SITE_GENERATION_PROMPT, buildUserPrompt } from "@/lib/ai-prompts";
+import rateLimit from "@/lib/rate-limit";
+
+const limiter = rateLimit({ interval: 60_000, uniqueTokenPerInterval: 500 });
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -17,6 +20,15 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // ── Rate limit by authenticated user ──────────────────────────────────────
+  const { success } = limiter.check(30, userId);
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429 }
+    );
   }
 
   // ── Validate input ────────────────────────────────────────────────────────

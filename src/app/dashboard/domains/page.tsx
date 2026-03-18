@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Globe, Plus, Loader2, Calendar, ExternalLink } from "lucide-react";
-import { createBrowserClient } from "@/lib/supabase";
+import { useSupabase } from "@/lib/useSupabase";
 import type { Domain } from "@/lib/supabase-types";
 import { cn } from "@/lib/utils";
 
@@ -53,14 +53,16 @@ function formatDate(dateStr: string | null) {
 }
 
 export default function DomainsPage() {
+  const { supabase, isLoaded } = useSupabase();
   const [domains, setDomains] = useState<Domain[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded || !supabase) return;
+
     async function fetchDomains() {
       try {
-        const supabase = createBrowserClient();
-        const { data } = await supabase
+        const { data } = await supabase!
           .from("domains")
           .select("*")
           .order("created_at", { ascending: false });
@@ -73,7 +75,7 @@ export default function DomainsPage() {
       }
     }
     fetchDomains();
-  }, []);
+  }, [isLoaded, supabase]);
 
   return (
     <div className="space-y-6">

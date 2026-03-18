@@ -53,7 +53,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
   let customerId: string | null = null;
 
   if (clerkId) {
-    console.log(`[Webhook] Upserting customer for clerk_id: ${clerkId}`);
     try {
       // Try to find existing customer first
       const { data: existingCustomer } = await (supabase
@@ -70,7 +69,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
             .update({ email: customerEmail, updated_at: new Date().toISOString() })
             .eq("id", customerId);
         }
-        console.log(`[Webhook] Found existing customer: ${customerId}`);
       } else {
         // Create new customer
         const { data: newCustomer, error: custErr } = await (supabase
@@ -87,7 +85,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
           console.error(`[Webhook] Failed to create customer: ${custErr.message}`);
         } else {
           customerId = newCustomer.id;
-          console.log(`[Webhook] Created new customer: ${customerId}`);
         }
       }
     } catch (err) {
@@ -96,7 +93,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
   }
 
   // ── Step 2: Register domain at NameSilo ──
-  console.log(`[Webhook] Registering ${domain} for ${years} year(s)...`);
   const regResult = await registerDomain(domain, years);
 
   if (!regResult.success) {
@@ -105,8 +101,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
     // TODO: Send alert email to admin, issue refund if needed
     return;
   }
-
-  console.log(`[Webhook] Successfully registered ${domain}`);
 
   // ── Step 3: Create domain record in Supabase ──
   let domainId: string | null = null;
@@ -132,7 +126,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
         console.error(`[Webhook] Failed to save domain record: ${domainErr.message}`);
       } else {
         domainId = domainRecord.id;
-        console.log(`[Webhook] Domain record saved: ${domainId}`);
       }
     } catch (err) {
       console.error(`[Webhook] Database error saving domain:`, err);
@@ -161,7 +154,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
         console.error(`[Webhook] Failed to save domain order: ${orderErr.message}`);
       } else {
         domainOrderId = orderRecord.id;
-        console.log(`[Webhook] Domain order saved: ${domainOrderId}`);
       }
     } catch (err) {
       console.error(`[Webhook] Database error saving order:`, err);
@@ -170,8 +162,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
 
   // ── Step 5: If site package was purchased, create site order and trigger provisioning ──
   if (customerId && sitePackage && sitePrompt) {
-    console.log(`[Webhook] Site package "${sitePackage}" purchased — creating records...`);
-
     let siteOrderId: string | null = null;
 
     // Create site design order
@@ -193,7 +183,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
         console.error(`[Webhook] Failed to save site order: ${siteOrderErr.message}`);
       } else {
         siteOrderId = siteOrder.id;
-        console.log(`[Webhook] Site order saved: ${siteOrderId}`);
       }
     } catch (err) {
       console.error(`[Webhook] Database error saving site order:`, err);
@@ -201,7 +190,6 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
 
     // Trigger provisioning pipeline
     if (siteOrderId) {
-      console.log(`[Webhook] Triggering provisioning for ${domain}...`);
       try {
         const result = await provisionSite({
           customerId,
@@ -210,9 +198,7 @@ async function handleSuccessfulPurchase(session: Stripe.Checkout.Session): Promi
           orderId: siteOrderId,
         });
 
-        if (result.success) {
-          console.log(`[Webhook] Provisioning complete for ${domain} (site: ${result.siteId})`);
-        } else {
+        if (!result.success) {
           console.error(`[Webhook] Provisioning partially failed for ${domain}:`, result.steps);
         }
       } catch (err) {
@@ -227,7 +213,14 @@ export async function POST(req: NextRequest) {
 
   // Verify webhook signature if secret is configured
   let event: Stripe.Event;
-  if (WEBHOOK_SECRET) {
+  if (!WEBHOOK_SECRET) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("[Domains Webhook] STRIPE_WEBHOOK_SECRET is not set in production");
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+    }
+    // In development without webhook secret, parse directly
+    event = JSON.parse(body) as Stripe.Event;
+  } else {
     const sig = req.headers.get("stripe-signature");
     if (!sig) {
       return NextResponse.json({ error: "Missing signature" }, { status: 400 });
@@ -235,12 +228,9 @@ export async function POST(req: NextRequest) {
     try {
       event = getStripe().webhooks.constructEvent(body, sig, WEBHOOK_SECRET);
     } catch (err) {
-      console.error("Webhook signature verification failed:", err);
+      console.error("[Domains Webhook] Signature verification failed:", err);
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
-  } else {
-    // In test mode without webhook secret, parse directly
-    event = JSON.parse(body) as Stripe.Event;
   }
 
   if (event.type === "checkout.session.completed") {

@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
   const sanitizedRepo = sanitizeRepoName(repoName);
 
   try {
-    console.log(`[Vercel] Creating project for repo ${sanitizedRepo}, domain ${cleanDomain}...`);
     const project = await createVercelProject(sanitizedRepo, cleanDomain);
 
     return NextResponse.json({

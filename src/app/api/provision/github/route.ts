@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    console.log(`[GitHub] Creating repo for ${cleanDomain}...`);
     const repo = await createGitHubRepo(cleanDomain);
 
     return NextResponse.json({

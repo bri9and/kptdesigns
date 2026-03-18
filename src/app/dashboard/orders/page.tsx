@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ShoppingCart, Loader2 } from "lucide-react";
-import { createBrowserClient } from "@/lib/supabase";
+import { useSupabase } from "@/lib/useSupabase";
 import type { Order } from "@/lib/supabase-types";
 import { cn } from "@/lib/utils";
 
@@ -64,14 +64,16 @@ function formatAmount(cents: number, currency: string) {
 }
 
 export default function OrdersPage() {
+  const { supabase, isLoaded } = useSupabase();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded || !supabase) return;
+
     async function fetchOrders() {
       try {
-        const supabase = createBrowserClient();
-        const { data } = await supabase
+        const { data } = await supabase!
           .from("orders")
           .select("*")
           .order("created_at", { ascending: false });
@@ -83,7 +85,7 @@ export default function OrdersPage() {
       }
     }
     fetchOrders();
-  }, []);
+  }, [isLoaded, supabase]);
 
   return (
     <div className="space-y-6">

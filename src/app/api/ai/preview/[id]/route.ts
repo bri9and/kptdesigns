@@ -85,11 +85,10 @@ function renderPreviewPage(code: string): string {
   // We need to extract the default export function name from the code
   // and then render it. We also need to handle imports.
 
-  // Escape the code for embedding in a script tag
-  const escapedCode = code
-    .replace(/\\/g, "\\\\")
-    .replace(/`/g, "\\`")
-    .replace(/\$/g, "\\$");
+  // Sanitize the generated code for safe embedding inside a <script> tag.
+  // Escape closing script tags to prevent injection that breaks out of the tag.
+  const sanitizedCode = code
+    .replace(/<\/script/gi, "<\\/script");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -185,110 +184,144 @@ function renderPreviewPage(code: string): string {
       Store, Warehouse, Church, School, Hospital, Library,
     } = iconProxy;
 
-    try {
-      // The generated code as a string
-      const code = \`${escapedCode}\`;
+    // Store icons and React globally so the generated code script can access them
+    window.__previewIcons__ = {
+      Phone, Zap, ShieldCheck, Clock, Star, MapPin, Award, CheckCircle,
+      AlertTriangle, BatteryCharging, Home, Plug, Building2, BadgeCheck, Cable,
+      Wrench, Droplets, Flame, Construction, Pipette, Shovel, PhoneCall,
+      Search, Hammer, ThumbsUp, Heart, Leaf, Sun, Moon, Coffee, Camera,
+      Globe, Mail, MessageCircle, ArrowRight, ArrowLeft, ChevronRight,
+      ChevronDown, Menu, X, ExternalLink, Users, Briefcase, Shield,
+      Settings, Truck, Package, Tool, Paintbrush, Scissors, Music,
+      BookOpen, GraduationCap, Stethoscope, Scale, Gavel, Calculator,
+      DollarSign, TrendingUp, BarChart, PieChart, Target, Lightbulb,
+      Wifi, Monitor, Smartphone, Printer, HardDrive, Code, Database,
+      Cloud, Lock, Key, Eye, EyeOff, Bell, Calendar, Map, Navigation,
+      Compass, Anchor, Ship, Plane, Car, Bike, Bus, Train, Mountain,
+      TreePine, Flower, Bug, Fish, Bird, Dog, Cat, Utensils, Wine,
+      Beer, Pizza, Salad, Cake, IceCream, ShoppingCart, ShoppingBag,
+      CreditCard, Receipt, Tag, Percent, Gift, PartyPopper, Sparkles,
+      Gem, Crown, Trophy, Medal, Flag, Rocket, Satellite, Atom,
+      Microscope, TestTube, Pill, Activity, Thermometer, Syringe,
+      Ambulance, CircleDot, CircleCheck, CircleX, Info, HelpCircle,
+      AlertCircle, FileText, Folder, Image, Video, Mic, Volume2,
+      Play, Pause, SkipForward, SkipBack, Repeat, Shuffle, Download,
+      Upload, Share, Copy, Clipboard, Bookmark, Link, Hash, AtSign,
+      Send, Inbox, Archive, Trash, Edit, PenTool, Type, Bold, Italic,
+      Underline, AlignLeft, AlignCenter, AlignRight, List, Grid,
+      Layers, Layout, Sidebar, Columns, Rows, Table, Filter, SortAsc,
+      SortDesc, RefreshCw, RotateCw, Move, Maximize, Minimize,
+      ZoomIn, ZoomOut, Crosshair, Scan, QrCode, Fingerprint,
+      UserCheck, UserPlus, UserMinus, Users2, Building, Factory,
+      Store, Warehouse, Church, School, Hospital, Library,
+    };
+    window.__previewReady__ = true;
+  <\/script>
 
-      // We need to transform the code to:
-      // 1. Remove import statements (we provide everything globally)
-      // 2. Remove export keywords
-      // 3. Find and render the default export component
+  <script>
+    /**
+     * Render the generated code in a sandboxed iframe using srcdoc.
+     * This avoids using new Function() / eval() to execute arbitrary code
+     * in the main page context. The iframe sandbox restricts capabilities
+     * to only allow-scripts (no same-origin access, no forms, no popups).
+     */
+    function waitForPreviewReady(cb) {
+      if (window.__previewReady__) { cb(); return; }
+      var check = setInterval(function() {
+        if (window.__previewReady__) { clearInterval(check); cb(); }
+      }, 50);
+    }
 
-      let transformedCode = code
-        // Remove all import statements
+    waitForPreviewReady(function() {
+      var generatedCode = ${JSON.stringify(sanitizedCode)};
+
+      // Transform the code: strip imports/exports for in-browser use
+      var transformedCode = generatedCode
         .replace(/^import\\s+.*?from\\s+["'].*?["'];?\\s*$/gm, '')
         .replace(/^import\\s+["'].*?["'];?\\s*$/gm, '')
-        // Remove 'export const metadata' and keep the const
         .replace(/^export\\s+const\\s+metadata/gm, 'const metadata')
-        // Remove 'export default function' and keep 'function'
         .replace(/^export\\s+default\\s+function/gm, 'function')
-        // Remove standalone 'export default'
         .replace(/^export\\s+default\\s+/gm, 'const __DefaultExport__ = ')
-        // Remove other exports
         .replace(/^export\\s+/gm, '');
 
-      // Find the component function name
-      const funcMatch = transformedCode.match(/^function\\s+([A-Z][A-Za-z0-9]*)/m);
-      const componentName = funcMatch ? funcMatch[1] : null;
+      // Find the component name
+      var funcMatch = transformedCode.match(/^function\\s+([A-Z][A-Za-z0-9]*)/m);
+      var componentName = funcMatch ? funcMatch[1] : null;
 
       if (!componentName) {
-        throw new Error('Could not find a default export component function in the generated code.');
+        var errorDiv = document.getElementById('preview-error');
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Preview Error:\\n\\nCould not find a default export component function in the generated code.';
+        return;
       }
 
-      // Evaluate the transformed code
-      const evalFunc = new Function(
-        'React',
-        'Phone', 'Zap', 'ShieldCheck', 'Clock', 'Star', 'MapPin', 'Award', 'CheckCircle',
-        'AlertTriangle', 'BatteryCharging', 'Home', 'Plug', 'Building2', 'BadgeCheck', 'Cable',
-        'Wrench', 'Droplets', 'Flame', 'Construction', 'Pipette', 'Shovel', 'PhoneCall',
-        'Search', 'Hammer', 'ThumbsUp', 'Heart', 'Leaf', 'Sun', 'Moon', 'Coffee', 'Camera',
-        'Globe', 'Mail', 'MessageCircle', 'ArrowRight', 'ArrowLeft', 'ChevronRight',
-        'ChevronDown', 'Menu', 'X', 'ExternalLink', 'Users', 'Briefcase', 'Shield',
-        'Settings', 'Truck', 'Package', 'Tool', 'Paintbrush', 'Scissors', 'Music',
-        'BookOpen', 'GraduationCap', 'Stethoscope', 'Scale', 'Gavel', 'Calculator',
-        'DollarSign', 'TrendingUp', 'BarChart', 'PieChart', 'Target', 'Lightbulb',
-        'Wifi', 'Monitor', 'Smartphone', 'Printer', 'HardDrive', 'Code', 'Database',
-        'Cloud', 'Lock', 'Key', 'Eye', 'EyeOff', 'Bell', 'Calendar', 'Map', 'Navigation',
-        'Compass', 'Anchor', 'Ship', 'Plane', 'Car', 'Bike', 'Bus', 'Train', 'Mountain',
-        'TreePine', 'Flower', 'Bug', 'Fish', 'Bird', 'Dog', 'Cat', 'Utensils', 'Wine',
-        'Beer', 'Pizza', 'Salad', 'Cake', 'IceCream', 'ShoppingCart', 'ShoppingBag',
-        'CreditCard', 'Receipt', 'Tag', 'Percent', 'Gift', 'PartyPopper', 'Sparkles',
-        'Gem', 'Crown', 'Trophy', 'Medal', 'Flag', 'Rocket', 'Satellite', 'Atom',
-        'Microscope', 'TestTube', 'Pill', 'Activity', 'Thermometer', 'Syringe',
-        'Ambulance', 'CircleDot', 'CircleCheck', 'CircleX', 'Info', 'HelpCircle',
-        'AlertCircle', 'FileText', 'Folder', 'Image', 'Video', 'Mic', 'Volume2',
-        'Play', 'Pause', 'SkipForward', 'SkipBack', 'Repeat', 'Shuffle', 'Download',
-        'Upload', 'Share', 'Copy', 'Clipboard', 'Bookmark', 'Link', 'Hash', 'AtSign',
-        'Send', 'Inbox', 'Archive', 'Trash', 'Edit', 'PenTool', 'Type', 'Bold', 'Italic',
-        'Underline', 'AlignLeft', 'AlignCenter', 'AlignRight', 'List', 'Grid',
-        'Layers', 'Layout', 'Sidebar', 'Columns', 'Rows', 'Table', 'Filter', 'SortAsc',
-        'SortDesc', 'RefreshCw', 'RotateCw', 'Move', 'Maximize', 'Minimize',
-        'ZoomIn', 'ZoomOut', 'Crosshair', 'Scan', 'QrCode', 'Fingerprint',
-        'UserCheck', 'UserPlus', 'UserMinus', 'Users2', 'Building', 'Factory',
-        'Store', 'Warehouse', 'Church', 'School', 'Hospital', 'Library',
-        transformedCode + '\\nreturn ' + componentName + ';'
-      );
+      // Build the sandboxed iframe srcdoc HTML
+      // The iframe gets its own React/Babel/Tailwind environment
+      var srcdoc = '<!DOCTYPE html>'
+        + '<html lang="en"><head>'
+        + '<meta charset="utf-8"/>'
+        + '<meta name="viewport" content="width=device-width,initial-scale=1"/>'
+        + '<script src="https://cdn.tailwindcss.com"><\\/script>'
+        + '<script src="https://unpkg.com/react@19/umd/react.production.min.js"><\\/script>'
+        + '<script src="https://unpkg.com/react-dom@19/umd/react-dom.production.min.js"><\\/script>'
+        + '<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\\/script>'
+        + '<script src="https://unpkg.com/lucide-react@0.577.0/dist/umd/lucide-react.min.js"><\\/script>'
+        + '<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0A0A12}'
+        + '@font-face{font-family:"Inter";font-style:normal;font-weight:300 900;font-display:swap;'
+        + 'src:url("https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2") format("woff2")}'
+        + '</style></head><body><div id="root"></div>'
+        + '<script type="text/babel" data-type="module" data-presets="react,typescript">'
+        + 'var lucide=window.lucideReact||{};'
+        + 'var iconProxy=new Proxy(lucide,{get(t,p){if(p in t)return t[p];return function F(props){return React.createElement("span",{style:{display:"inline-block",width:16,height:16},className:props?.className||""},"")};}});'
+        + 'var {'
+        + 'Phone,Zap,ShieldCheck,Clock,Star,MapPin,Award,CheckCircle,'
+        + 'AlertTriangle,BatteryCharging,Home,Plug,Building2,BadgeCheck,Cable,'
+        + 'Wrench,Droplets,Flame,Construction,Pipette,Shovel,PhoneCall,'
+        + 'Search,Hammer,ThumbsUp,Heart,Leaf,Sun,Moon,Coffee,Camera,'
+        + 'Globe,Mail,MessageCircle,ArrowRight,ArrowLeft,ChevronRight,'
+        + 'ChevronDown,Menu,X,ExternalLink,Users,Briefcase,Shield,'
+        + 'Settings,Truck,Package,Tool,Paintbrush,Scissors,Music,'
+        + 'BookOpen,GraduationCap,Stethoscope,Scale,Gavel,Calculator,'
+        + 'DollarSign,TrendingUp,BarChart,PieChart,Target,Lightbulb,'
+        + 'Wifi,Monitor,Smartphone,Printer,HardDrive,Code,Database,'
+        + 'Cloud,Lock,Key,Eye,EyeOff,Bell,Calendar,Map,Navigation,'
+        + 'Compass,Anchor,Ship,Plane,Car,Bike,Bus,Train,Mountain,'
+        + 'TreePine,Flower,Bug,Fish,Bird,Dog,Cat,Utensils,Wine,'
+        + 'Beer,Pizza,Salad,Cake,IceCream,ShoppingCart,ShoppingBag,'
+        + 'CreditCard,Receipt,Tag,Percent,Gift,PartyPopper,Sparkles,'
+        + 'Gem,Crown,Trophy,Medal,Flag,Rocket,Satellite,Atom,'
+        + 'Microscope,TestTube,Pill,Activity,Thermometer,Syringe,'
+        + 'Ambulance,CircleDot,CircleCheck,CircleX,Info,HelpCircle,'
+        + 'AlertCircle,FileText,Folder,Image,Video,Mic,Volume2,'
+        + 'Play,Pause,SkipForward,SkipBack,Repeat,Shuffle,Download,'
+        + 'Upload,Share,Copy,Clipboard,Bookmark,Link,Hash,AtSign,'
+        + 'Send,Inbox,Archive,Trash,Edit,PenTool,Type,Bold,Italic,'
+        + 'Underline,AlignLeft,AlignCenter,AlignRight,List,Grid,'
+        + 'Layers,Layout,Sidebar,Columns,Rows,Table,Filter,SortAsc,'
+        + 'SortDesc,RefreshCw,RotateCw,Move,Maximize,Minimize,'
+        + 'ZoomIn,ZoomOut,Crosshair,Scan,QrCode,Fingerprint,'
+        + 'UserCheck,UserPlus,UserMinus,Users2,Building,Factory,'
+        + 'Store,Warehouse,Church,School,Hospital,Library'
+        + '}=iconProxy;'
+        + 'try{'
+        + transformedCode.replace(/<\\/script/gi, '<\\\\/script')
+        + '\\nvar root=ReactDOM.createRoot(document.getElementById("root"));'
+        + 'root.render(React.createElement(' + componentName + '));'
+        + '}catch(err){'
+        + 'document.body.innerHTML="<pre style=\\"color:#ff6b6b;padding:2rem;font-size:14px;white-space:pre-wrap\\">"'
+        + '+"Preview Error:\\\\n\\\\n"+((err&&err.message)||String(err))+"</pre>";'
+        + '}'
+        + '<\\/script></body></html>';
 
-      const Component = evalFunc(
-        React,
-        Phone, Zap, ShieldCheck, Clock, Star, MapPin, Award, CheckCircle,
-        AlertTriangle, BatteryCharging, Home, Plug, Building2, BadgeCheck, Cable,
-        Wrench, Droplets, Flame, Construction, Pipette, Shovel, PhoneCall,
-        Search, Hammer, ThumbsUp, Heart, Leaf, Sun, Moon, Coffee, Camera,
-        Globe, Mail, MessageCircle, ArrowRight, ArrowLeft, ChevronRight,
-        ChevronDown, Menu, X, ExternalLink, Users, Briefcase, Shield,
-        Settings, Truck, Package, Tool, Paintbrush, Scissors, Music,
-        BookOpen, GraduationCap, Stethoscope, Scale, Gavel, Calculator,
-        DollarSign, TrendingUp, BarChart, PieChart, Target, Lightbulb,
-        Wifi, Monitor, Smartphone, Printer, HardDrive, Code, Database,
-        Cloud, Lock, Key, Eye, EyeOff, Bell, Calendar, Map, Navigation,
-        Compass, Anchor, Ship, Plane, Car, Bike, Bus, Train, Mountain,
-        TreePine, Flower, Bug, Fish, Bird, Dog, Cat, Utensils, Wine,
-        Beer, Pizza, Salad, Cake, IceCream, ShoppingCart, ShoppingBag,
-        CreditCard, Receipt, Tag, Percent, Gift, PartyPopper, Sparkles,
-        Gem, Crown, Trophy, Medal, Flag, Rocket, Satellite, Atom,
-        Microscope, TestTube, Pill, Activity, Thermometer, Syringe,
-        Ambulance, CircleDot, CircleCheck, CircleX, Info, HelpCircle,
-        AlertCircle, FileText, Folder, Image, Video, Mic, Volume2,
-        Play, Pause, SkipForward, SkipBack, Repeat, Shuffle, Download,
-        Upload, Share, Copy, Clipboard, Bookmark, Link, Hash, AtSign,
-        Send, Inbox, Archive, Trash, Edit, PenTool, Type, Bold, Italic,
-        Underline, AlignLeft, AlignCenter, AlignRight, List, Grid,
-        Layers, Layout, Sidebar, Columns, Rows, Table, Filter, SortAsc,
-        SortDesc, RefreshCw, RotateCw, Move, Maximize, Minimize,
-        ZoomIn, ZoomOut, Crosshair, Scan, QrCode, Fingerprint,
-        UserCheck, UserPlus, UserMinus, Users2, Building, Factory,
-        Store, Warehouse, Church, School, Hospital, Library,
-      );
+      // Hide the outer root, render in sandboxed iframe
+      document.getElementById('root').style.display = 'none';
 
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(React.createElement(Component));
-
-    } catch (err) {
-      const errorDiv = document.getElementById('preview-error');
-      errorDiv.style.display = 'block';
-      errorDiv.textContent = 'Preview Error:\\n\\n' + (err.message || String(err));
-    }
+      var iframe = document.createElement('iframe');
+      iframe.sandbox = 'allow-scripts';
+      iframe.style.cssText = 'width:100%;height:100vh;border:none;';
+      iframe.srcdoc = srcdoc;
+      document.body.appendChild(iframe);
+    });
   <\/script>
 </body>
 </html>`;

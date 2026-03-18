@@ -13,7 +13,7 @@ import {
   Server,
   Check,
 } from "lucide-react";
-import { createBrowserClient } from "@/lib/supabase";
+import { useSupabase } from "@/lib/useSupabase";
 import { HOSTING_PLANS, type HostingPlanSlug } from "@/lib/hosting-plans";
 import type { Site, Order } from "@/lib/supabase-types";
 import { cn } from "@/lib/utils";
@@ -86,6 +86,7 @@ export default function SitesPage() {
 
 function SitesContent() {
   const searchParams = useSearchParams();
+  const { supabase, isLoaded } = useSupabase();
   const [sites, setSites] = useState<Site[]>([]);
   const [hostingOrders, setHostingOrders] = useState<Record<string, Order>>({});
   const [loading, setLoading] = useState(true);
@@ -93,10 +94,12 @@ function SitesContent() {
   const hostingStatus = searchParams.get("hosting");
 
   useEffect(() => {
+    if (!isLoaded || !supabase) return;
+
     async function fetchSites() {
+      const db = supabase!;
       try {
-        const supabase = createBrowserClient();
-        const { data } = await supabase
+        const { data } = await db
           .from("sites")
           .select("*")
           .order("created_at", { ascending: false });
@@ -105,8 +108,8 @@ function SitesContent() {
         // Fetch active hosting orders for all sites
         if (data && data.length > 0) {
           const siteIds = data.map((s: Site) => s.id);
-          const { data: orders } = await (supabase
-            .from("orders") as ReturnType<typeof supabase.from>)
+          const { data: orders } = await (db
+            .from("orders") as ReturnType<typeof db.from>)
             .select("*")
             .in("site_id", siteIds)
             .eq("type", "hosting")
@@ -131,7 +134,7 @@ function SitesContent() {
       }
     }
     fetchSites();
-  }, []);
+  }, [isLoaded, supabase]);
 
   return (
     <div className="space-y-6">
