@@ -34,8 +34,8 @@ const SITE_PACKAGES = [
   {
     id: "starter",
     name: "Starter",
-    price: 1650_00, // cents
-    display: "$1,650",
+    price: 1000_00, // cents
+    display: "$1,000",
     tagline: "3-5 page custom website",
     turnaround: "1 week",
     features: ["Mobile-responsive design", "Basic SEO setup", "Contact form", "Full source code"],
@@ -43,8 +43,8 @@ const SITE_PACKAGES = [
   {
     id: "professional",
     name: "Professional",
-    price: 2750_00,
-    display: "$2,750",
+    price: 2500_00,
+    display: "$2,500",
     tagline: "5-10 page site with CMS & SEO",
     turnaround: "2 weeks",
     features: ["Custom design from scratch", "Content management system", "SEO optimization", "Analytics integration"],
@@ -53,8 +53,8 @@ const SITE_PACKAGES = [
   {
     id: "premium",
     name: "Premium",
-    price: 5500_00,
-    display: "$5,500",
+    price: 5000_00,
+    display: "From $5,000",
     tagline: "10+ pages, ecommerce & integrations",
     turnaround: "4 weeks",
     features: ["Ecommerce integration", "Third-party integrations", "Brand strategy", "Advanced animations"],

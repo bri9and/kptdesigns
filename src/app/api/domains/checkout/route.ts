@@ -17,17 +17,17 @@ const MARKUP_MULTIPLIER = 1.75; // 75% markup on wholesale price
 const SITE_PACKAGES: Record<string, { name: string; priceCents: number; description: string }> = {
   starter: {
     name: "Starter Site Build",
-    priceCents: 1650_00,
+    priceCents: 1000_00,
     description: "3-5 page custom website — mobile-responsive, SEO, contact form",
   },
   professional: {
     name: "Professional Site Build",
-    priceCents: 2750_00,
+    priceCents: 2500_00,
     description: "5-10 page site with CMS, SEO optimization, and analytics",
   },
   premium: {
     name: "Premium Site Build",
-    priceCents: 5500_00,
+    priceCents: 5000_00,
     description: "10+ pages with ecommerce, integrations, and brand strategy",
   },
 };

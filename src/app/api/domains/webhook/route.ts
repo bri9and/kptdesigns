@@ -14,9 +14,9 @@ const MARKUP_MULTIPLIER = 1.75; // 75% markup — must match checkout route
 
 // Site package pricing (in cents) — must match checkout route
 const SITE_PACKAGE_PRICES: Record<string, number> = {
-  starter: 1650_00,
-  professional: 2750_00,
-  premium: 5500_00,
+  starter: 1000_00,
+  professional: 2500_00,
+  premium: 5000_00,
 };
 
 async function registerDomain(domain: string, years: number): Promise<{ success: boolean; error?: string }> {

@@ -22,7 +22,7 @@ import { fadeUp, stagger } from "@/lib/animations";
 const packages = [
   {
     name: "Starter",
-    price: "$1,650",
+    price: "$1,000",
     tagline: "3-5 page custom website",
     turnaround: "1 week",
     features: [
@@ -35,7 +35,7 @@ const packages = [
   },
   {
     name: "Professional",
-    price: "$2,750",
+    price: "$2,500",
     tagline: "5-10 page site with CMS & SEO",
     turnaround: "2 weeks",
     features: [
@@ -50,7 +50,7 @@ const packages = [
   },
   {
     name: "Premium",
-    price: "$5,500",
+    price: "From $5,000",
     tagline: "10+ pages, ecommerce & integrations",
     turnaround: "4 weeks",
     features: [
