@@ -17,6 +17,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/complete-profile(.*)",
+  "/neo(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
