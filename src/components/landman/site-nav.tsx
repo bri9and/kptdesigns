@@ -1,4 +1,4 @@
-import { PHONE_TEL, SITE } from "@/lib/landman";
+import { SITE } from "@/lib/landman";
 
 function BrandMark() {
   return (
@@ -42,17 +42,11 @@ export default function SiteNav() {
             <a
               key={link.href}
               href={link.href}
-              className="hidden font-mono text-[11px] uppercase tracking-[0.22em] text-cream/65 transition-colors hover:text-copper sm:inline"
+              className="font-mono text-[11px] uppercase tracking-[0.22em] text-cream/65 transition-colors hover:text-copper"
             >
               {link.label}
             </a>
           ))}
-          <a
-            href={`tel:${PHONE_TEL}`}
-            className="font-mono text-[11px] uppercase tracking-[0.22em] text-copper transition-colors hover:text-cream"
-          >
-            Call →
-          </a>
         </nav>
       </div>
     </header>

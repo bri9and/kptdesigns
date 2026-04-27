@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import CallCard from "./call-card";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -100,18 +99,9 @@ export default function Hero() {
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 1, delay: 1.15, ease: EASE }}
-          className="mt-12 max-w-3xl"
-        >
-          <CallCard />
-        </motion.div>
-
-        <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 1.45, ease: EASE }}
+          transition={{ duration: 0.9, delay: 1.15, ease: EASE }}
           className="mt-16 grid grid-cols-2 gap-x-6 gap-y-8 border-t border-cream/10 pt-10 md:grid-cols-4"
         >
           <MetaCell label="Coverage" value="Appalachian basin" />
