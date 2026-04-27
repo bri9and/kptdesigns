@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KPT — Organize the World's Information</title>
+<title>KPT Designs — Modern Websites That Convert</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -15,13 +15,13 @@
 
 :root {
   --blue: #C56738;
-  --red: #A04A2E;
-  --yellow: #D4A341;
-  --green: #5A6B3F;
+  --red: #5B8FB9;
+  --yellow: #E8A547;
+  --green: #7BA15A;
   --blue-light: #EFD8C0;
-  --red-light: #E8C9B6;
-  --yellow-light: #F2E2B9;
-  --green-light: #D2DCC2;
+  --red-light: #D7E5EF;
+  --yellow-light: #FAEAC4;
+  --green-light: #DBEACB;
   --blue-dark: #9A4824;
   --white: #FBF8F1;
   --surface: #F2EBDB;
@@ -168,6 +168,16 @@ nav.scrolled {
 .nav-logo .p { color: var(--red); }
 .nav-logo .t { color: var(--yellow); }
 .nav-logo .dot { color: var(--green); font-size: 28px; line-height: 0; }
+.nav-logo .designs {
+  color: var(--gray-700);
+  font-size: 0.62em;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-left: 8px;
+  margin-bottom: -2px;
+  align-self: flex-end;
+}
 
 .nav-links {
   display: flex;
@@ -268,15 +278,17 @@ nav.scrolled {
 .hero-kpt .letter:nth-child(2) { color: var(--red); animation-delay: 0.25s; }
 .hero-kpt .letter:nth-child(3) { color: var(--yellow); animation-delay: 0.4s; }
 
-.hero-kpt .dot {
+.hero-designs {
   font-family: var(--font-display);
-  font-size: clamp(5rem, 12vw, 9rem);
-  font-weight: 700;
+  font-size: clamp(1rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
   color: var(--green);
-  line-height: 1;
-  display: inline-block;
-  animation: letterPop 0.6s var(--ease-bounce) both;
-  animation-delay: 0.55s;
+  margin-top: -4px;
+  margin-bottom: 20px;
+  animation: fadeUp 0.8s var(--ease) 0.6s both;
+  text-indent: 0.42em; /* compensate for last-letter spacing so it visually centers */
 }
 
 @keyframes letterPop {
@@ -778,7 +790,7 @@ nav.scrolled {
   left: -150px;
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(90,107,63,0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(123,161,90,0.1) 0%, transparent 70%);
   pointer-events: none;
 }
 
@@ -1233,7 +1245,7 @@ footer {
 <nav id="nav">
   <div class="nav-inner">
     <a href="#" class="nav-logo">
-      <span class="k">K</span><span class="p">P</span><span class="t">T</span><span class="dot">.</span>
+      <span class="k">K</span><span class="p">P</span><span class="t">T</span><span class="designs">Designs</span>
     </a>
     <ul class="nav-links">
       <li><a href="#features">Products</a></li>
@@ -1257,9 +1269,9 @@ footer {
       <span class="letter">K</span>
       <span class="letter">P</span>
       <span class="letter">T</span>
-      <span class="dot">.</span>
     </div>
-    <p class="hero-tagline">Organize the world's information and make it universally accessible and useful.</p>
+    <p class="hero-designs">Designs</p>
+    <p class="hero-tagline">Modern websites. Built to convert. Custom-coded, no templates — you own everything.</p>
     <div class="hero-search">
       <div class="search-box">
         <div class="search-icon">
@@ -1565,9 +1577,9 @@ footer {
     <div class="footer-grid">
       <div class="footer-brand">
         <div class="nav-logo">
-          <span class="k">K</span><span class="p">P</span><span class="t">T</span><span class="dot">.</span>
+          <span class="k">K</span><span class="p">P</span><span class="t">T</span><span class="designs">Designs</span>
         </div>
-        <p>Organizing the world's information and making it universally accessible and useful.</p>
+        <p>Modern websites. Built to convert. Custom-coded, no templates &mdash; you own everything.</p>
       </div>
       <div class="footer-col">
         <h4>Products</h4>

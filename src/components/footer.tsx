@@ -24,7 +24,7 @@ export function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="group inline-block text-qwhite hover:text-qyellow transition-colors">
-              <Logo variant="mark" size="lg" />
+              <Logo variant="full" size="lg" />
             </Link>
             <p className="text-qwhite/60 text-sm mt-3 max-w-xs leading-relaxed">
               Modern websites. Built to convert. Every project handled with

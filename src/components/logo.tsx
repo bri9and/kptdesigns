@@ -7,18 +7,25 @@ interface LogoProps {
 }
 
 const sizes = {
-  sm: { kpt: "text-lg", sub: "text-[9px]", gap: "gap-0", tracking: "tracking-[0.25em]", subTracking: "tracking-[0.15em]" },
-  md: { kpt: "text-2xl", sub: "text-[11px]", gap: "gap-0.5", tracking: "tracking-[0.3em]", subTracking: "tracking-[0.15em]" },
-  lg: { kpt: "text-4xl", sub: "text-sm", gap: "gap-1", tracking: "tracking-[0.35em]", subTracking: "tracking-[0.2em]" },
+  sm: { kpt: "text-lg", sub: "text-[9px]", gap: "gap-0", subTracking: "tracking-[0.18em]" },
+  md: { kpt: "text-2xl", sub: "text-[11px]", gap: "gap-0.5", subTracking: "tracking-[0.18em]" },
+  lg: { kpt: "text-4xl", sub: "text-sm", gap: "gap-1", subTracking: "tracking-[0.2em]" },
 };
 
-export function Logo({ variant = "mark", className, size = "md" }: LogoProps) {
+const KPT_COLORS = {
+  k: "var(--terracotta, #C56738)",
+  p: "var(--fern, #7BA15A)",
+  t: "var(--cornflower, #5B8FB9)",
+};
+
+export function Logo({ variant = "full", className, size = "md" }: LogoProps) {
   const s = sizes[size];
 
   if (variant === "icon") {
     return (
       <span
-        className={`inline-flex items-center justify-center font-bold text-[#FF8000] ${s.kpt} leading-none select-none ${className ?? ""}`}
+        className={`inline-flex items-center justify-center font-bold ${s.kpt} leading-none select-none ${className ?? ""}`}
+        style={{ color: KPT_COLORS.k }}
         aria-label="KPT Designs"
       >
         K
@@ -29,13 +36,15 @@ export function Logo({ variant = "mark", className, size = "md" }: LogoProps) {
   return (
     <span
       className={`inline-flex flex-col ${s.gap} select-none ${className ?? ""}`}
-      aria-label={variant === "full" ? "KPT Designs" : "KPT"}
+      aria-label="KPT Designs"
     >
-      <span className={`font-bold text-[#FF8000] ${s.kpt} ${s.tracking} leading-none`}>
-        KPT
+      <span className={`font-bold ${s.kpt} leading-none flex items-baseline`}>
+        <span style={{ color: KPT_COLORS.k }}>K</span>
+        <span style={{ color: KPT_COLORS.p }}>P</span>
+        <span style={{ color: KPT_COLORS.t }}>T</span>
       </span>
       {variant === "full" && (
-        <span className={`font-medium text-white/50 ${s.sub} ${s.subTracking} uppercase leading-none`}>
+        <span className={`font-medium text-foreground/55 ${s.sub} ${s.subTracking} uppercase leading-none mt-0.5`}>
           Designs
         </span>
       )}
