@@ -19,6 +19,7 @@ const isPublicRoute = createRouteMatcher([
   "/complete-profile(.*)",
   "/neo(.*)",
   "/landman(.*)",
+  "/concepts(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
