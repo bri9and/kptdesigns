@@ -1,3 +1,5 @@
+import { PHONE_DISPLAY } from "@/lib/landman";
+
 export default function FinalCta() {
   return (
     <section className="relative overflow-hidden border-t border-cream/10 px-6 py-32 md:px-10 md:py-44">
@@ -24,11 +26,15 @@ export default function FinalCta() {
           <em className="italic text-copper">one conversation at a time.</em>
         </h2>
 
-        <p className="mx-auto mt-10 max-w-xl text-base leading-relaxed text-cream/70 md:text-lg">
-          Voice Landman is in quiet beta across Pennsylvania, Ohio, and West
-          Virginia. We listen, we ground every value in real data, and we
-          take the work seriously.
-        </p>
+        <div className="mt-16 flex flex-col items-center gap-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-cream/45">
+            The intake line
+          </p>
+          <p className="select-all font-serif text-[2.75rem] leading-none tracking-tight md:text-[6rem]">
+            {PHONE_DISPLAY}
+          </p>
+          <span aria-hidden="true" className="h-px w-24 bg-copper/55" />
+        </div>
 
         <p className="mt-12 font-mono text-[11px] uppercase tracking-[0.22em] text-cream/50">
           Pittsburgh, PA · Appalachian basin · Marcellus and Utica
