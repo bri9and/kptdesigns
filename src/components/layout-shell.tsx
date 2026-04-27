@@ -12,8 +12,9 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
   const isDashboard = pathname.startsWith("/dashboard");
   const isNeo = pathname.startsWith("/neo");
+  const isLandman = pathname.startsWith("/landman");
 
-  if (isSitePage || isAuthPage || isDashboard || isNeo) {
+  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman) {
     return <>{children}</>;
   }
 
