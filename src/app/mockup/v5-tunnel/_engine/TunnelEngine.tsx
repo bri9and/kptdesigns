@@ -331,6 +331,8 @@ function DesktopTunnel() {
   const targetRef = useRef(0);
   // Touch tracking
   const touchYRef = useRef<number | null>(null);
+  // Last input time — used for idle-snap to nearest station (page dwell).
+  const lastInputAtRef = useRef(0);
 
   // MotionValue mirror — drives ProgressBar / SectionPill (so we don't have
   // to refactor the HUD components). Updated each rAF tick from the lerped
@@ -352,9 +354,11 @@ function DesktopTunnel() {
   // ---------- input → target progress ----------
   const setTarget = useCallback((v: number) => {
     targetRef.current = Math.max(0, Math.min(1, v));
+    lastInputAtRef.current = performance.now();
   }, []);
   const nudgeTarget = useCallback((delta: number) => {
     targetRef.current = Math.max(0, Math.min(1, targetRef.current + delta));
+    lastInputAtRef.current = performance.now();
   }, []);
 
   // wheel — captured on the wrapper, prevents page scroll
@@ -363,9 +367,10 @@ function DesktopTunnel() {
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      // Each wheel notch (~100 deltaY) → ~1/12 of total tunnel.
-      // 0.0008 yields a comfortable advance per notch.
-      nudgeTarget(e.deltaY * 0.0008);
+      // 0.0004 (was 0.0008) — halved per user request for a slower, more
+      // cinematic zoom. Combined with the slower lerp + station idle-snap,
+      // this lets each page "hold" before the next.
+      nudgeTarget(e.deltaY * 0.0004);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -384,8 +389,9 @@ function DesktopTunnel() {
       if (y === undefined) return;
       const dy = touchYRef.current - y;
       touchYRef.current = y;
-      // touch deltas are smaller than wheel; tune multiplier higher
-      nudgeTarget(dy * 0.0018);
+      // touch deltas are smaller than wheel; tune multiplier higher.
+      // 0.0009 (was 0.0018) — halved to match the slower wheel feel.
+      nudgeTarget(dy * 0.0009);
       e.preventDefault();
     };
     const onTouchEnd = () => {
@@ -444,10 +450,20 @@ function DesktopTunnel() {
 
     const tick = () => {
       const cur = progressRef.current;
-      const tgt = targetRef.current;
-      // Critically damped-ish lerp; per-frame factor 0.07 is a comfortable
-      // momentum. Stop micro-updates near zero diff.
-      const next = cur + (tgt - cur) * 0.07;
+      let tgt = targetRef.current;
+      // Idle-snap: after ~280ms of no input, pull the target to the nearest
+      // station so the page "dwells" before continuing. This gives each
+      // checkpoint a moment of presence instead of a continuous fly-through.
+      const idleMs = performance.now() - lastInputAtRef.current;
+      if (idleMs > 280) {
+        const nearestStation = Math.round(tgt * (N - 1)) / (N - 1);
+        // gentle pull toward the station (don't slam — let the lerp take it)
+        tgt = tgt + (nearestStation - tgt) * 0.12;
+        targetRef.current = tgt;
+      }
+      // Lerp factor 0.035 (was 0.07) — halved per user request for a more
+      // cinematic glide. Stop micro-updates near zero diff.
+      const next = cur + (tgt - cur) * 0.035;
       const clamped = Math.max(0, Math.min(1, next));
       progressRef.current = clamped;
       scrollYProgress.set(clamped);
