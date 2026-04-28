@@ -26,9 +26,7 @@
  *   overflowing scrollable panel scroll natively until they hit the boundary,
  *   then the next notch advances the station.
  *
- * - Mobile (<768px): R3F dropped, sections render as a normal vertical page.
- * - Reduced-motion : camera frozen, sections render as a normal stack.
- *
+ * Fallbacks (mobile, reduced-motion) live in ./TunnelFallbacks.
  * Scene primitives live in ./TunnelVisuals.
  * HUD chrome lives in ./TunnelHud.
  */
@@ -45,15 +43,6 @@ import { JetBrains_Mono, Inter } from "next/font/google";
 import { motionValue, useReducedMotion } from "framer-motion";
 import { useLenis } from "lenis/react";
 
-import HeroCheckpoint from "../_sections/HeroCheckpoint";
-import PhilosophyCheckpoint from "../_sections/PhilosophyCheckpoint";
-import StackCheckpoint from "../_sections/StackCheckpoint";
-import TelemetryCheckpoint from "../_sections/TelemetryCheckpoint";
-import PortfolioCheckpoint from "../_sections/PortfolioCheckpoint";
-import ProcessCheckpoint from "../_sections/ProcessCheckpoint";
-import FaqCheckpoint from "../_sections/FaqCheckpoint";
-import FinaleCheckpoint from "../_sections/FinaleCheckpoint";
-
 import {
   TunnelWalls,
   TunnelRings,
@@ -67,11 +56,15 @@ import {
   ScrollDots,
   CornerHud,
   skipLinkStyle,
-  type CheckpointDef as HudCheckpointDef,
 } from "./TunnelHud";
+import {
+  CHECKPOINTS,
+  MobileFallback,
+  PALETTE,
+  ReducedMotionFallback,
+} from "./TunnelFallbacks";
 
 /* --------------------------------- fonts --------------------------------- */
-
 const mono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "700"],
@@ -82,128 +75,25 @@ const display = Inter({
   weight: ["200", "400", "700"],
   variable: "--v5-display",
 });
-
-const PALETTE = {
-  void: "#000812",
-  cyan: "#00E5FF",
-  white: "#E8F1FF",
-  amber: "#FFB000",
-  magenta: "#FF00AA",
-};
+const FONT_VARS = `${mono.variable} ${display.variable}`;
 
 /* ---------- snap / settle tunables ---------- */
-const WHEEL_NOTCH = 100;          // |accumulator| to advance one station
-const WHEEL_COOLDOWN_MS = 500;    // ignore wheel after a station change
+// One scroll gesture = one stage. Higher notch = more deliberate gesture
+// required. Cooldown locks input until next stage commits, so a single
+// trackpad flick can't skip multiple stages.
+const WHEEL_NOTCH = 220;          // |accumulator| to advance one station
+const WHEEL_COOLDOWN_MS = 750;    // ignore wheel after a station change
 const TOUCH_THRESHOLD = 80;       // px swipe distance per station
 const SETTLE_EPSILON = 0.005;     // |progress - target| considered "arrived"
-const SETTLE_IDLE_MS = 150;       // idle time after arrival before "settled"
-const LERP_FACTOR = 0.035;        // cinematic glide
-
-/* checkpoint catalogue — drives sections, dots, pill */
-type CheckpointDef = HudCheckpointDef & { Component: React.ComponentType };
-
-const CHECKPOINTS: CheckpointDef[] = [
-  { id: "hero",       num: "01", label: "ENTRY",       longLabel: "ENTRY VECTOR LOCKED",       Component: HeroCheckpoint },
-  { id: "philosophy", num: "02", label: "PHILOSOPHY",  longLabel: "DOCTRINE · OWNED OUTRIGHT", Component: PhilosophyCheckpoint },
-  { id: "stack",      num: "03", label: "STACK",       longLabel: "STACK · INBOUND VECTOR",    Component: StackCheckpoint },
-  { id: "telemetry",  num: "04", label: "TELEMETRY",   longLabel: "TELEMETRY · LIVE DATA",     Component: TelemetryCheckpoint },
-  { id: "portfolio",  num: "05", label: "ARCHIVE",     longLabel: "ARCHIVE · 47 SPECIMENS",    Component: PortfolioCheckpoint },
-  { id: "process",    num: "06", label: "PROCESS",     longLabel: "PROCESS · PATH OF FOUR",    Component: ProcessCheckpoint },
-  { id: "faq",        num: "07", label: "FAQ",         longLabel: "KNOWN QUERIES · OPEN",      Component: FaqCheckpoint },
-  { id: "finale",     num: "08", label: "TERMINUS",    longLabel: "TERMINUS · LAUNCH READY",   Component: FinaleCheckpoint },
-];
+const SETTLE_IDLE_MS = 100;       // idle time after arrival before "settled"
+// Faster glide: ~0.4s to settle vs the previous ~1.5s. The user wants pages
+// to FEEL like pages, not animations.
+const LERP_FACTOR = 0.085;
 
 const N = CHECKPOINTS.length;
 
 /* ===================================================================== */
-/* MOBILE FALLBACK                                                        */
-/* ===================================================================== */
-
-function MobileFallback() {
-  return (
-    <div
-      className={`${mono.variable} ${display.variable}`}
-      style={{
-        background: PALETTE.void,
-        color: PALETTE.white,
-        minHeight: "100vh",
-        fontFamily: "var(--v5-display), system-ui",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          inset: 0,
-          background: `
-            radial-gradient(ellipse 60% 40% at 50% 30%, rgba(0,229,255,0.10) 0%, transparent 60%),
-            radial-gradient(ellipse 80% 60% at 50% 80%, rgba(255,0,170,0.08) 0%, transparent 70%),
-            ${PALETTE.void}
-          `,
-          zIndex: 0,
-        }}
-      />
-      <div
-        aria-hidden
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundImage: `linear-gradient(${PALETTE.cyan}1a 1px, transparent 1px), linear-gradient(90deg, ${PALETTE.cyan}1a 1px, transparent 1px)`,
-          backgroundSize: "80px 80px",
-          maskImage: "radial-gradient(ellipse 90% 70% at 50% 50%, #000 30%, transparent 80%)",
-          opacity: 0.5,
-          zIndex: 0,
-          pointerEvents: "none",
-        }}
-      />
-      <header
-        style={{
-          position: "sticky", top: 0, zIndex: 50,
-          padding: "12px 16px",
-          background: "rgba(0,8,18,0.92)",
-          borderBottom: `1px solid ${PALETTE.cyan}30`,
-          fontFamily: "var(--v5-mono), monospace",
-          fontSize: 10, letterSpacing: "0.18em",
-          color: PALETTE.cyan,
-          display: "flex", justifyContent: "space-between",
-          textTransform: "uppercase",
-        }}
-      >
-        <span>KPT // TUNNEL · MOBILE</span>
-        <span style={{ color: PALETTE.amber }}>EST. 2004</span>
-      </header>
-      <a href="#mobile-main" className="kpt-skip" style={skipLinkStyle}>Skip to content</a>
-      <main id="mobile-main" style={{ position: "relative", zIndex: 1 }}>
-        {CHECKPOINTS.map((cp, i) => (
-          <section
-            key={cp.id}
-            id={cp.id}
-            aria-label={cp.label}
-            style={{ padding: "60px 16px", borderTop: i > 0 ? `1px dashed ${PALETTE.cyan}24` : "none" }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--v5-mono), monospace",
-                fontSize: 10, letterSpacing: "0.28em",
-                color: PALETTE.amber,
-                marginBottom: 14,
-                textTransform: "uppercase",
-              }}
-            >
-              §{cp.num} / {cp.label}
-            </div>
-            <cp.Component />
-          </section>
-        ))}
-      </main>
-    </div>
-  );
-}
-
-/* ===================================================================== */
-/* DEFAULT EXPORT                                                         */
+/* DEFAULT EXPORT — chooses appropriate variant                           */
 /* ===================================================================== */
 
 export default function TunnelEngine() {
@@ -220,81 +110,9 @@ export default function TunnelEngine() {
   if (mobile === null) {
     return <div style={{ background: PALETTE.void, width: "100%", height: "100vh" }} />;
   }
-  if (mobile) return <MobileFallback />;
-  if (reduceMotion) return <ReducedMotionFallback />;
+  if (mobile) return <MobileFallback fontVars={FONT_VARS} />;
+  if (reduceMotion) return <ReducedMotionFallback fontVars={FONT_VARS} />;
   return <DesktopTunnel />;
-}
-
-/* ----------------- reduced-motion: vertical, frozen canvas --------------- */
-
-function ReducedMotionFallback() {
-  const lenis = useLenis();
-  useEffect(() => {
-    if (lenis && typeof lenis.destroy === "function") lenis.destroy();
-  }, [lenis]);
-  return (
-    <div
-      className={`${mono.variable} ${display.variable}`}
-      style={{
-        background: PALETTE.void,
-        color: PALETTE.white,
-        minHeight: "100vh",
-        position: "relative",
-        fontFamily: "var(--v5-display), system-ui",
-      }}
-    >
-      <div
-        style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", background: PALETTE.void }}
-        aria-hidden
-      >
-        <Canvas
-          gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-          dpr={[1, 2]}
-          camera={{ position: [0, 0, 4], fov: 70, near: 0.1, far: 600 }}
-          style={{ position: "absolute", inset: 0 }}
-        >
-          <color attach="background" args={[PALETTE.void]} />
-          <fog attach="fog" args={[PALETTE.void, 18, 90]} />
-          <TunnelWalls frozen />
-          <TunnelRings frozen />
-          <BloomSprites frozen />
-          <DriftingLights frozen />
-        </Canvas>
-        <div
-          aria-hidden
-          style={{
-            position: "absolute", inset: 0,
-            background: "radial-gradient(ellipse at center, rgba(0,8,18,0) 45%, rgba(0,8,18,0.85) 100%)",
-          }}
-        />
-      </div>
-      <a href="#rm-main" style={skipLinkStyle} className="kpt-skip">Skip to content</a>
-      <main id="rm-main" style={{ position: "relative", zIndex: 1 }}>
-        {CHECKPOINTS.map((cp, i) => (
-          <section
-            key={cp.id}
-            id={cp.id}
-            aria-label={cp.label}
-            style={{ padding: "100px 16px", borderTop: i > 0 ? `1px dashed ${PALETTE.cyan}24` : "none" }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--v5-mono), monospace",
-                fontSize: 10, letterSpacing: "0.32em",
-                color: PALETTE.amber,
-                textAlign: "center",
-                marginBottom: 24,
-                textTransform: "uppercase",
-              }}
-            >
-              §{cp.num} / {cp.label}
-            </div>
-            <cp.Component />
-          </section>
-        ))}
-      </main>
-    </div>
-  );
 }
 
 /* ===================================================================== */
@@ -314,7 +132,6 @@ function DesktopTunnel() {
   const wheelCooldownUntilRef = useRef(0);
   // Touch tracking — distance accumulated per single touch sequence.
   const touchStartYRef = useRef<number | null>(null);
-  const touchAccumRef = useRef(0);
   const touchFiredRef = useRef(false);
   // Last input timestamp — used for settle detection.
   const lastInputAtRef = useRef(0);
@@ -402,8 +219,10 @@ function DesktopTunnel() {
 
       const now = performance.now();
       if (now < wheelCooldownUntilRef.current) {
-        // During cooldown, swallow input but don't accumulate (prevents
-        // a single flick from queueing 3 stations).
+        // REFRESH cooldown if wheel is still active. This means a sustained
+        // trackpad scroll = ONE stage advance, not many. The user has to
+        // STOP scrolling and start again to advance to the next stage.
+        wheelCooldownUntilRef.current = now + 150;
         wheelAccumRef.current = 0;
         return;
       }
@@ -427,7 +246,6 @@ function DesktopTunnel() {
 
     const onTouchStart = (e: TouchEvent) => {
       touchStartYRef.current = e.touches[0]?.clientY ?? null;
-      touchAccumRef.current = 0;
       touchFiredRef.current = false;
     };
     const onTouchMove = (e: TouchEvent) => {
@@ -435,7 +253,6 @@ function DesktopTunnel() {
       const y = e.touches[0]?.clientY;
       if (y === undefined) return;
       const dy = touchStartYRef.current - y; // +ve = swipe up = next
-      touchAccumRef.current = dy;
       lastInputAtRef.current = performance.now();
       e.preventDefault();
       if (touchFiredRef.current) return;
@@ -446,7 +263,6 @@ function DesktopTunnel() {
     };
     const onTouchEnd = () => {
       touchStartYRef.current = null;
-      touchAccumRef.current = 0;
       touchFiredRef.current = false;
     };
     el.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -564,7 +380,7 @@ function DesktopTunnel() {
   return (
     <div
       ref={wrapperRef}
-      className={`${mono.variable} ${display.variable}`}
+      className={FONT_VARS}
       style={{
         position: "fixed",
         inset: 0,
@@ -638,12 +454,11 @@ function DesktopTunnel() {
               data-panel={i}
               aria-label={cp.label}
               aria-hidden={settledIndex !== null && !isSettled}
-              className={isSettled ? "kpt-panel-settled" : undefined}
+              className={`kpt-panel${isSettled ? " kpt-panel-settled" : ""}`}
               style={{
                 position: "absolute",
                 top: "50%",
                 left: "50%",
-                transform: "translate(-50%, -50%) scale(0.78)",
                 width: "min(1200px, 92vw)",
                 maxHeight: "86vh",
                 // FAQ etc. can grow tall; allow internal scroll when settled.
@@ -653,11 +468,7 @@ function DesktopTunnel() {
                 alignItems: "center",
                 justifyContent: "center",
                 willChange: "transform, opacity, filter",
-                opacity: 0,
                 transformStyle: "preserve-3d",
-                // Pointer events flipped imperatively in rAF.
-                pointerEvents: "none",
-                // Custom cyan settle outline (CSS class adds glow).
                 borderRadius: 6,
               }}
             >
@@ -675,16 +486,7 @@ function DesktopTunnel() {
       <CornerHud />
 
       {/* prev / next overlay buttons (top-right) */}
-      <div
-        style={{
-          position: "fixed",
-          top: 56,
-          right: 56,
-          zIndex: 56,
-          display: "flex",
-          gap: 8,
-        }}
-      >
+      <div style={{ position: "fixed", top: 56, right: 56, zIndex: 56, display: "flex", gap: 8 }}>
         <button
           type="button"
           onClick={() => advanceStation(-1)}
@@ -734,93 +536,28 @@ function DesktopTunnel() {
       </div>
 
       {/* ARIA live region — announces settled station for AT */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="kpt-sr-only"
-      >
+      <div role="status" aria-live="polite" aria-atomic="true" className="kpt-sr-only">
         {settledLabel ? `Active: ${settledLabel}` : ""}
       </div>
 
       <style>{`
-        .kpt-sr-only {
-          position: absolute !important;
-          width: 1px; height: 1px;
-          margin: -1px; padding: 0;
-          overflow: hidden;
-          clip: rect(0,0,0,0);
-          white-space: nowrap;
-          border: 0;
-        }
+        .kpt-sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
         .kpt-skip:focus { left: 8px !important; outline: 2px solid ${PALETTE.amber}; }
         html, body { overflow: hidden !important; height: 100%; }
-
-        /* Settled panel: cyan glow ring + smooth in. Avoids blur; lets
-           inner accordions expand and links/cards click cleanly. */
-        .kpt-panel-settled {
-          box-shadow:
-            0 0 0 1px ${PALETTE.cyan}66,
-            0 0 28px ${PALETTE.cyan}33,
-            0 0 80px ${PALETTE.cyan}1a;
-          transition: box-shadow 360ms ease-out;
-        }
-
-        /* Top-right prev/next buttons */
-        .kpt-nav-btn {
-          all: unset;
-          width: 36px; height: 36px;
-          display: inline-flex;
-          align-items: center; justify-content: center;
-          border: 1px solid ${PALETTE.cyan}55;
-          background: rgba(0,8,18,0.78);
-          color: ${PALETTE.cyan};
-          font-family: var(--v5-mono), monospace;
-          font-size: 16px;
-          letter-spacing: 0.04em;
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          transition: background 200ms, border-color 200ms, transform 200ms, box-shadow 200ms;
-        }
-        .kpt-nav-btn:hover:not(:disabled) {
-          background: ${PALETTE.cyan}1a;
-          border-color: ${PALETTE.cyan};
-          box-shadow: 0 0 14px ${PALETTE.cyan}66;
-          transform: translateY(-1px);
-        }
-        .kpt-nav-btn:focus-visible {
-          outline: none;
-          box-shadow: 0 0 0 2px ${PALETTE.amber}, 0 0 14px ${PALETTE.cyan}66;
-        }
+        .kpt-panel-settled { box-shadow: 0 0 0 1px ${PALETTE.cyan}66, 0 0 28px ${PALETTE.cyan}33, 0 0 80px ${PALETTE.cyan}1a; transition: box-shadow 360ms ease-out; }
+        .kpt-nav-btn { all: unset; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid ${PALETTE.cyan}55; background: rgba(0,8,18,0.78); color: ${PALETTE.cyan}; font-family: var(--v5-mono), monospace; font-size: 16px; letter-spacing: 0.04em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: background 200ms, border-color 200ms, transform 200ms, box-shadow 200ms; }
+        .kpt-nav-btn:hover:not(:disabled) { background: ${PALETTE.cyan}1a; border-color: ${PALETTE.cyan}; box-shadow: 0 0 14px ${PALETTE.cyan}66; transform: translateY(-1px); }
+        .kpt-nav-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px ${PALETTE.amber}, 0 0 14px ${PALETTE.cyan}66; }
         .kpt-nav-btn:disabled { cursor: default; }
-
-        /* Scroll-for-next hint: fade in 600ms after settling */
-        .kpt-next-hint {
-          opacity: 0;
-          transition: opacity 600ms ease-out;
-        }
+        .kpt-next-hint { opacity: 0; transition: opacity 600ms ease-out; }
         .kpt-next-hint.is-on { opacity: 0.85; }
-        .kpt-next-arrow {
-          display: inline-block;
-          animation: kpt-bounce 1.6s ease-in-out infinite;
-        }
-        @keyframes kpt-bounce {
-          0%, 100% { transform: translateY(0); opacity: 0.6; }
-          50%      { transform: translateY(4px); opacity: 1; }
-        }
-
-        /* Scrollbar styling for overflowing settled panels (FAQ etc.) */
+        .kpt-next-arrow { display: inline-block; animation: kpt-bounce 1.6s ease-in-out infinite; }
+        @keyframes kpt-bounce { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(4px); opacity: 1; } }
         [data-panel]::-webkit-scrollbar { width: 6px; }
         [data-panel]::-webkit-scrollbar-track { background: transparent; }
-        [data-panel]::-webkit-scrollbar-thumb {
-          background: ${PALETTE.cyan}33;
-          border-radius: 3px;
-        }
+        [data-panel]::-webkit-scrollbar-thumb { background: ${PALETTE.cyan}33; border-radius: 3px; }
         [data-panel]::-webkit-scrollbar-thumb:hover { background: ${PALETTE.cyan}66; }
-
-        @media (prefers-reduced-motion: reduce) {
-          .kpt-next-arrow { animation: none; }
-        }
+        @media (prefers-reduced-motion: reduce) { .kpt-next-arrow { animation: none; } }
       `}</style>
     </div>
   );
