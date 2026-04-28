@@ -13,8 +13,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const isDashboard = pathname.startsWith("/dashboard");
   const isNeo = pathname.startsWith("/neo");
   const isLandman = pathname.startsWith("/landman");
+  // v5-tunnel mockup runs its own fixed canvas + HUD chrome — render bare so the
+  // global header doesn't compete with the in-tunnel navigation.
+  const isTunnelMockup = pathname.startsWith("/mockup/v5-tunnel");
 
-  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman) {
+  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup) {
     return <>{children}</>;
   }
 
