@@ -78,16 +78,14 @@ const display = Inter({
 const FONT_VARS = `${mono.variable} ${display.variable}`;
 
 /* ---------- snap / settle tunables ---------- */
-// One scroll gesture = one stage. Higher notch = more deliberate gesture
-// required. Cooldown locks input until next stage commits, so a single
-// trackpad flick can't skip multiple stages.
-const WHEEL_NOTCH = 220;          // |accumulator| to advance one station
-const WHEEL_COOLDOWN_MS = 750;    // ignore wheel after a station change
-const TOUCH_THRESHOLD = 80;       // px swipe distance per station
-const SETTLE_EPSILON = 0.005;     // |progress - target| considered "arrived"
-const SETTLE_IDLE_MS = 100;       // idle time after arrival before "settled"
-// Faster glide: ~0.4s to settle vs the previous ~1.5s. The user wants pages
-// to FEEL like pages, not animations.
+// Always-accept model: any wheel event past the (low) notch triggers an
+// advance. After advance, FIXED 1.5s cooldown expires no matter what — no
+// refresh on continued input. Once expired, the very next scroll advances.
+const WHEEL_NOTCH = 50;            // any meaningful scroll triggers advance
+const WHEEL_COOLDOWN_MS = 1500;    // fixed lockout between advances
+const TOUCH_THRESHOLD = 80;        // px swipe distance per station
+const SETTLE_EPSILON = 0.005;
+const SETTLE_IDLE_MS = 100;
 const LERP_FACTOR = 0.085;
 
 const N = CHECKPOINTS.length;
@@ -219,10 +217,8 @@ function DesktopTunnel() {
 
       const now = performance.now();
       if (now < wheelCooldownUntilRef.current) {
-        // REFRESH cooldown if wheel is still active. This means a sustained
-        // trackpad scroll = ONE stage advance, not many. The user has to
-        // STOP scrolling and start again to advance to the next stage.
-        wheelCooldownUntilRef.current = now + 150;
+        // FIXED cooldown — does NOT refresh. We just discard input until
+        // the lockout expires. Once expired, the very next scroll advances.
         wheelAccumRef.current = 0;
         return;
       }
