@@ -121,10 +121,12 @@ export function ScrollDots({
   activeIndex,
   onJump,
   checkpoints,
+  settledIndex = null,
 }: {
   activeIndex: number;
   onJump: (i: number) => void;
   checkpoints: CheckpointDef[];
+  settledIndex?: number | null;
 }) {
   return (
     <nav
@@ -142,6 +144,7 @@ export function ScrollDots({
     >
       {checkpoints.map((cp, i) => {
         const active = i === activeIndex;
+        const settled = i === settledIndex;
         return (
           <button
             key={cp.id}
@@ -149,7 +152,7 @@ export function ScrollDots({
             onClick={() => onJump(i)}
             aria-label={`Skip to ${cp.label} section`}
             aria-current={active ? "true" : undefined}
-            className="kpt-dot"
+            className={`kpt-dot${settled ? " kpt-dot--settled" : ""}`}
             style={{
               all: "unset",
               cursor: "pointer",
@@ -195,6 +198,23 @@ export function ScrollDots({
       <style>{`
         .kpt-dot:hover .kpt-dot-label, .kpt-dot:focus-visible .kpt-dot-label { opacity: 1; }
         .kpt-dot:focus-visible { box-shadow: 0 0 0 3px ${PALETTE.cyan}55, 0 0 12px ${PALETTE.cyan}; }
+        .kpt-dot--settled::after {
+          content: "";
+          position: absolute;
+          inset: -6px;
+          border-radius: 999px;
+          border: 1px solid ${PALETTE.cyan}88;
+          animation: kpt-dot-pulse 1.8s ease-out infinite;
+          pointer-events: none;
+        }
+        @keyframes kpt-dot-pulse {
+          0%   { transform: scale(0.6); opacity: 0.9; }
+          80%  { transform: scale(1.4); opacity: 0;   }
+          100% { transform: scale(1.4); opacity: 0;   }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .kpt-dot--settled::after { animation: none; opacity: 0.5; }
+        }
       `}</style>
     </nav>
   );

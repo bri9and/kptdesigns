@@ -16,8 +16,10 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   // v5-tunnel mockup runs its own fixed canvas + HUD chrome — render bare so the
   // global header doesn't compete with the in-tunnel navigation.
   const isTunnelMockup = pathname.startsWith("/mockup/v5-tunnel");
+  // touchdesign is a 100vh canvas (operator network) with its own toolbar.
+  const isTouchDesign = pathname.startsWith("/projects/touchdesign");
 
-  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup) {
+  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isTouchDesign) {
     return <>{children}</>;
   }
 
