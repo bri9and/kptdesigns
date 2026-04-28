@@ -1,18 +1,25 @@
 "use client";
 
 /**
- * TunnelEngine — V5 Tunnel (scroll-IN)
+ * TunnelEngine — V5 Tunnel (scroll-IN, NOT scroll-down)
  *
  * Architecture:
  *   ┌───────────────────────────────────────────┐
- *   │ fixed <Canvas>            (z-index 0)     │  ← cosmic tunnel BACKDROP
- *   │ fixed HUD chrome          (z-index 30+)   │  ← progress, dots, pill
- *   │ scrollable 800vh stack    (z-index 10)    │  ← 8 sticky sections, HTML
+ *   │ 100vh wrapper, overflow:hidden            │  ← single viewport (NO page scroll)
+ *   │  ├─ fixed <Canvas>            (z 0)       │  ← cosmic tunnel BACKDROP
+ *   │  ├─ overlay panel layer       (z 10)      │  ← 8 absolutely-positioned panels
+ *   │  └─ fixed HUD chrome          (z 30+)     │  ← progress, dots, pill
  *   └───────────────────────────────────────────┘
  *
- * The tunnel is the spectacle. Content is plain HTML on top so it stays
- * razor-sharp. Scroll progress drives BOTH the R3F camera advance AND
- * per-section opacity fades.
+ * Wheel / touch / keyboard input is captured on the wrapper and converted to
+ * a `progress` value (0..1) representing camera position through the tunnel.
+ * The viewport NEVER scrolls vertically — the user is "flying" forward.
+ *
+ * Each of the 8 checkpoint panels lives at a station progress (0/8, 1/8, ...
+ * 7/8). As progress approaches a station, that panel scales 0.78 → 1, fades
+ * in, and is fully readable when at its station. As progress passes, the
+ * panel scales to 1.18 and fades out — giving a "panel flew past me"
+ * sensation that combines with the camera dolly behind it.
  *
  * - Mobile (<768px): R3F dropped, sections render as a normal vertical page.
  * - Reduced-motion : camera frozen, sections render as a normal stack.
@@ -24,13 +31,14 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import { Canvas } from "@react-three/fiber";
 import { JetBrains_Mono, Inter } from "next/font/google";
 import {
-  useScroll,
+  motionValue,
   useReducedMotion,
 } from "framer-motion";
 import { useLenis } from "lenis/react";
@@ -96,36 +104,6 @@ const CHECKPOINTS: CheckpointDef[] = [
 ];
 
 const N = CHECKPOINTS.length;
-
-/* --------------------------- smooth scroll helper ------------------------ */
-
-let smoothScrollRaf = 0;
-
-/**
- * rAF-driven smooth scroll that bypasses any global smooth-scroll lib that
- * might have hijacked `window.scrollTo`. We use `document.documentElement.scrollTop`
- * directly each frame because that property assignment can't be intercepted
- * the same way the scrollTo function calls can.
- */
-function smoothScrollTo(targetY: number, durationMs = 700) {
-  const startY = window.scrollY;
-  const delta = targetY - startY;
-  if (Math.abs(delta) < 1) return;
-  const startT = performance.now();
-  const ease = (t: number) => 1 - Math.pow(1 - t, 3);
-  cancelAnimationFrame(smoothScrollRaf);
-  const step = (now: number) => {
-    const elapsed = now - startT;
-    const t = Math.min(1, elapsed / durationMs);
-    const y = startY + delta * ease(t);
-    // Set scrollTop on both root candidates — covers Webkit + Gecko + any
-    // patched window.scrollTo wrapper.
-    document.documentElement.scrollTop = y;
-    document.body.scrollTop = y;
-    if (t < 1) smoothScrollRaf = requestAnimationFrame(step);
-  };
-  smoothScrollRaf = requestAnimationFrame(step);
-}
 
 /* ===================================================================== */
 /* MOBILE FALLBACK                                                        */
@@ -224,48 +202,6 @@ function MobileFallback() {
         ))}
       </main>
     </div>
-  );
-}
-
-/* ===================================================================== */
-/* CONTENT LAYER — sticky sections w/ opacity tied to scroll progress    */
-/* ===================================================================== */
-
-/**
- * Each section is sticky inside its own 100vh parent — the parent's scroll
- * range determines when the section is visible. No per-section opacity
- * transform (an earlier version used `useTransform` per child but that
- * crashed under Turbopack production minification — `e.on is not a function`
- * during render). Sticky positioning handles the visibility transitions.
- */
-function ContentSection({
-  cp,
-  isFirst,
-}: {
-  cp: CheckpointDef;
-  isFirst: boolean;
-}) {
-  return (
-    <section
-      id={cp.id}
-      aria-label={cp.label}
-      style={{ position: "relative", height: "100vh", width: "100%" }}
-    >
-      <div
-        style={{
-          position: "sticky",
-          top: 0,
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "calc(env(safe-area-inset-top) + 70px) 16px 70px",
-        }}
-      >
-        {isFirst ? <h1 className="kpt-sr-only">KPT Designs — Tunnel</h1> : null}
-        <cp.Component />
-      </div>
-    </section>
   );
 }
 
@@ -377,15 +313,35 @@ function ReducedMotionFallback() {
   );
 }
 
-/* ------------------------ desktop: full tunnel --------------------------- */
+/* ===================================================================== */
+/* DESKTOP TUNNEL — input-driven progress, single 100vh viewport         */
+/* ===================================================================== */
 
+/**
+ * Smooth tunnel progress driven by wheel / touch / keyboard input. The page
+ * never scrolls vertically; instead, input increments a `target` progress
+ * value (0..1), and a rAF loop lerps `current` toward it for inertia.
+ */
 function DesktopTunnel() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  // Camera dolly reads this each frame.
   const progressRef = useRef(0);
+  // Target = where the user wants to be; current = lerps toward it.
+  const targetRef = useRef(0);
+  // Touch tracking
+  const touchYRef = useRef<number | null>(null);
 
-  // If a global Lenis instance is still alive (it might be from before the
-  // route changed), destroy it so native scroll APIs work. Lenis hijacks
-  // window.scrollTo / scrollTop but releases them on .destroy().
+  // MotionValue mirror — drives ProgressBar / SectionPill (so we don't have
+  // to refactor the HUD components). Updated each rAF tick from the lerped
+  // `progressRef`.
+  const scrollYProgress = useMemo(() => motionValue(0), []);
+
+  // active section index — for pill + dots
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // If a global Lenis instance is alive, kill it. Lenis hijacks window scroll
+  // and would conflict with our own wheel handling.
   const lenis = useLenis();
   useEffect(() => {
     if (lenis && typeof lenis.destroy === "function") {
@@ -393,78 +349,188 @@ function DesktopTunnel() {
     }
   }, [lenis]);
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
-
-  // mirror scroll progress into a ref for the R3F render loop
-  useEffect(() => {
-    return scrollYProgress.on("change", (v) => {
-      progressRef.current = v;
-    });
-  }, [scrollYProgress]);
-
-  // active section index — for pill + dots
-  const [activeIndex, setActiveIndex] = useState(0);
-  useEffect(() => {
-    return scrollYProgress.on("change", (v) => {
-      const i = Math.min(N - 1, Math.max(0, Math.floor(v * N)));
-      setActiveIndex(i);
-    });
-  }, [scrollYProgress]);
-
-  // Jump to a checkpoint with a custom JS-driven smooth scroll. We avoid the
-  // platform smooth-scroll APIs because some other smooth-scroll lib higher
-  // in the tree (e.g. Lenis) can swallow the call even after it nominally
-  // unmounts. A plain rAF tween always works.
-  const jumpToById = useCallback((i: number) => {
-    const clamped = Math.min(N - 1, Math.max(0, i));
-    const cp = CHECKPOINTS[clamped];
-    if (!cp) return;
-    const el = document.getElementById(cp.id);
-    let target = 0;
-    if (el) {
-      target = el.getBoundingClientRect().top + window.scrollY;
-    } else if (containerRef.current) {
-      const c = containerRef.current;
-      const total = c.scrollHeight - window.innerHeight;
-      target = c.offsetTop + (clamped / N) * total;
-    }
-    smoothScrollTo(target);
+  // ---------- input → target progress ----------
+  const setTarget = useCallback((v: number) => {
+    targetRef.current = Math.max(0, Math.min(1, v));
+  }, []);
+  const nudgeTarget = useCallback((delta: number) => {
+    targetRef.current = Math.max(0, Math.min(1, targetRef.current + delta));
   }, []);
 
-  // keyboard navigation
+  // wheel — captured on the wrapper, prevents page scroll
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      // Each wheel notch (~100 deltaY) → ~1/12 of total tunnel.
+      // 0.0008 yields a comfortable advance per notch.
+      nudgeTarget(e.deltaY * 0.0008);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [nudgeTarget]);
+
+  // touch (mobile-ish, but desktop gets it free)
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const onTouchStart = (e: TouchEvent) => {
+      touchYRef.current = e.touches[0]?.clientY ?? null;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchYRef.current === null) return;
+      const y = e.touches[0]?.clientY;
+      if (y === undefined) return;
+      const dy = touchYRef.current - y;
+      touchYRef.current = y;
+      // touch deltas are smaller than wheel; tune multiplier higher
+      nudgeTarget(dy * 0.0018);
+      e.preventDefault();
+    };
+    const onTouchEnd = () => {
+      touchYRef.current = null;
+    };
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [nudgeTarget]);
+
+  // keyboard — global listeners; jump to specific stations
+  const jumpToStation = useCallback(
+    (i: number) => {
+      const clamped = Math.min(N - 1, Math.max(0, i));
+      // Each station occupies a slice of [0, 1] — center the camera on the
+      // station's progress fraction. Station i lives at i/(N-1).
+      setTarget(clamped / (N - 1));
+    },
+    [setTarget]
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         e.preventDefault();
-        jumpToById(Math.min(N - 1, activeIndex + 1));
+        jumpToStation(activeIndex + 1);
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
-        jumpToById(Math.max(0, activeIndex - 1));
+        jumpToStation(activeIndex - 1);
       } else if (e.key === "Escape" || e.key === "Home") {
         e.preventDefault();
-        smoothScrollTo(0);
+        setTarget(0);
       } else if (e.key === "End") {
         e.preventDefault();
-        jumpToById(N - 1);
+        setTarget(1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [activeIndex, jumpToById]);
+  }, [activeIndex, jumpToStation, setTarget]);
+
+  // ---------- main animation loop ----------
+  // Lerps progress → target each frame, updates motionValue + DOM styles
+  // imperatively. We avoid framer-motion's per-child useTransform because it
+  // crashed Turbopack production builds previously.
+  useEffect(() => {
+    let raf = 0;
+    let lastIdx = -1;
+
+    const tick = () => {
+      const cur = progressRef.current;
+      const tgt = targetRef.current;
+      // Critically damped-ish lerp; per-frame factor 0.07 is a comfortable
+      // momentum. Stop micro-updates near zero diff.
+      const next = cur + (tgt - cur) * 0.07;
+      const clamped = Math.max(0, Math.min(1, next));
+      progressRef.current = clamped;
+      scrollYProgress.set(clamped);
+
+      // active station = nearest checkpoint by progress fraction
+      const idx = Math.min(
+        N - 1,
+        Math.max(0, Math.round(clamped * (N - 1)))
+      );
+      if (idx !== lastIdx) {
+        lastIdx = idx;
+        setActiveIndex(idx);
+      }
+
+      // Imperative panel styling — by far the cheapest path. Each panel's
+      // dataset has its station index; we compute scale/opacity/translateZ
+      // from |progress - station|.
+      const overlay = overlayRef.current;
+      if (overlay) {
+        const panels = overlay.querySelectorAll<HTMLElement>("[data-panel]");
+        panels.forEach((el) => {
+          const stationIdx = Number(el.dataset.panel);
+          const stationP = stationIdx / (N - 1);
+          const d = clamped - stationP; // signed: negative=approaching, positive=passed
+          const ad = Math.abs(d);
+          // Window of visibility — half a station-width (1 / (N-1) / 2).
+          const half = 1 / (N - 1) / 2;
+          // soft falloff
+          const t = Math.max(0, 1 - ad / (half * 1.4));
+          // ease-out-quad on opacity
+          const opacity = t * t * (3 - 2 * t);
+
+          // Scale: when approaching (d < 0) we grow from 0.78 → 1; when
+          // passing (d > 0) we grow further 1 → 1.18. This sells "panel
+          // flying past the camera".
+          let scale: number;
+          if (d <= 0) {
+            // approach: -half → 0 maps to 0.78 → 1
+            const a = Math.min(1, Math.max(0, 1 + d / (half * 1.6)));
+            scale = 0.78 + a * 0.22;
+          } else {
+            // pass: 0 → +half maps to 1 → 1.18
+            const a = Math.min(1, Math.max(0, d / (half * 1.6)));
+            scale = 1 + a * 0.18;
+          }
+
+          // translateZ-ish blur for depth — only on approaching panels far
+          // out (subtle, performant).
+          const blur = d < 0 ? Math.min(8, ad * 60) : 0;
+
+          el.style.opacity = String(opacity);
+          el.style.transform = `translate(-50%, -50%) scale(${scale.toFixed(4)})`;
+          el.style.filter = blur > 0.4 ? `blur(${blur.toFixed(2)}px)` : "none";
+          // Off-screen panels don't consume input
+          el.style.pointerEvents = opacity > 0.5 ? "auto" : "none";
+          // Hide entirely below threshold to skip painting
+          el.style.visibility = opacity > 0.01 ? "visible" : "hidden";
+        });
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [scrollYProgress]);
 
   return (
     <div
+      ref={wrapperRef}
       className={`${mono.variable} ${display.variable}`}
       style={{
-        position: "relative",
+        position: "fixed",
+        inset: 0,
+        width: "100vw",
+        height: "100vh",
+        overflow: "hidden",
         background: PALETTE.void,
         color: PALETTE.white,
         fontFamily: "var(--v5-display), system-ui",
+        // Disable native scroll chaining
+        overscrollBehavior: "none",
+        touchAction: "none",
       }}
     >
       <a href="#tunnel-content" className="kpt-skip" style={skipLinkStyle}>Skip to content</a>
@@ -473,7 +539,7 @@ function DesktopTunnel() {
       <div
         aria-hidden
         style={{
-          position: "fixed",
+          position: "absolute",
           inset: 0,
           zIndex: 0,
           pointerEvents: "none",
@@ -518,17 +584,52 @@ function DesktopTunnel() {
         />
       </div>
 
-      {/* scrollable content layer — 800vh */}
-      <div ref={containerRef} id="tunnel-content" style={{ position: "relative", zIndex: 10 }}>
+      {/* overlay panel layer — 8 absolutely-positioned panels, transformed by rAF */}
+      <div
+        id="tunnel-content"
+        ref={overlayRef}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 10,
+          // perspective gives the transform stack a real 3D feel
+          perspective: "1400px",
+          perspectiveOrigin: "50% 50%",
+        }}
+      >
         {CHECKPOINTS.map((cp, i) => (
-          <ContentSection key={cp.id} cp={cp} isFirst={i === 0} />
+          <div
+            key={cp.id}
+            id={cp.id}
+            data-panel={i}
+            aria-label={cp.label}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              // initial transform — rAF loop overwrites this immediately
+              transform: "translate(-50%, -50%) scale(0.78)",
+              width: "min(1200px, 92vw)",
+              maxHeight: "100vh",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              willChange: "transform, opacity, filter",
+              // start hidden — rAF reveals on first tick
+              opacity: 0,
+              transformStyle: "preserve-3d",
+            }}
+          >
+            {i === 0 ? <h1 className="kpt-sr-only">KPT Designs — Tunnel</h1> : null}
+            <cp.Component />
+          </div>
         ))}
       </div>
 
       {/* HUD chrome */}
       <ProgressBar scrollYProgress={scrollYProgress} />
       <SectionPill scrollYProgress={scrollYProgress} activeIndex={activeIndex} checkpoints={CHECKPOINTS} />
-      <ScrollDots activeIndex={activeIndex} onJump={jumpToById} checkpoints={CHECKPOINTS} />
+      <ScrollDots activeIndex={activeIndex} onJump={jumpToStation} checkpoints={CHECKPOINTS} />
       <CornerHud />
 
       <style>{`
@@ -542,6 +643,8 @@ function DesktopTunnel() {
           border: 0;
         }
         .kpt-skip:focus { left: 8px !important; outline: 2px solid ${PALETTE.amber}; }
+        /* Prevent body from scrolling when this view is mounted */
+        html, body { overflow: hidden !important; height: 100%; }
       `}</style>
     </div>
   );
