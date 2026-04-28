@@ -30,11 +30,8 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { JetBrains_Mono, Inter } from "next/font/google";
 import {
-  motion,
   useScroll,
-  useTransform,
   useReducedMotion,
-  type MotionValue,
 } from "framer-motion";
 import { useLenis } from "lenis/react";
 
@@ -235,52 +232,26 @@ function MobileFallback() {
 /* ===================================================================== */
 
 /**
- * Maps scrollYProgress to a per-section opacity.
- * Each of N sections owns 1/N of the scroll. We add a small fade ramp so
- * sections cross-fade gracefully into one another.
+ * Each section is sticky inside its own 100vh parent — the parent's scroll
+ * range determines when the section is visible. No per-section opacity
+ * transform (an earlier version used `useTransform` per child but that
+ * crashed under Turbopack production minification — `e.on is not a function`
+ * during render). Sticky positioning handles the visibility transitions.
  */
-function useSectionOpacity(
-  scrollYProgress: MotionValue<number>,
-  index: number,
-  total: number,
-  ramp = 0.04,
-): MotionValue<number> {
-  const slice = 1 / total;
-  const start = index * slice;
-  const end = (index + 1) * slice;
-  const isFirst = index === 0;
-  const isLast = index === total - 1;
-  // Cross-fade ramps either side of the section's slice. For the first/last
-  // section we suppress the entry/exit ramp so they stay opaque at the page
-  // edges. We use a tiny epsilon to keep the input array strictly increasing
-  // (useTransform requires monotonic input points).
-  const eps = 1e-4;
-  const inA = isFirst ? -eps : Math.max(-eps, start - ramp);
-  const inB = isFirst ? 0   : start + ramp * 0.5;
-  const inC = isLast  ? 1   : end - ramp * 0.5;
-  const inD = isLast  ? 1 + eps : Math.min(1 + eps, end + ramp);
-  const outA = isFirst ? 1 : 0;
-  const outD = isLast  ? 1 : 0;
-  return useTransform(scrollYProgress, [inA, inB, inC, inD], [outA, 1, 1, outD]);
-}
-
 function ContentSection({
   cp,
-  index,
-  scrollYProgress,
+  isFirst,
 }: {
   cp: CheckpointDef;
-  index: number;
-  scrollYProgress: MotionValue<number>;
+  isFirst: boolean;
 }) {
-  const opacity = useSectionOpacity(scrollYProgress, index, N);
   return (
     <section
       id={cp.id}
       aria-label={cp.label}
       style={{ position: "relative", height: "100vh", width: "100%" }}
     >
-      <motion.div
+      <div
         style={{
           position: "sticky",
           top: 0,
@@ -289,13 +260,11 @@ function ContentSection({
           alignItems: "center",
           justifyContent: "center",
           padding: "calc(env(safe-area-inset-top) + 70px) 16px 70px",
-          opacity,
-          willChange: "opacity",
         }}
       >
-        {index === 0 ? <h1 className="kpt-sr-only">KPT Designs — Tunnel</h1> : null}
+        {isFirst ? <h1 className="kpt-sr-only">KPT Designs — Tunnel</h1> : null}
         <cp.Component />
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -552,7 +521,7 @@ function DesktopTunnel() {
       {/* scrollable content layer — 800vh */}
       <div ref={containerRef} id="tunnel-content" style={{ position: "relative", zIndex: 10 }}>
         {CHECKPOINTS.map((cp, i) => (
-          <ContentSection key={cp.id} cp={cp} index={i} scrollYProgress={scrollYProgress} />
+          <ContentSection key={cp.id} cp={cp} isFirst={i === 0} />
         ))}
       </div>
 
