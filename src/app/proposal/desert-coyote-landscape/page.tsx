@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PageApproach } from "@/app/mockup/_lib/PageApproach";
 import { ProposalShell } from "./_proposal/ProposalShell";
 
 export const metadata: Metadata = {
@@ -8,10 +7,8 @@ export const metadata: Metadata = {
     "A redesign proposal for Desert Coyote Landscape — a Sonoran Field Guide concept with on-domain estimate requests, project gallery, trailer rental, and full service architecture.",
 };
 
+// No PageApproach wrapper — the depth-entrance zoom didn't fit the
+// production-site feel for Desert Coyote.
 export default function Page() {
-  return (
-    <PageApproach>
-      <ProposalShell />
-    </PageApproach>
-  );
+  return <ProposalShell />;
 }
