@@ -43,7 +43,6 @@ import {
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { motionValue, useReducedMotion, useTransform, motion, type MotionValue } from "framer-motion";
-import { useLenis } from "lenis/react";
 import * as THREE from "three";
 
 import HeroLiquid from "../_sections/HeroLiquid";
@@ -660,12 +659,6 @@ function DesktopLiquid() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [settledIndex, setSettledIndex] = useState<number | null>(0);
-
-  // Kill global Lenis (would hijack window scroll)
-  const lenis = useLenis();
-  useEffect(() => {
-    if (lenis && typeof lenis.destroy === "function") lenis.destroy();
-  }, [lenis]);
 
   /* ---------- station mutators ---------- */
   const setStation = useCallback((i: number) => {

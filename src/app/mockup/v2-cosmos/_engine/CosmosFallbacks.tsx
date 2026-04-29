@@ -11,9 +11,6 @@
  * the desktop engine and these fallbacks consume it.
  */
 
-import { useEffect } from "react";
-import { useLenis } from "lenis/react";
-
 import HeroCosmos from "../_sections/HeroCosmos";
 import PhilosophyCosmos from "../_sections/PhilosophyCosmos";
 import StackCosmos from "../_sections/StackCosmos";
@@ -174,10 +171,6 @@ export function MobileFallback({ fontVars }: { fontVars: string }) {
 }
 
 export function ReducedMotionFallback({ fontVars }: { fontVars: string }) {
-  const lenis = useLenis();
-  useEffect(() => {
-    if (lenis && typeof lenis.destroy === "function") lenis.destroy();
-  }, [lenis]);
   return (
     <div
       className={fontVars}

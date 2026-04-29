@@ -31,7 +31,6 @@ import {
   useState,
 } from "react";
 import { motionValue, useReducedMotion } from "framer-motion";
-import { useLenis } from "lenis/react";
 
 import HeroPlane from "../_sections/HeroPlane";
 import PhilosophyPlane from "../_sections/PhilosophyPlane";
@@ -123,12 +122,6 @@ function DesktopStrata() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [settledIndex, setSettledIndex] = useState<number | null>(0);
-
-  // Kill global Lenis (would hijack window scroll).
-  const lenis = useLenis();
-  useEffect(() => {
-    if (lenis && typeof lenis.destroy === "function") lenis.destroy();
-  }, [lenis]);
 
   const setStation = useCallback((i: number) => {
     const clamped = Math.max(0, Math.min(N - 1, i));

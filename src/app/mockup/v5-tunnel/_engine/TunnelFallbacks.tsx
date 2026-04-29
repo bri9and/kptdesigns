@@ -10,9 +10,7 @@
  * station desktop experience and stay within line budget.
  */
 
-import { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { useLenis } from "lenis/react";
 
 import HeroCheckpoint from "../_sections/HeroCheckpoint";
 import PhilosophyCheckpoint from "../_sections/PhilosophyCheckpoint";
@@ -136,10 +134,6 @@ export function MobileFallback({ fontVars }: { fontVars: string }) {
 }
 
 export function ReducedMotionFallback({ fontVars }: { fontVars: string }) {
-  const lenis = useLenis();
-  useEffect(() => {
-    if (lenis && typeof lenis.destroy === "function") lenis.destroy();
-  }, [lenis]);
   return (
     <div
       className={fontVars}

@@ -41,7 +41,6 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { JetBrains_Mono, Inter } from "next/font/google";
 import { motionValue, useReducedMotion } from "framer-motion";
-import { useLenis } from "lenis/react";
 
 import {
   TunnelWalls,
@@ -143,12 +142,6 @@ function DesktopTunnel() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [settledIndex, setSettledIndex] = useState<number | null>(0);
-
-  // Kill global Lenis (would hijack window scroll).
-  const lenis = useLenis();
-  useEffect(() => {
-    if (lenis && typeof lenis.destroy === "function") lenis.destroy();
-  }, [lenis]);
 
   /* ---------- station mutators ---------- */
   const setStation = useCallback((i: number) => {
