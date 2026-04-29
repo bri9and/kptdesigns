@@ -6,10 +6,10 @@ import { z } from "zod";
 import { palette, fonts } from "../_lib/tokens";
 import { fakeChargeDeposit } from "../_lib/stripe-demo";
 
-// Stripe.js types — react-stripe-js is NOT in this project's package.json,
-// so we render a styled placeholder card field unless @stripe/react-stripe-js
-// is added in a follow-up. For tonight, the BookTeeTime component renders
-// its OWN minimal card-input placeholder that looks like Stripe Elements.
+// v2 booking flow — paper background, moss CTAs, mono labels, Fraunces stat
+// numerals. Keeps the v1 3-step state machine, RHF + zod validation, the
+// fakeChargeDeposit call, and the .ics download. No translucent panel; the
+// section sits flush on the paper page with thin rules above and below.
 
 const bookingSchema = z.object({
   date: z.string().min(1, "Pick a date"),
@@ -22,7 +22,7 @@ type BookingForm = z.infer<typeof bookingSchema>;
 
 const TIME_SLOTS = (() => {
   const slots: string[] = [];
-  for (let h = 6; h <= 17; h++) for (let m of [0, 15, 30, 45]) {
+  for (let h = 6; h <= 17; h++) for (const m of [0, 15, 30, 45]) {
     const hh = ((h % 12) || 12);
     const mer = h < 12 ? "AM" : "PM";
     slots.push(`${hh}:${String(m).padStart(2, "0")} ${mer}`);
@@ -92,20 +92,26 @@ export function BookTeeTime() {
 
   return (
     <section id="book" className="la-book" aria-labelledby="la-book-title">
-      <header className="la-book__intro">
-        <p className="la-book__eyebrow">Book a tee time</p>
-        <h2 id="la-book-title" className="la-book__title">Reserve your round.</h2>
-        <p className="la-book__lede">
-          Pick your date and time, hold your spot with a small refundable
-          deposit, and we'll see you on the first tee.
-        </p>
-      </header>
+      <div className="la-book__inner">
+        <header className="la-book__intro">
+          <p className="la-book__eyebrow">
+            <span>BOOK</span>
+            <span className="la-book__rule" aria-hidden="true" />
+            <span>TEE TIME</span>
+          </p>
+          <h2 id="la-book-title" className="la-book__title">
+            Reserve your <em>round.</em>
+          </h2>
+          <p className="la-book__lede">
+            Pick your date and time, hold your spot with a small refundable
+            deposit, and we'll see you on the first tee.
+          </p>
+        </header>
 
-      <div className="la-book__panel">
         <ol className="la-book__steps" aria-label="Booking steps">
-          <li className={step >= 1 ? "is-active" : ""}>1 · Tee time</li>
-          <li className={step >= 2 ? "is-active" : ""}>2 · Deposit</li>
-          <li className={step >= 3 ? "is-active" : ""}>3 · Confirmation</li>
+          <li className={step >= 1 ? "is-active" : ""}>01 · Tee time</li>
+          <li className={step >= 2 ? "is-active" : ""}>02 · Deposit</li>
+          <li className={step >= 3 ? "is-active" : ""}>03 · Confirmation</li>
         </ol>
 
         {step === 1 && (
@@ -119,7 +125,7 @@ export function BookTeeTime() {
               <label className="la-book__field">
                 <span>Time</span>
                 <select {...register("time")}>
-                  <option value="">Select…</option>
+                  <option value="">Select a time</option>
                   {TIME_SLOTS.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
                 {errors.time && <em>{errors.time.message}</em>}
@@ -146,7 +152,9 @@ export function BookTeeTime() {
               <span>Estimated total</span>
               <strong>${total}</strong>
             </div>
-            <button className="la-book__cta" type="submit">Continue to deposit →</button>
+            <div className="la-book__row la-book__row--end">
+              <button className="la-book__cta" type="submit">Continue to deposit →</button>
+            </div>
           </form>
         )}
 
@@ -172,9 +180,10 @@ export function BookTeeTime() {
 
         {step === 3 && submitted && confirmation && (
           <div className="la-book__success">
-            <div className="la-book__seal" aria-hidden="true">✓</div>
-            <h3>You're booked.</h3>
-            <p className="la-book__conf">Confirmation <code>{confirmation}</code></p>
+            <p className="la-book__success-eyebrow">CONFIRMED</p>
+            <h3 className="la-book__success-title">You're <em>booked.</em></h3>
+            <p className="la-book__conf-label">Confirmation</p>
+            <p className="la-book__conf-id"><code>{confirmation}</code></p>
             <p className="la-book__summary">
               {submitted.players} player{Number(submitted.players) > 1 ? "s" : ""} · {submitted.date} at {submitted.time}{submitted.cart === "cart" ? " · with cart" : " · walking"}
             </p>
@@ -191,7 +200,7 @@ export function BookTeeTime() {
 }
 
 // Stylized card-field placeholder. Visually mimics Stripe Elements.
-// We do not render real Stripe Elements tonight (would require adding
+// We do not render real Stripe Elements (would require adding
 // @stripe/react-stripe-js). Demo mode = visual fidelity only.
 function FakeCardField() {
   const [num, setNum] = useState("");
@@ -225,52 +234,185 @@ function FakeCardField() {
 }
 
 const css = `
-.la-book { padding: 8rem 5vw; background: ${palette.water}; color: ${palette.cream}; }
-.la-book__intro { max-width: 640px; margin: 0 auto 4rem; text-align: center; }
-.la-book__eyebrow { font-family: ${fonts.body}; font-size: 0.72rem; letter-spacing: 0.32em; text-transform: uppercase; color: ${palette.dawn}; margin: 0 0 1.25rem; }
-.la-book__title { font-family: ${fonts.display}; font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 400; line-height: 1.1; margin: 0 0 1.25rem; }
-.la-book__lede { font-family: ${fonts.display}; font-style: italic; opacity: 0.85; font-size: 1.05rem; line-height: 1.6; margin: 0; }
-.la-book__panel { max-width: 720px; margin: 0 auto; background: rgba(244,239,223,0.06); border: 1px solid rgba(244,239,223,0.16); border-radius: 6px; padding: 2.5rem; backdrop-filter: blur(4px); }
-.la-book__steps { list-style: none; padding: 0; margin: 0 0 2.5rem; display: flex; gap: 1.5rem; font-family: ${fonts.body}; font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.55; }
-.la-book__steps li.is-active { opacity: 1; color: ${palette.dawn}; }
-.la-book__form { display: flex; flex-direction: column; gap: 1.5rem; font-family: ${fonts.body}; }
+.la-book {
+  padding: 6rem 2.5rem;
+  background: ${palette.paper};
+  color: ${palette.ink};
+  font-family: ${fonts.body};
+  border-top: 1px solid rgba(22,20,15,0.18);
+  border-bottom: 1px solid rgba(22,20,15,0.18);
+}
+.la-book__inner { max-width: 760px; margin: 0 auto; }
+.la-book__intro { display: flex; flex-direction: column; gap: 1.25rem; margin: 0 0 3rem; }
+.la-book__eyebrow {
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.65rem;
+  font-family: ${fonts.mono}; font-size: 0.65rem; letter-spacing: 0.32em; text-transform: uppercase;
+  color: ${palette.ash}; margin: 0;
+}
+.la-book__rule { display: inline-block; width: 22px; height: 1px; background: currentColor; opacity: 0.45; }
+.la-book__title {
+  font-family: ${fonts.display}; font-weight: 400;
+  font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.05;
+  letter-spacing: -0.015em; margin: 0; max-width: 16ch;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+}
+.la-book__title em {
+  font-style: italic; color: ${palette.moss};
+  font-variation-settings: "opsz" 96, "SOFT" 70;
+}
+.la-book__lede {
+  font-family: ${fonts.body}; font-size: 1.02rem; line-height: 1.6;
+  color: ${palette.ink}; opacity: 0.82; margin: 0; max-width: 50ch;
+}
+.la-book__steps {
+  list-style: none; padding: 0 0 1.5rem; margin: 0 0 2.5rem;
+  display: flex; gap: 2rem;
+  border-bottom: 1px solid rgba(22,20,15,0.12);
+  font-family: ${fonts.mono}; font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: ${palette.ash};
+}
+.la-book__steps li.is-active { color: ${palette.moss}; }
+.la-book__form { display: flex; flex-direction: column; gap: 1.5rem; }
 .la-book__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-.la-book__row--end { justify-content: flex-end; align-items: center; gap: 1.5rem; }
-.la-book__field { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; }
-.la-book__field span, .la-book__field legend { font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.78; }
-.la-book__field input, .la-book__field select { background: rgba(244,239,223,0.08); border: 1px solid rgba(244,239,223,0.22); color: ${palette.cream}; padding: 0.85rem 1rem; border-radius: 4px; font-family: inherit; font-size: 0.95rem; }
-.la-book__field input:focus, .la-book__field select:focus { outline: none; border-color: ${palette.dawn}; box-shadow: 0 0 0 2px rgba(201,169,110,0.25); }
-.la-book__field em { color: ${palette.dawn}; font-size: 0.75rem; font-style: normal; }
-.la-book__radios { border: 1px solid rgba(244,239,223,0.22); border-radius: 4px; padding: 0.7rem 1rem; background: rgba(244,239,223,0.04); }
-.la-book__radios label { display: inline-flex; gap: 0.5rem; align-items: center; margin-right: 1.5rem; font-size: 0.95rem; }
+.la-book__row--end { justify-content: flex-end; align-items: center; gap: 1rem; grid-template-columns: auto auto; justify-self: end; }
+.la-book__field { display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.92rem; }
+.la-book__field span, .la-book__field legend {
+  font-family: ${fonts.mono}; font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: ${palette.ash}; padding: 0;
+}
+.la-book__field input, .la-book__field select {
+  background: ${palette.bone};
+  border: 1px solid rgba(22,20,15,0.18);
+  color: ${palette.ink};
+  padding: 0.85rem 1rem; border-radius: 2px;
+  font-family: ${fonts.body}; font-size: 0.95rem;
+}
+.la-book__field input:focus, .la-book__field select:focus {
+  outline: none; border-color: ${palette.moss};
+  box-shadow: 0 0 0 2px rgba(31,55,37,0.18);
+}
+.la-book__field em {
+  color: ${palette.brick}; font-family: ${fonts.mono};
+  font-size: 0.68rem; font-style: normal; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.la-book__radios {
+  border: 1px solid rgba(22,20,15,0.18);
+  border-radius: 2px;
+  padding: 0.75rem 1rem;
+  background: ${palette.bone};
+  display: flex; flex-direction: column; gap: 0.4rem;
+}
+.la-book__radios legend { padding: 0 0 0.4rem; }
+.la-book__radios label { display: inline-flex; gap: 0.5rem; align-items: center; margin-right: 1rem; font-size: 0.92rem; color: ${palette.ink}; font-family: ${fonts.body}; }
 .la-book__field--inline { grid-column: 1 / -1; }
-.la-book__total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 1.25rem; border-top: 1px solid rgba(244,239,223,0.18); font-family: ${fonts.body}; }
-.la-book__total span { font-size: 0.78rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.75; }
-.la-book__total strong { font-family: ${fonts.display}; font-size: 1.6rem; font-weight: 400; color: ${palette.dawn}; }
-.la-book__cta { background: ${palette.dawn}; color: ${palette.water}; border: none; padding: 0.95rem 1.6rem; border-radius: 999px; font-family: ${fonts.body}; font-size: 0.85rem; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; transition: transform 180ms, box-shadow 180ms; align-self: flex-start; }
-.la-book__cta:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,169,110,0.35); }
-.la-book__cta:focus-visible { outline: 2px solid ${palette.cream}; outline-offset: 2px; }
-.la-book__back { background: transparent; color: ${palette.cream}; border: 1px solid rgba(244,239,223,0.4); padding: 0.85rem 1.4rem; border-radius: 999px; font-family: ${fonts.body}; font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; }
-.la-book__deposit { display: flex; justify-content: space-between; align-items: baseline; padding: 1.25rem 0; border-top: 1px solid rgba(244,239,223,0.18); border-bottom: 1px solid rgba(244,239,223,0.18); }
-.la-book__deposit span { font-size: 0.85rem; opacity: 0.85; }
-.la-book__deposit strong { font-family: ${fonts.display}; font-size: 1.7rem; font-weight: 400; color: ${palette.dawn}; }
-.la-book__deposit-line { font-size: 0.95rem; opacity: 0.9; margin: 0; }
-.la-book__deposit-fine { font-size: 0.78rem; opacity: 0.7; margin: 0; line-height: 1.55; }
-.la-book__card { display: grid; grid-template-columns: 1fr 120px 80px; gap: 0.5rem; padding: 0.85rem 1rem; background: rgba(244,239,223,0.08); border: 1px solid rgba(244,239,223,0.22); border-radius: 4px; }
-.la-book__card input { background: transparent; border: none; color: ${palette.cream}; font-family: ${fonts.body}; font-size: 0.95rem; outline: none; }
-.la-book__card input::placeholder { color: rgba(244,239,223,0.5); }
-.la-book__success { text-align: center; padding: 2rem 0; }
-.la-book__seal { width: 64px; height: 64px; margin: 0 auto 1.5rem; border: 1px solid ${palette.dawn}; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: ${palette.dawn}; }
-.la-book__success h3 { font-family: ${fonts.display}; font-weight: 400; font-size: 2rem; margin: 0 0 0.75rem; }
-.la-book__conf { font-family: ${fonts.body}; font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; margin: 0 0 0.5rem; }
-.la-book__conf code { font-family: ${fonts.mono}; color: ${palette.dawn}; letter-spacing: 0.18em; }
-.la-book__summary { font-family: ${fonts.display}; font-style: italic; opacity: 0.92; margin: 0 0 2rem; }
+.la-book__total {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 1.25rem 0;
+  border-top: 1px solid rgba(22,20,15,0.18);
+  border-bottom: 1px solid rgba(22,20,15,0.18);
+}
+.la-book__total span {
+  font-family: ${fonts.mono}; font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: ${palette.ash};
+}
+.la-book__total strong {
+  font-family: ${fonts.display}; font-weight: 400;
+  font-size: 2rem; color: ${palette.moss};
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+}
+.la-book__cta {
+  background: ${palette.moss}; color: ${palette.bone};
+  border: none;
+  padding: 0.95rem 1.6rem; border-radius: 999px;
+  font-family: ${fonts.mono}; font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background 180ms, transform 180ms;
+}
+.la-book__cta:hover { background: ${palette.mossDeep}; transform: translateY(-1px); }
+.la-book__cta:focus-visible { outline: 2px solid ${palette.brick}; outline-offset: 2px; }
+.la-book__back {
+  background: transparent; color: ${palette.ink};
+  border: 1px solid rgba(22,20,15,0.28);
+  padding: 0.85rem 1.4rem; border-radius: 999px;
+  font-family: ${fonts.mono}; font-size: 0.7rem; letter-spacing: 0.22em; text-transform: uppercase;
+  cursor: pointer; transition: border-color 180ms, background 180ms;
+}
+.la-book__back:hover { border-color: ${palette.ink}; background: rgba(22,20,15,0.04); }
+.la-book__deposit {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 1.25rem 0;
+  border-top: 1px solid rgba(22,20,15,0.18);
+  border-bottom: 1px solid rgba(22,20,15,0.18);
+}
+.la-book__deposit span {
+  font-family: ${fonts.mono}; font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: ${palette.ash};
+}
+.la-book__deposit strong {
+  font-family: ${fonts.display}; font-weight: 400;
+  font-size: 2rem; color: ${palette.moss};
+  font-variation-settings: "opsz" 96, "SOFT" 30;
+}
+.la-book__deposit-line { font-family: ${fonts.body}; font-size: 0.98rem; line-height: 1.6; opacity: 0.85; margin: 0; }
+.la-book__deposit-line strong { font-weight: 600; color: ${palette.ink}; }
+.la-book__deposit-fine {
+  font-family: ${fonts.mono}; font-size: 0.65rem; letter-spacing: 0.08em;
+  color: ${palette.ash}; margin: 0; line-height: 1.65;
+}
+.la-book__card {
+  display: grid; grid-template-columns: 1fr 120px 80px; gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: ${palette.bone};
+  border: 1px solid rgba(22,20,15,0.18);
+  border-radius: 2px;
+}
+.la-book__card input {
+  background: transparent; border: none; color: ${palette.ink};
+  font-family: ${fonts.body}; font-size: 0.95rem; outline: none;
+}
+.la-book__card input::placeholder { color: ${palette.ash}; }
+.la-book__success {
+  display: flex; flex-direction: column; gap: 0.85rem;
+  padding: 1.5rem 0;
+}
+.la-book__success-eyebrow {
+  font-family: ${fonts.mono}; font-size: 0.65rem; letter-spacing: 0.32em; text-transform: uppercase;
+  color: ${palette.brick}; margin: 0;
+}
+.la-book__success-title {
+  font-family: ${fonts.display}; font-weight: 400;
+  font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.05;
+  letter-spacing: -0.015em; margin: 0;
+  font-variation-settings: "opsz" 144, "SOFT" 30;
+}
+.la-book__success-title em {
+  font-style: italic; color: ${palette.moss};
+  font-variation-settings: "opsz" 96, "SOFT" 70;
+}
+.la-book__conf-label {
+  font-family: ${fonts.mono}; font-size: 0.62rem; letter-spacing: 0.32em; text-transform: uppercase;
+  color: ${palette.ash}; margin: 1rem 0 0;
+}
+.la-book__conf-id { margin: 0; }
+.la-book__conf-id code {
+  font-family: ${fonts.mono}; font-weight: 500;
+  font-size: clamp(2rem, 4.5vw, 2.8rem);
+  color: ${palette.moss}; letter-spacing: 0.04em;
+}
+.la-book__summary {
+  font-family: ${fonts.body}; font-size: 0.98rem;
+  color: ${palette.ink}; opacity: 0.82; margin: 0.5rem 0 1.5rem;
+}
 @media (prefers-reduced-motion: reduce) {
   .la-book__cta { transition: none; }
   .la-book__cta:hover { transform: none; }
 }
 @media (max-width: 720px) {
+  .la-book { padding: 4rem 1.25rem; }
   .la-book__row { grid-template-columns: 1fr; }
+  .la-book__row--end { grid-template-columns: 1fr; justify-self: stretch; }
+  .la-book__row--end .la-book__cta, .la-book__row--end .la-book__back { width: 100%; text-align: center; }
   .la-book__card { grid-template-columns: 1fr; }
+  .la-book__steps { flex-wrap: wrap; gap: 1rem; }
 }
 `;
