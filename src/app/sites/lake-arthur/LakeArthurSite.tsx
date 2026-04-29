@@ -5,6 +5,8 @@ import { WhyPlay } from "./_sections/WhyPlay";
 import { CourseAtAGlance } from "./_sections/CourseAtAGlance";
 import { SignatureHoles } from "./_sections/SignatureHoles";
 import { Scorecard } from "./_sections/Scorecard";
+import { Amenities } from "./_sections/Amenities";
+import { Rates } from "./_sections/Rates";
 import { BookTeeTime } from "./_sections/BookTeeTime";
 import { Events } from "./_sections/Events";
 import { Visit } from "./_sections/Visit";
