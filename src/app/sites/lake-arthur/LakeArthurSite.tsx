@@ -1,32 +1,37 @@
-import { DroneHero } from "./_sections/DroneHero";
+import { LakeArthurFonts } from "./_lib/Fonts";
+import { Header } from "./_sections/Header";
+import { Hero } from "./_sections/Hero";
+import { WhyPlay } from "./_sections/WhyPlay";
 import { CourseAtAGlance } from "./_sections/CourseAtAGlance";
-import { FieldGuide } from "./_sections/FieldGuide";
+import { SignatureHoles } from "./_sections/SignatureHoles";
 import { BookTeeTime } from "./_sections/BookTeeTime";
-import { Banquets } from "./_sections/Banquets";
-import { Tournaments } from "./_sections/Tournaments";
-import { Leagues } from "./_sections/Leagues";
-import { ProShop } from "./_sections/ProShop";
+import { Events } from "./_sections/Events";
 import { Visit } from "./_sections/Visit";
 import { Footer } from "./_sections/Footer";
 import { palette, fonts } from "./_lib/tokens";
 
+// v2 composition — photographic editorial. Drone footage demoted to a
+// callout inside the Hero photo. v1 sections (DroneHero / FieldGuide /
+// Banquets / Tournaments / Leagues / ProShop) remain on disk for
+// reference but are not imported here.
+
 export function LakeArthurSite() {
   return (
     <>
+      <LakeArthurFonts />
       <main className="la-site">
-        <DroneHero />
+        <Header />
+        <Hero />
+        <WhyPlay />
         <CourseAtAGlance />
-        <FieldGuide />
+        <SignatureHoles />
         <BookTeeTime />
-        <Banquets />
-        <Tournaments />
-        <Leagues />
-        <ProShop />
+        <Events />
         <Visit />
         <Footer />
       </main>
       <style>{`
-        .la-site { background: ${palette.paper}; color: ${palette.charcoal}; font-family: ${fonts.body}; min-height: 100vh; }
+        .la-site { background: ${palette.paper}; color: ${palette.ink}; font-family: ${fonts.body}; min-height: 100vh; }
         @media (prefers-reduced-motion: reduce) { .la-site * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
       `}</style>
     </>
