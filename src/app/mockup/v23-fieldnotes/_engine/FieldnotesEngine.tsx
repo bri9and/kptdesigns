@@ -161,7 +161,7 @@ export default function FieldnotesEngine() {
               <span className="fn-stamp-block">SPECS &mdash; SOFTSCAPE / HARDSCAPE</span>
               <span className="fn-rule" aria-hidden />
               <div className="fn-toggle" role="tablist" aria-label="Emphasize column">
-                <button
+                <button type="button"
                   role="tab"
                   aria-selected={emphasized === "soft"}
                   className={`fn-toggle-btn${emphasized === "soft" ? " on" : ""}`}
@@ -169,7 +169,7 @@ export default function FieldnotesEngine() {
                 >
                   softscape
                 </button>
-                <button
+                <button type="button"
                   role="tab"
                   aria-selected={emphasized === "hard"}
                   className={`fn-toggle-btn${emphasized === "hard" ? " on" : ""}`}

@@ -118,7 +118,7 @@ export default function IsoIconsEngine() {
         {/* HERO */}
         <section className="iso-hero">
           <div className="iso-hero-grid">
-            <button
+            <button type="button"
               className="iso-hero-picto"
               onMouseEnter={() => setHeroVariant(VARIANTS[(VARIANTS.indexOf(heroVariant) + 1) % VARIANTS.length])}
               onFocus={() => setHeroVariant(VARIANTS[(VARIANTS.indexOf(heroVariant) + 1) % VARIANTS.length])}

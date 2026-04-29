@@ -158,7 +158,7 @@ export default function PegboardStackEngine() {
           <ul className="pb-stack-list">
             {CASES.map((c) => (
               <li key={c.id} className={`pb-case${open === c.id ? " open" : ""}`}>
-                <button
+                <button type="button"
                   className="pb-case-front"
                   onClick={() => setOpen(open === c.id ? "" : c.id)}
                   aria-expanded={open === c.id}

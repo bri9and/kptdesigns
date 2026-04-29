@@ -66,11 +66,21 @@ const CHIPPER = [
 export default function BucketTruckEngine() {
   const [scroll, setScroll] = useState(0);
   const [hovered, setHovered] = useState<number | null>(null);
+  const rafRef = useRef(0);
 
   useEffect(() => {
-    const onScroll = () => setScroll(window.scrollY);
+    const onScroll = () => {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        setScroll(window.scrollY);
+        rafRef.current = 0;
+      });
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   // Boom rises with scroll. Bucket altitude offset increases with hovered lift.
@@ -337,13 +347,11 @@ const css = `
     height: 760px;
     overflow: hidden;
     transform-origin: 50% 100%;
-    will-change: transform;
     background: linear-gradient(180deg, #5C7C92 0%, #7A99B0 28%, #4A5A4C 60%, #2A331F 100%);
   }
   .bt-sky {
     position: absolute; top: 0; left: 0; right: 0; height: 60%;
     background: linear-gradient(180deg, #6F90A8, #91B0C5);
-    will-change: transform;
   }
   .bt-sun {
     position: absolute; top: 50px; right: 12%;
@@ -463,7 +471,6 @@ const css = `
     border-top: 4px solid #08070A;
     padding: 22px 36px 18px;
     z-index: 6;
-    will-change: transform;
   }
   .bt-vinyl {
     position: absolute; inset: 0; pointer-events: none; opacity: 0.6;

@@ -158,7 +158,7 @@ export default function SoundStageEngine() {
 
           <div className="ss-scene-tabs" role="tablist">
             {SCENES.map((s) => (
-              <button
+              <button type="button"
                 key={s.num}
                 role="tab"
                 aria-selected={activeScene === s.num}

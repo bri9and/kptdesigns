@@ -168,7 +168,7 @@ export default function KnotFluencyEngine() {
           </div>
           <div className="kf-system-tabs" role="tablist">
             {SYSTEM.map((s) => (
-              <button
+              <button type="button"
                 key={s.label}
                 role="tab"
                 aria-selected={openSystem === s.label}

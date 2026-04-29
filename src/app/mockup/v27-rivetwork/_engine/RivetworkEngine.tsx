@@ -144,7 +144,7 @@ export default function RivetworkEngine() {
             ))}
           </div>
 
-          <svg className="rv-cut-mark" viewBox="0 0 600 160" aria-hidden>
+          <svg className="rv-cut-mark" viewBox="0 0 960 160" aria-hidden>
             <defs>
               <filter id="rv-recess">
                 <feOffset dx="0" dy="2" />

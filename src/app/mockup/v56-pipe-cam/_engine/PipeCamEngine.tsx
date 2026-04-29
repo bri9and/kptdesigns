@@ -177,7 +177,7 @@ export default function PipeCamEngine() {
                   onFocus={() => setActive(i)}
                   tabIndex={0}
                 >
-                  <button
+                  <button type="button"
                     className="pc-co-btn"
                     onClick={() => setActive(i)}
                     aria-pressed={active === i}

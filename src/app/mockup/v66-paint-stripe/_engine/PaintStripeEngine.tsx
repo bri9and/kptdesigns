@@ -108,7 +108,7 @@ export default function PaintStripeEngine() {
           </header>
           <div className="ps-lots">
             {LOTS.map((l) => (
-              <button
+              <button type="button"
                 key={l.id}
                 className={`ps-lot${openLot === l.id ? " open" : ""}`}
                 onMouseEnter={() => setOpenLot(l.id)}

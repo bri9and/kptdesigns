@@ -171,7 +171,7 @@ export default function PaintChipEngine() {
                 const total = CHIPS.length;
                 const angle = -42 + (84 / (total - 1)) * i;
                 return (
-                  <button
+                  <button type="button"
                     key={c.id}
                     className={`pc-chip${activeChip === c.id ? " pc-chip-active" : ""}`}
                     style={{
@@ -220,7 +220,7 @@ export default function PaintChipEngine() {
                 <span>{expanded.code}</span>
               </div>
               <h2 className="pc-detail-name">{expanded.name}</h2>
-              <button
+              <button type="button"
                 className="pc-detail-close"
                 onClick={() => setActiveChip(null)}
                 aria-label="Close chip detail"

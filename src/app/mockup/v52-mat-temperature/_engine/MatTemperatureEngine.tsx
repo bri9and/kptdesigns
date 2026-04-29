@@ -92,7 +92,7 @@ export default function MatTemperatureEngine() {
   // dial angle: -120deg at 32°F → +120deg at 100°F
   const dialAngle = useMemo(() => {
     const t = Math.max(0, Math.min(1, (ambientF - 32) / 68));
-    return -120 + t * 240;
+    return Number((-120 + t * 240).toFixed(1));
   }, [ambientF]);
 
   const cssVars: React.CSSProperties = {
@@ -119,8 +119,8 @@ export default function MatTemperatureEngine() {
 
           <header className="mt-hero-meta">
             <span className="mt-tag">KPT&nbsp;PAVING</span>
-            <span className="mt-clock" aria-live="polite">SIM·{clockFmt}</span>
-            <span className={`mt-status mt-status-${status.code.toLowerCase()}`}>{status.label}</span>
+            <span className="mt-clock" aria-live="polite" suppressHydrationWarning>SIM·{clockFmt}</span>
+            <span className={`mt-status mt-status-${status.code.toLowerCase()}`} suppressHydrationWarning>{status.label}</span>
           </header>
 
           <div className="mt-hero-body">
@@ -145,8 +145,8 @@ export default function MatTemperatureEngine() {
           </div>
 
           {/* DIAL */}
-          <div className="mt-dial-wrap">
-            <div className="mt-dial" role="img" aria-label={`Ambient temperature ${ambientFmt}`}>
+          <div className="mt-dial-wrap" suppressHydrationWarning>
+            <div className="mt-dial" role="img" aria-label={`Ambient temperature ${ambientFmt}`} suppressHydrationWarning>
               <svg viewBox="0 0 200 200" className="mt-dial-svg">
                 <defs>
                   <linearGradient id="dial-arc" x1="0" y1="0" x2="1" y2="0">
@@ -169,10 +169,10 @@ export default function MatTemperatureEngine() {
                 {Array.from({ length: 11 }, (_, i) => {
                   const a = -120 + (i / 10) * 240;
                   const rad = (a * Math.PI) / 180;
-                  const x1 = 100 + Math.cos(rad - Math.PI / 2) * 72;
-                  const y1 = 100 + Math.sin(rad - Math.PI / 2) * 72;
-                  const x2 = 100 + Math.cos(rad - Math.PI / 2) * 64;
-                  const y2 = 100 + Math.sin(rad - Math.PI / 2) * 64;
+                  const x1 = Number((100 + Math.cos(rad - Math.PI / 2) * 72).toFixed(1));
+                  const y1 = Number((100 + Math.sin(rad - Math.PI / 2) * 72).toFixed(1));
+                  const x2 = Number((100 + Math.cos(rad - Math.PI / 2) * 64).toFixed(1));
+                  const y2 = Number((100 + Math.sin(rad - Math.PI / 2) * 64).toFixed(1));
                   return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgba(242,239,233,0.7)" strokeWidth="1.4" />;
                 })}
                 {/* needle */}
@@ -188,7 +188,7 @@ export default function MatTemperatureEngine() {
                 <span className="mt-dial-label">AMBIENT · TEMPE, AZ</span>
               </div>
             </div>
-            <ul className="mt-readouts">
+            <ul className="mt-readouts" suppressHydrationWarning>
               <li><span>DEWPOINT</span><strong>{dewpointF}°F</strong></li>
               <li><span>WIND</span><strong>{windMph} mph NW</strong></li>
               <li><span>SURFACE</span><strong>{ambientF + 4}°F</strong></li>
@@ -296,7 +296,7 @@ export default function MatTemperatureEngine() {
             <span className="mt-foot-line">FRESH OIL · DO NOT DRIVE 24H</span>
           </div>
           <div className="mt-foot-r">
-            <span className="mt-foot-readout">{ambientFmt} AT {clockFmt}</span>
+            <span className="mt-foot-readout" suppressHydrationWarning>{ambientFmt} AT {clockFmt}</span>
             <span className="mt-foot-line">dispatch · 480.555.0188</span>
             <span className="mt-foot-line">jobs@kpt.paving</span>
           </div>

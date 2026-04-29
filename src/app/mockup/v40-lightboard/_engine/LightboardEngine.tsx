@@ -106,8 +106,8 @@ export default function LightboardEngine() {
               promise.
             </p>
             <div className="lb-ctas">
-              <button className="lb-cta primary">⚡ Energize the bid</button>
-              <button className="lb-cta ghost">Open the schematic</button>
+              <button type="button" className="lb-cta primary">⚡ Energize the bid</button>
+              <button type="button" className="lb-cta ghost">Open the schematic</button>
             </div>
             <div className="lb-meter" role="status" aria-label="Live load">
               <div className="lb-meter-row">
@@ -305,8 +305,8 @@ export default function LightboardEngine() {
               powered. We'll have a load-calc, scope, and price back in 48 hours.
             </p>
             <div className="lb-ctas">
-              <button className="lb-cta primary">⚡ Energize the bid</button>
-              <button className="lb-cta ghost">Schedule a walk</button>
+              <button type="button" className="lb-cta primary">⚡ Energize the bid</button>
+              <button type="button" className="lb-cta ghost">Schedule a walk</button>
             </div>
           </div>
         </section>

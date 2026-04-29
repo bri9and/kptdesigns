@@ -54,7 +54,7 @@ export default function FlipbookEngine() {
           </div>
           <nav className="fb-nav" aria-label="Page nav">
             {DOODLES.map((d) => (
-              <button
+              <button type="button"
                 key={d.id}
                 className={`fb-doodle${activeDoodle === d.id ? " on" : ""}`}
                 onMouseEnter={() => setActiveDoodle(d.id)}
@@ -109,7 +109,7 @@ export default function FlipbookEngine() {
           </div>
           <div className="fb-pages-row">
             {PAGES.map((p) => (
-              <button
+              <button type="button"
                 key={p.num}
                 className={`fb-page fb-page-card${openPage === p.num ? " open" : ""}`}
                 onMouseEnter={() => setOpenPage(p.num)}

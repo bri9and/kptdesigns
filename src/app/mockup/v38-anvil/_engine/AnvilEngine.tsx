@@ -146,7 +146,7 @@ export default function AnvilEngine() {
           </p>
 
           <div className="anv-ctas">
-            <button
+            <button type="button"
               className={`anv-cta primary${reignite ? " hot" : ""}`}
               onMouseEnter={() => setReignite(true)}
               onMouseLeave={() => setReignite(false)}
@@ -156,7 +156,7 @@ export default function AnvilEngine() {
               <span className="anv-cta-text">Spec a piece</span>
               <span className="anv-cta-glow" aria-hidden />
             </button>
-            <button className="anv-cta ghost">
+            <button type="button" className="anv-cta ghost">
               <span className="anv-cta-text">Walk the shop</span>
             </button>
           </div>
@@ -284,8 +284,8 @@ export default function AnvilEngine() {
             14 weeks; small repairs slot in faster.
           </p>
           <div className="anv-ctas">
-            <button className="anv-cta primary"><span className="anv-cta-text">Spec a piece</span><span className="anv-cta-glow" aria-hidden /></button>
-            <button className="anv-cta ghost"><span className="anv-cta-text">Walk the shop</span></button>
+            <button type="button" className="anv-cta primary"><span className="anv-cta-text">Spec a piece</span><span className="anv-cta-glow" aria-hidden /></button>
+            <button type="button" className="anv-cta ghost"><span className="anv-cta-text">Walk the shop</span></button>
           </div>
         </section>
 

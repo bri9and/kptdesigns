@@ -121,8 +121,8 @@ export default function FlightcaseEngine() {
               live in named cases; the cases live in named vans.
             </p>
             <div className="fc-ctas">
-              <button className="fc-cta primary">Open a case</button>
-              <button className="fc-cta ghost">See what's inside</button>
+              <button type="button" className="fc-cta primary">Open a case</button>
+              <button type="button" className="fc-cta ghost">See what's inside</button>
             </div>
           </div>
 
@@ -144,7 +144,7 @@ export default function FlightcaseEngine() {
                 </div>
 
                 <div className="fc-case-latches">
-                  <button
+                  <button type="button"
                     className={`fc-latch ${latchOn.a ? "on" : ""}`}
                     onClick={() => setLatchOn((s) => ({ ...s, a: !s.a }))}
                     aria-label="Toggle left butterfly latch"
@@ -152,7 +152,7 @@ export default function FlightcaseEngine() {
                     <span className="fc-latch-wing" />
                     <span className="fc-latch-pin" />
                   </button>
-                  <button
+                  <button type="button"
                     className={`fc-latch ${latchOn.b ? "on" : ""}`}
                     onClick={() => setLatchOn((s) => ({ ...s, b: !s.b }))}
                     aria-label="Toggle right butterfly latch"
@@ -262,7 +262,7 @@ export default function FlightcaseEngine() {
           </p>
 
           <div className="fc-latch-pair">
-            <button
+            <button type="button"
               className={`fc-latch big ${latchOn.a ? "on" : ""}`}
               onClick={() => setLatchOn((s) => ({ ...s, a: !s.a }))}
               aria-pressed={latchOn.a}
@@ -271,7 +271,7 @@ export default function FlightcaseEngine() {
               <span className="fc-latch-pin" />
               <span className="fc-latch-label">{latchOn.a ? "POPPED" : "LATCH 1"}</span>
             </button>
-            <button
+            <button type="button"
               className={`fc-latch big ${latchOn.b ? "on" : ""}`}
               onClick={() => setLatchOn((s) => ({ ...s, b: !s.b }))}
               aria-pressed={latchOn.b}

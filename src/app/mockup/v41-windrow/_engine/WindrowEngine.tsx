@@ -160,8 +160,8 @@ export default function WindrowEngine() {
           </p>
 
           <div className="wr-ctas">
-            <button className="wr-cta primary">Lock a window</button>
-            <button className="wr-cta ghost">See the temp log</button>
+            <button type="button" className="wr-cta primary">Lock a window</button>
+            <button type="button" className="wr-cta ghost">See the temp log</button>
           </div>
 
           {/* Probe gauge */}
@@ -293,8 +293,8 @@ export default function WindrowEngine() {
             dewpoint. Send us the address; we'll come measure.
           </p>
           <div className="wr-ctas wr-ctas-center">
-            <button className="wr-cta primary">Lock a window</button>
-            <button className="wr-cta ghost">Call dispatch</button>
+            <button type="button" className="wr-cta primary">Lock a window</button>
+            <button type="button" className="wr-cta ghost">Call dispatch</button>
           </div>
         </section>
 
