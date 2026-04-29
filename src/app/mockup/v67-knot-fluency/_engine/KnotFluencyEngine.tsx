@@ -281,7 +281,7 @@ const css = `
   padding: 28px 24px 64px;
   overflow-x: hidden;
 }
-.kf-rope-trace {
+.kf-shell > .kf-rope-trace {
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -289,7 +289,7 @@ const css = `
   opacity: 0.18;
 }
 .kf-rope-trace svg { width: 100%; height: 100%; }
-.kf-shell > * { position: relative; z-index: 1; }
+.kf-shell > *:not(.kf-rope-trace) { position: relative; z-index: 1; }
 
 .kf-knot {
   width: 120px;
