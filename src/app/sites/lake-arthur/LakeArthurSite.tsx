@@ -27,6 +27,8 @@ export function LakeArthurSite() {
         <CourseAtAGlance />
         <SignatureHoles />
         <Scorecard />
+        <Amenities />
+        <Rates />
         <BookTeeTime />
         <Events />
         <Visit />

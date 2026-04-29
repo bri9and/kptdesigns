@@ -2,9 +2,11 @@ import { signatureHoles } from "../_lib/content";
 import { palette, fonts, photos } from "../_lib/tokens";
 
 // Four signature holes — replaces the v1 18-hole field guide.
-// 2x2 grid on desktop. Cards rotate through real course photos.
+// 2x2 grid on desktop. Cards rotate through photos. First two are real
+// Lake Arthur banners; last two are CC0 fallbacks without people, owner
+// can swap when course-specific photos arrive.
 
-const PHOTOS = [photos.course1, photos.course2, photos.thumbCourse, photos.thumbBook];
+const PHOTOS = [photos.course1, photos.course2, photos.courseFairway, photos.courseGreen];
 
 export function SignatureHoles() {
   return (

@@ -75,16 +75,99 @@ export const holes: Hole[] = [
   { number: 18, par: 4, yards: C("442"), yardsBlue: C("457"), yardsRed: C("355"), handicap: C(2),  title: "The Closer", note: "The second-toughest hole, finishing back at the clubhouse. A demanding tee shot and a long approach.", tip: "Pick a number; commit to it. Bogey is a fine finish." },
 ];
 
+// Real 2026 rate card from lakearthur.com/golf-course/rates.
+// Riding rate = greens fee + cart, all-in.
+export type RateRow = {
+  label: string;
+  walking9: Field<string>;
+  walking18: Field<string>;
+  riding9: Field<string>;
+  riding18: Field<string>;
+};
+
+export const rateGroups: { id: string; title: string; sub: string; rows: RateRow[] }[] = [
+  {
+    id: "weekday",
+    title: "Weekday",
+    sub: "Mon — Fri",
+    rows: [
+      {
+        label: "Standard",
+        walking9: C("$17"),
+        walking18: C("$28"),
+        riding9: C("$29"),
+        riding18: C("$43"),
+      },
+      {
+        label: "Senior",
+        walking9: P("Call"),
+        walking18: P("Call"),
+        riding9: C("$25"),
+        riding18: C("$37"),
+      },
+    ],
+  },
+  {
+    id: "weekend",
+    title: "Weekend & Holidays",
+    sub: "Sat · Sun · Holidays",
+    rows: [
+      {
+        label: "Standard",
+        walking9: C("$27"),
+        walking18: C("$39"),
+        riding9: C("$37"),
+        riding18: C("$58"),
+      },
+    ],
+  },
+];
+
+// Legacy rates flat list (kept for any older section that references it):
 export const rates = [
-  { row: "Weekday — 18 holes", price: P("$28") },
-  { row: "Weekday — 9 holes",  price: P("$18") },
-  { row: "Weekend — 18 holes", price: P("$36") },
-  { row: "Weekend — 9 holes",  price: P("$24") },
-  { row: "Senior 62+ (Mon–Fri)", price: P("$24") },
-  { row: "Junior 12-17", price: P("$16") },
-  { row: "Cart — 18 holes", price: P("$18") },
-  { row: "Cart — 9 holes",  price: P("$12") },
-  { row: "Twilight (after 4 PM)", price: P("$22") },
+  { row: "Weekday · walking 9", price: C("$17") },
+  { row: "Weekday · walking 18", price: C("$28") },
+  { row: "Weekday · riding 9",  price: C("$29") },
+  { row: "Weekday · riding 18", price: C("$43") },
+  { row: "Weekend · walking 9", price: C("$27") },
+  { row: "Weekend · walking 18", price: C("$39") },
+  { row: "Weekend · riding 9", price: C("$37") },
+  { row: "Weekend · riding 18", price: C("$58") },
+  { row: "Senior · riding 9", price: C("$25") },
+  { row: "Senior · riding 18", price: C("$37") },
+];
+
+// Amenities — confirmed from lakearthur.com/facilities. Tone is in our
+// editorial voice; facts are theirs.
+export const amenities = [
+  {
+    slug: "grille-room",
+    title: "The Grille Room",
+    eyebrow: "Eat · drink · watch",
+    body: "Six locally-brewed drafts. Four flat-screens for the games. Covered patio for the long summer evenings. Kitchen rebuilt and the menu re-cut in 2017.",
+    extra: "Shuffleboard, giant Jenga, and the kind of clubhouse you stay at after the round.",
+  },
+  {
+    slug: "practice",
+    title: "Practice green & short-game area",
+    eyebrow: "Warm up · sharpen up",
+    body: "Short-game area for everything inside 100 yards. Two new sand traps with raised edges so the awkward lies are practiced — not feared.",
+    extra: "Putting green attached to the clubhouse — drop in five minutes early, leave with the speed dialed.",
+  },
+  {
+    slug: "shop",
+    title: "Pro shop",
+    eyebrow: "Footjoy · Titleist · Bermuda Sands",
+    body: "Brands you know, prices that make sense for a public course. Walk-ins welcome on tournament weekends.",
+    extra: "Shaft and grip work available — drop a club, pick it up tuned.",
+  },
+  {
+    slug: "carts",
+    title: "Affordable carts",
+    eyebrow: "Riding included",
+    body: "Riding rate is greens-plus-cart, all-in. Weekday riding 18 = $43. Weekend riding 18 = $58. No cart-fee surprises at the turn.",
+    extra: "Walking welcome any day — weekday walking 18 is $28.",
+  },
 ];
 
 export const tournaments = [
@@ -234,7 +317,9 @@ export const eventCategories = [
 
 export const navLinks = [
   { label: "Course",     href: "#course" },
-  { label: "Heritage",   href: "#heritage" },
+  { label: "Scorecard",  href: "#scorecard" },
+  { label: "Amenities",  href: "#amenities" },
+  { label: "Rates",      href: "#rates" },
   { label: "Book",       href: "#book" },
   { label: "Events",     href: "#events" },
   { label: "Visit",      href: "#visit" },
