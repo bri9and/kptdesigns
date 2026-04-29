@@ -3,7 +3,6 @@ import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { LayoutShell } from "@/components/layout-shell";
-import { LenisProvider } from "@/components/lenis-provider";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-sans",
@@ -105,8 +104,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}>
-        <LenisProvider>
-          <ClerkProvider
+        <ClerkProvider
             appearance={{
               variables: {
                 colorPrimary: "#FF8000",
@@ -121,8 +119,7 @@ export default function RootLayout({
           >
             <span style={{ position: 'fixed', top: 8, right: 12, fontSize: 11, color: 'rgba(0, 0, 0, 0.25)', zIndex: 9999, fontFamily: 'monospace', pointerEvents: 'none' }}>v3.0</span>
             <LayoutShell>{children}</LayoutShell>
-          </ClerkProvider>
-        </LenisProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
