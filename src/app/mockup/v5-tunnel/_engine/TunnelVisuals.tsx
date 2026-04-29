@@ -15,7 +15,9 @@ import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-const TUNNEL_LENGTH = 360;
+// Doubled from 360 to give each station real spatial breathing room — the
+// camera dolly auto-scales since it's defined as (TUNNEL_LENGTH - 30).
+const TUNNEL_LENGTH = 720;
 const TUNNEL_RADIUS = 6;
 
 const PALETTE = {
@@ -128,8 +130,8 @@ export function TunnelWalls({ frozen }: { frozen: boolean }) {
 export function TunnelRings({ frozen }: { frozen: boolean }) {
   const group = useRef<THREE.Group>(null);
   const rings = useMemo(
-    () => new Array(40).fill(0).map((_, i) => ({
-      z: -i * (TUNNEL_LENGTH / 40),
+    () => new Array(64).fill(0).map((_, i) => ({
+      z: -i * (TUNNEL_LENGTH / 64),
       hue: i % 3,
     })),
     []
@@ -171,8 +173,8 @@ export function BloomSprites({ frozen }: { frozen: boolean }) {
       const x = Math.sin(n * 12.9898) * 43758.5453;
       return x - Math.floor(x);
     };
-    return new Array(20).fill(0).map((_, i) => ({
-      z: -i * (TUNNEL_LENGTH / 20) - seeded(i + 1) * 6,
+    return new Array(32).fill(0).map((_, i) => ({
+      z: -i * (TUNNEL_LENGTH / 32) - seeded(i + 1) * 6,
       tex: i % 2 === 0 ? cyanTex : magentaTex,
       scale: 4 + seeded(i + 17) * 3.5,
     }));

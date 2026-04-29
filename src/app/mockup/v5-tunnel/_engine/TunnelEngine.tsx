@@ -86,7 +86,9 @@ const WHEEL_COOLDOWN_MS = 1500;    // fixed lockout between advances
 const TOUCH_THRESHOLD = 80;        // px swipe distance per station
 const SETTLE_EPSILON = 0.005;
 const SETTLE_IDLE_MS = 100;
-const LERP_FACTOR = 0.085;
+// Slowed from 0.085 → 0.055 so the longer (doubled) tunnel travel between
+// stations feels like a real flight — ~0.7s settle, ~2× distance covered.
+const LERP_FACTOR = 0.055;
 
 const N = CHECKPOINTS.length;
 
