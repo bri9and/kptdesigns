@@ -338,11 +338,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0; max-width: 18ch;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-ev__title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-ev__grid {
   list-style: none; padding: 0; margin: 0 auto;
@@ -369,7 +369,7 @@ const css = `
   font-family: ${fonts.display}; font-weight: 500;
   font-size: 1.5rem; line-height: 1.15; margin: 0;
   color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-ev__card-body {
   font-family: ${fonts.body}; font-size: 0.96rem; line-height: 1.6;
@@ -400,11 +400,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(1.7rem, 3.4vw, 2.4rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-ev__block-title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-ev__form { display: flex; flex-direction: column; gap: 1.25rem; }
 .la-ev__row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
@@ -447,7 +447,7 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: 1.45rem; line-height: 1.2; margin: 0;
   color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-ev__success p {
   font-family: ${fonts.body}; font-size: 0.96rem; line-height: 1.55;

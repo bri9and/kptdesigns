@@ -77,10 +77,10 @@ const css = `
   line-height: 1.06;
   letter-spacing: -0.018em;
   margin: 0;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
   max-width: 18ch;
 }
-.la-her__title em { font-style: italic; color: ${palette.moss}; font-variation-settings: "opsz" 96, "SOFT" 70; }
+.la-her__title em { font-style: italic; color: ${palette.moss}; font-variation-settings: normal; }
 .la-her__lede { font-family: ${fonts.body}; font-size: 1rem; line-height: 1.6; color: ${palette.ink}; opacity: 0.78; margin: 0; max-width: 38ch; }
 
 .la-her__timeline {
@@ -99,7 +99,7 @@ const css = `
 }
 .la-her__year { font-family: ${fonts.mono}; font-size: 0.85rem; letter-spacing: 0.08em; color: ${palette.brick}; }
 .la-her__bar { display: none; }
-.la-her__note { font-family: ${fonts.display}; font-style: italic; font-size: 1.05rem; line-height: 1.5; color: ${palette.ink}; font-variation-settings: "opsz" 96, "SOFT" 50; }
+.la-her__note { font-family: ${fonts.display}; font-style: italic; font-size: 1.05rem; line-height: 1.5; color: ${palette.ink}; font-variation-settings: normal; }
 
 .la-her__art {
   grid-column: 2; grid-row: 1 / span 2;
@@ -130,7 +130,7 @@ const css = `
   color: ${palette.moss};
   border-left: 2px solid ${palette.brick};
   padding-left: 1rem;
-  font-variation-settings: "opsz" 96, "SOFT" 80;
+  font-variation-settings: normal;
 }
 
 @media (max-width: 920px) {

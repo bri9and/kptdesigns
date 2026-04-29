@@ -254,11 +254,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0; max-width: 16ch;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-book__title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-book__lede {
   font-family: ${fonts.body}; font-size: 1.02rem; line-height: 1.6;
@@ -318,7 +318,7 @@ const css = `
 .la-book__total strong {
   font-family: ${fonts.display}; font-weight: 400;
   font-size: 2rem; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-book__cta {
   background: ${palette.moss}; color: ${palette.bone};
@@ -351,7 +351,7 @@ const css = `
 .la-book__deposit strong {
   font-family: ${fonts.display}; font-weight: 400;
   font-size: 2rem; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-book__deposit-line { font-family: ${fonts.body}; font-size: 0.98rem; line-height: 1.6; opacity: 0.85; margin: 0; }
 .la-book__deposit-line strong { font-weight: 600; color: ${palette.ink}; }
@@ -383,11 +383,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(2rem, 4.5vw, 3rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-book__success-title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-book__conf-label {
   font-family: ${fonts.mono}; font-size: 0.62rem; letter-spacing: 0.32em; text-transform: uppercase;

@@ -69,11 +69,11 @@ const css = `
   font-size: clamp(2.4rem, 5vw, 3.4rem);
   line-height: 1; letter-spacing: -0.018em;
   margin: 0; color: ${palette.bone};
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-foot__mark em {
   font-style: italic; color: ${palette.brick};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-foot__addr {
   font-family: ${fonts.mono}; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;

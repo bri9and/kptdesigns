@@ -76,11 +76,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0; max-width: 18ch;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-sig__title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-sig__grid {
   list-style: none; padding: 0; margin: 0 auto;
@@ -117,7 +117,7 @@ const css = `
   font-family: ${fonts.display}; font-weight: 500;
   font-size: 1.55rem; line-height: 1.15; margin: 0;
   color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-sig__note {
   font-family: ${fonts.body}; font-size: 0.96rem; line-height: 1.6;

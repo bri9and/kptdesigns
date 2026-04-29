@@ -139,11 +139,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(2rem, 4.4vw, 2.8rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-visit__title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-visit__meta {
   display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2rem;
@@ -209,7 +209,7 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: 1.5rem; line-height: 1.2; margin: 0;
   color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-visit__success p {
   font-family: ${fonts.body}; font-size: 0.96rem; line-height: 1.55;

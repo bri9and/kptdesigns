@@ -94,11 +94,11 @@ const css = `
   font-family: ${fonts.display}; font-weight: 400;
   font-size: clamp(2.1rem, 4.6vw, 3.1rem); line-height: 1.05;
   letter-spacing: -0.015em; margin: 0; max-width: 14ch;
-  font-variation-settings: "opsz" 144, "SOFT" 30;
+  font-variation-settings: normal;
 }
 .la-glance__title em {
   font-style: italic; color: ${palette.moss};
-  font-variation-settings: "opsz" 96, "SOFT" 70;
+  font-variation-settings: normal;
 }
 .la-glance__lede {
   font-family: ${fonts.body}; font-size: 1.02rem; line-height: 1.6;
