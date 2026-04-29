@@ -261,8 +261,8 @@ The Stripe Elements deposit form additionally:
 #### Annotation Rail (`AnnotationRail.tsx`)
 
 - Right edge of viewport, 28px wide strip with a vertical track and dot
-  markers tied to scroll positions of flagged sections (course-at-a-glance,
-  book-a-tee-time, banquets, tournaments, leagues, drone-hero, footer).
+  markers tied to scroll positions of flagged sections (drone-hero,
+  course-at-a-glance, book-a-tee-time, banquets, tournaments, leagues).
 - When the user scrolls into a flagged section, a card slides out from the
   rail with `What changed:` line + `Why:` line + dismiss X. Auto-dismisses
   after 5s if untouched.
@@ -432,9 +432,10 @@ The proposal page must additionally:
 
 ## Definition of Done
 
-- `/sites/lake-arthur` renders all 10 sections, all 4 forms validate and show
-  realistic success states, Stripe Elements card field renders without
-  network calls.
+- `/sites/lake-arthur` renders all 10 sections, every form (book a tee time,
+  banquets inquiry, tournaments mini-inquiry, leagues signup, visit contact)
+  validates and shows a realistic success state, Stripe Elements card field
+  renders without network calls.
 - `/proposal/lake-arthur` plays the cinematic intro, embeds the redesign
   fullscreen, exposes annotation rail / before-after toggle / scope drawer,
   all dismissible.
