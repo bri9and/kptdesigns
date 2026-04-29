@@ -158,14 +158,100 @@ export const proShop = [
   { slug: "divot-tool",       title: "Divot Tool + Marker",       price: P("$16"), tag: "Accessories" },
 ];
 
+// — v2 design data (Newport-club photographic editorial) —
+
+export const whyPlay = [
+  {
+    slug: "lakeside",
+    title: "On the lake",
+    body: "Holes 3, 12, and 18 trace the water's edge. Wind off Lake Arthur reads the course before you do.",
+    photo: "/sites/lake-arthur/photos/banner_2.jpg",
+  },
+  {
+    slug: "all-levels",
+    title: "Every handicap, welcome",
+    body: "Three tee boxes. Wide fairways where they matter; clear bailouts where they don't. Bring the kids; bring the boss.",
+    photo: "/sites/lake-arthur/photos/btn_2.jpg",
+  },
+  {
+    slug: "events",
+    title: "Built for the moment",
+    body: "Member-guests on Saturday. Charity scramble on Sunday. Wedding reception on Friday night. The clubhouse handles all of it.",
+    photo: "/sites/lake-arthur/photos/btn_3.jpg",
+  },
+];
+
+// Four signature holes pulled from the 18-hole roster.
+export const signatureHoles = [3, 7, 12, 18].map((n) => holes.find((h) => h.number === n)!);
+
+// Consolidated event categories — replaces the three separate
+// banquets/tournaments/leagues sections in v1.
+export const eventCategories = [
+  {
+    slug: "banquets",
+    title: "Banquets & Weddings",
+    eyebrow: "Up to 220 guests",
+    body: "Sunset receptions over the water, corporate dinners in the clubhouse, charity galas in the tented terrace.",
+    cta: "Plan your event",
+    anchor: "#banquets",
+    photo: "/sites/lake-arthur/photos/banner_3.jpg",
+  },
+  {
+    slug: "tournaments",
+    title: "Tournaments",
+    eyebrow: "Charity · Corporate · Member-Guest",
+    body: "Three formats. Shotgun starts, branded scoring, hosted bar and lunch. Capacity from 64 teams down to 16.",
+    cta: "Run your event here",
+    anchor: "#tournaments",
+    photo: "/sites/lake-arthur/photos/btn_4.jpg",
+  },
+  {
+    slug: "leagues",
+    title: "Weekly Leagues",
+    eyebrow: "Mon · Wed · Thu · Sun",
+    body: "Four leagues across the week. Men's, women's, seniors, couples. Sign-ups open in March each season.",
+    cta: "Join a league",
+    anchor: "#leagues",
+    photo: "/sites/lake-arthur/photos/btn_1.jpg",
+  },
+];
+
+export const navLinks = [
+  { label: "Course",     href: "#course" },
+  { label: "Heritage",   href: "#heritage" },
+  { label: "Book",       href: "#book" },
+  { label: "Events",     href: "#events" },
+  { label: "Visit",      href: "#visit" },
+];
+
+// Heritage / legacy block. All milestone copy is placeholder — owner to
+// confirm or correct. The founding year (1965) tracks the placeholder
+// already declared in `courseStats.designer`.
+export const heritage = {
+  founded: P(1965),
+  era: P("1965 — present"),
+  intro:
+    "Lake Arthur Golf Club opened on a parcel of the old Isle Road farm — carved by hand around the natural folds of the land. The lake to the north. The woods to the east. The hayfield where the back nine still rolls.",
+  pull: "Sixty seasons. Same eighteen holes. Better every year.",
+  milestones: [
+    { year: P("1965"), note: P("Opened with nine holes. Par 36.") },
+    { year: P("1972"), note: P("Back nine added — the course played as eighteen for the first time.") },
+    { year: P("1996"), note: P("Drainage rebuilt across holes 9–14 after a heavy spring.") },
+    { year: P("2018"), note: P("Clubhouse renovated; banquet hall expanded to seat 220.") },
+    { year: P("2024"), note: P("Tee boxes regraded and new irrigation laid through the front nine.") },
+  ],
+  photo: "/sites/lake-arthur/photos/banner_3.jpg",
+};
+
 export type SectionAnchor =
-  | "drone-hero"
-  | "course-at-a-glance"
-  | "field-guide"
+  | "hero"
+  | "why-play"
+  | "course"
+  | "signature-holes"
   | "book"
+  | "events"
   | "banquets"
   | "tournaments"
   | "leagues"
-  | "shop"
   | "visit"
   | "footer";
