@@ -16,13 +16,23 @@ export const meta = {
   bookingUrlExternal: C("https://lakearthur.cps.golf/"),
 };
 
+// Confirmed from the official Lake Arthur scorecard (lakearthur.com/images/SC-1.JPG).
 export const courseStats = {
   holes: C(18),
-  par: P(72),
-  yardageBack: P("6,412"),
-  yardageMiddle: P("6,003"),
-  yardageForward: P("5,221"),
-  rating: P("70.8 / 124"),
+  par: C(71),
+  yardageBlue: C("6,637"),    // championship tees
+  yardageWhite: C("6,301"),   // regular tees
+  yardageGold: C("5,567"),
+  yardageRed: C("5,140"),     // forward tees
+  ratingBlue: C("71.6 / 129"),
+  ratingWhite: C("70.0 / 125"),
+  ratingGold: C("66.0 / 115"),
+  ratingRed: C("69.6 / 116"),
+  // Legacy field aliases the v2 sections still read:
+  yardageBack: C("6,637"),
+  yardageMiddle: C("6,301"),
+  yardageForward: C("5,140"),
+  rating: C("71.6 / 129"),
   designer: P("Original layout, 1965 — refined ongoing"),
 };
 
@@ -32,31 +42,37 @@ export const courseCharacter =
 export type Hole = {
   number: number;
   par: number;
-  yards: Field<string>;
-  title: string;
-  note: string;
+  yards: Field<string>;        // white-tee yardage (regular play)
+  yardsBlue: Field<string>;    // championship tee
+  yardsRed: Field<string>;     // forward tee
+  handicap: Field<number>;
+  title: string;               // editorial name (placeholder — owner-supplied)
+  note: string;                // editorial note (placeholder)
   tip?: string;
 };
 
+// All yardages, pars, and handicaps below are CONFIRMED from the official
+// Lake Arthur scorecard (lakearthur.com/images/SC-1.JPG). Hole names and
+// notes are placeholders — owner-supplied copy will replace.
 export const holes: Hole[] = [
-  { number: 1, par: 4, yards: P("372"), title: "The Opening Bow", note: "A generous fairway to settle the nerves. Aim left-center; the slope feeds you toward the green.", tip: "Driver, mid-iron approach." },
-  { number: 2, par: 5, yards: P("498"), title: "Cathedral Pines", note: "A reachable par five framed by mature pines on both sides. Two good strikes leave a wedge.", tip: "Bombs reward; misses are punished." },
-  { number: 3, par: 3, yards: P("164"), title: "Lake Glance", note: "First sight of Lake Arthur from the elevated tee. Wind off the water adds a club.", tip: "Take more than you think." },
-  { number: 4, par: 4, yards: P("405"), title: "The Long Look", note: "Dogleg right around a stand of oaks. Drive it down the left side and the green opens up.", tip: "Don't flirt with the right tree line." },
-  { number: 5, par: 4, yards: P("388"), title: "The Fold", note: "Fairway folds into a swale ~250 out. Stop short of the fold or carry it — anything in is a blind approach.", tip: "Lay-up is the smart play." },
-  { number: 6, par: 3, yards: P("172"), title: "Island Of Quiet", note: "Pin tucked behind a small front bunker. The green is firm; aim center.", tip: "Spin matters — flighted iron." },
-  { number: 7, par: 5, yards: P("522"), title: "The Bend", note: "Sweeping dogleg left; cut the corner and a 200-yard approach is on. Bail out right and you're laying three.", tip: "Pick a target; commit." },
-  { number: 8, par: 4, yards: P("355"), title: "The Short Bite", note: "Driveable for the long hitter, but the green is tilted back-to-front and won't hold.", tip: "Hybrid + wedge is rarely wrong here." },
-  { number: 9, par: 4, yards: P("411"), title: "Turn Home", note: "Plays back toward the clubhouse. Modest fairway, demanding approach to a tucked pin.", tip: "Pick a side; both shoulders punish." },
-  { number: 10, par: 4, yards: P("396"), title: "Second Wind", note: "Restart with a generous landing area. The fairway tilts left — favor the right rough off the tee.", tip: "Take what the course gives." },
-  { number: 11, par: 3, yards: P("145"), title: "The Whisper", note: "The shortest hole on the course. A small green with no bailout — anything off-line ends in trouble.", tip: "One club less than instinct." },
-  { number: 12, par: 5, yards: P("541"), title: "The Long Walk", note: "Three honest shots for most. Out of bounds left from tee through green; respect it.", tip: "Stay right; don't get cute." },
-  { number: 13, par: 4, yards: P("367"), title: "The Switchback", note: "Fairway turns 90° right around a pond. Lay up to 130, hit the green, walk off with par.", tip: "Resist driver — wedge in is gold." },
-  { number: 14, par: 4, yards: P("422"), title: "The Test", note: "Longest par four on the course. Headwind most afternoons. Take three good shots if you have to.", tip: "Bogey is a fine score here." },
-  { number: 15, par: 3, yards: P("198"), title: "Skyline", note: "Long iron from an elevated tee. The green sits below; gauge the wind by the flag — the trees lie.", tip: "Trust the yardage, not the eye." },
-  { number: 16, par: 4, yards: P("378"), title: "The Hinge", note: "Slight dogleg left to a green guarded by a single deep bunker on the right. Pin the left side; bail right.", tip: "A confident draw saves a stroke." },
-  { number: 17, par: 5, yards: P("509"), title: "Reachable Dreams", note: "Players who hit it long and straight will have a look in two. The green is the largest on the course.", tip: "Eagle is on the table — go get it." },
-  { number: 18, par: 4, yards: P("431"), title: "The Closer", note: "Finishing hole plays back toward the clubhouse. A demanding tee shot with water down the right edge.", tip: "Aim at the left bunker; the slope feeds right." },
+  { number: 1,  par: 4, yards: C("334"), yardsBlue: C("336"), yardsRed: C("312"), handicap: C(13), title: "The Opening Bow", note: "A generous fairway to settle the nerves. Aim left-center; the slope feeds you toward the green.", tip: "Driver, mid-iron approach." },
+  { number: 2,  par: 3, yards: C("171"), yardsBlue: C("194"), yardsRed: C("120"), handicap: C(9),  title: "First Iron", note: "A meaty par three to start. Take enough club to clear the front bunker; long is fine.", tip: "Wind on the tee usually fades a touch." },
+  { number: 3,  par: 4, yards: C("382"), yardsBlue: C("410"), yardsRed: C("294"), handicap: C(3),  title: "The Long Look", note: "The third-toughest hole on the course. Position off the tee matters more than distance.", tip: "Aim center; let the slope work." },
+  { number: 4,  par: 4, yards: C("302"), yardsBlue: C("312"), yardsRed: C("255"), handicap: C(15), title: "The Bend", note: "A short par four with a dogleg. Resist driver if your tee shot tends to fade — the trouble is right.", tip: "3-wood, mid-iron is rarely wrong." },
+  { number: 5,  par: 4, yards: C("374"), yardsBlue: C("393"), yardsRed: C("309"), handicap: C(11), title: "Mid-Round Test", note: "Straightforward but exacting. The green is small; club selection beats power.", tip: "One more than you think." },
+  { number: 6,  par: 4, yards: C("463"), yardsBlue: C("487"), yardsRed: C("421"), handicap: C(7),  title: "The Long Par Four", note: "Plays as a par four from the back tees, par five from the forwards. Either way it's a three-shot hole for most.", tip: "Lay up to a comfortable wedge." },
+  { number: 7,  par: 4, yards: C("374"), yardsBlue: C("419"), yardsRed: C("290"), handicap: C(5),  title: "The Fifth Hardest", note: "Tight off the tee, demanding into the green. A par here feels like a birdie.", tip: "Take the line off the right edge of the fairway bunker." },
+  { number: 8,  par: 5, yards: C("529"), yardsBlue: C("546"), yardsRed: C("468"), handicap: C(1),  title: "The Hardest Hole", note: "The number-one handicap. Long, demanding, no easy bailout. Three good shots for most.", tip: "Pick a target on each shot; commit to it." },
+  { number: 9,  par: 3, yards: C("118"), yardsBlue: C("127"), yardsRed: C("110"), handicap: C(17), title: "Short And Sweet", note: "The shortest hole on the course. A small green with no bailout — anything off-line ends in trouble.", tip: "Wedge or pitching wedge for most." },
+  { number: 10, par: 4, yards: C("303"), yardsBlue: C("310"), yardsRed: C("285"), handicap: C(18), title: "Easy Restart", note: "The easiest-rated hole on the course. A short par four to settle into the back nine.", tip: "Hybrid + wedge sets up birdie." },
+  { number: 11, par: 4, yards: C("390"), yardsBlue: C("411"), yardsRed: C("277"), handicap: C(8),  title: "Mid-Length", note: "A solid par four that asks for a strong drive and a confident approach. Don't short-side yourself.", tip: "Aim at the center of the green; let the pin come to you." },
+  { number: 12, par: 4, yards: C("340"), yardsBlue: C("367"), yardsRed: C("275"), handicap: C(16), title: "The Switchback", note: "A reachable par four for the longest hitters. Most will lay up to a comfortable wedge yardage.", tip: "Resist the driver if you're not striping it." },
+  { number: 13, par: 3, yards: C("200"), yardsBlue: C("219"), yardsRed: C("155"), handicap: C(6),  title: "The Long Three", note: "The longest par three on the course. Hybrid for many; long iron if you've got it.", tip: "Trust the yardage; the green looks closer than it plays." },
+  { number: 14, par: 4, yards: C("414"), yardsBlue: C("441"), yardsRed: C("317"), handicap: C(4),  title: "The Long Test", note: "The fourth-hardest hole. Plays into the prevailing wind most afternoons.", tip: "Take an extra club into the green." },
+  { number: 15, par: 5, yards: C("499"), yardsBlue: C("530"), yardsRed: C("392"), handicap: C(10), title: "Reachable In Two", note: "A reachable par five for the long hitter. Two good strikes set up an eagle look.", tip: "Drive it left-center; the angle opens." },
+  { number: 16, par: 5, yards: C("531"), yardsBlue: C("531"), yardsRed: C("386"), handicap: C(12), title: "The Long Walk", note: "A three-shot par five for most. The green is the largest on the course.", tip: "Pick a number you trust on each shot." },
+  { number: 17, par: 3, yards: C("135"), yardsBlue: C("147"), yardsRed: C("119"), handicap: C(14), title: "The Whisper", note: "A short par three with a tucked pin. The green is small and firm.", tip: "Take less club; let it land short and run." },
+  { number: 18, par: 4, yards: C("442"), yardsBlue: C("457"), yardsRed: C("355"), handicap: C(2),  title: "The Closer", note: "The second-toughest hole, finishing back at the clubhouse. A demanding tee shot and a long approach.", tip: "Pick a number; commit to it. Bogey is a fine finish." },
 ];
 
 export const rates = [
@@ -170,8 +186,8 @@ export const whyPlay = [
   {
     slug: "all-levels",
     title: "Every handicap, welcome",
-    body: "Three tee boxes. Wide fairways where they matter; clear bailouts where they don't. Bring the kids; bring the boss.",
-    photo: "/sites/lake-arthur/photos/btn_2.jpg",
+    body: "Four tee boxes ranging from 5,140 to 6,637 yards. Wide fairways where they matter; clear bailouts where they don't. Bring the kids; bring the boss.",
+    photo: "/sites/lake-arthur/photos/course-lake-bg.jpg",
   },
   {
     slug: "events",

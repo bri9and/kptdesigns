@@ -51,15 +51,24 @@ export const z = {
   intro: 70,
 };
 
-// Photo paths — pulled from lakearthur.com directly into /public.
+// Photo paths.
+// banner_*, btn_*, logo*, SC-1 = real Lake Arthur assets pulled from
+// lakearthur.com. course-* = CC0-licensed stock from Unsplash, used as
+// filler for spots where we don't yet have a no-people LA photo. Owner
+// can swap the stock paths for real photography when it lands.
+const ROOT = "/sites/lake-arthur/photos";
 export const photos = {
-  hero:           "/sites/lake-arthur/photos/banner_1.jpg",
-  course1:        "/sites/lake-arthur/photos/banner_2.jpg",
-  course2:        "/sites/lake-arthur/photos/banner_3.jpg",
-  thumbBook:      "/sites/lake-arthur/photos/btn_1.jpg",
-  thumbCourse:    "/sites/lake-arthur/photos/btn_2.jpg",
-  thumbEvents:    "/sites/lake-arthur/photos/btn_3.jpg",
-  thumbContact:   "/sites/lake-arthur/photos/btn_4.jpg",
-  logo:           "/sites/lake-arthur/photos/logo.png",
-  footerLogo:     "/sites/lake-arthur/photos/footer_logo.png",
+  hero:           `${ROOT}/banner_1.jpg`,           // real LA banner
+  course1:        `${ROOT}/banner_2.jpg`,           // real LA banner
+  course2:        `${ROOT}/banner_3.jpg`,           // real LA banner
+  courseFairway:  `${ROOT}/course-fairway.jpg`,     // CC0 Unsplash filler
+  courseLake:     `${ROOT}/course-lake-bg.jpg`,     // CC0 Unsplash filler — no people
+  courseGreen:    `${ROOT}/course-green.jpg`,       // CC0 Unsplash filler — no people
+  thumbBook:      `${ROOT}/btn_1.jpg`,
+  thumbCourse:    `${ROOT}/btn_2.jpg`,
+  thumbEvents:    `${ROOT}/btn_3.jpg`,
+  thumbContact:   `${ROOT}/btn_4.jpg`,
+  scorecard:      `${ROOT}/SC-1.JPG`,
+  logo:           `${ROOT}/logo.png`,
+  footerLogo:     `${ROOT}/footer_logo.png`,
 };
