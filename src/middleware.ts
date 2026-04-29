@@ -23,6 +23,7 @@ const isPublicRoute = createRouteMatcher([
   "/mockup(.*)",
   "/projects(.*)",
   "/proposal(.*)",
+  "/pitch(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
