@@ -107,14 +107,6 @@ const catalog: Category[] = [
         appeal: "Novel",
       },
       {
-        slug: "v51-broadsheet",
-        name: "V51 — Broadsheet",
-        emoji: "📰",
-        descriptor: "Tabloid newsprint front page — 96pt black banner, halftone-dot single-color photos on pulp, 6pt agate classifieds at the right rail.",
-        risk: "Medium Risk",
-        appeal: "Bold",
-      },
-      {
         slug: "v69-pellucid",
         name: "V69 — Pellucid",
         emoji: "🫧",
@@ -136,6 +128,14 @@ const catalog: Category[] = [
         descriptor: "Cream + terracotta. Fraunces, asymmetric magazine grid, monograph weight.",
         risk: "Low Risk",
         appeal: "Premium",
+      },
+      {
+        slug: "v51-broadsheet",
+        name: "V51 — Broadsheet",
+        emoji: "📰",
+        descriptor: "Tabloid newsprint front page — 96pt black banner, halftone-dot single-color photos on pulp, 6pt agate classifieds at the right rail.",
+        risk: "Medium Risk",
+        appeal: "Bold",
       },
       {
         slug: "v8-codex",
