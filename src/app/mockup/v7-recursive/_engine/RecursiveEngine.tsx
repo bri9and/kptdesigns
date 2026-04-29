@@ -456,6 +456,13 @@ function DesktopRecursive() {
               willChange: "transform, opacity",
               backfaceVisibility: "hidden",
               overflow: "hidden",
+              // Default: invisible until rAF tick applies styles. Non-active
+              // levels remain hidden via rAF. The active level's React class
+              // (.v7-level-settled) overrides this in the inline <style>.
+              opacity: settledIndex === i ? 1 : 0,
+              visibility: settledIndex === i ? "visible" : "hidden",
+              pointerEvents: settledIndex === i ? "auto" : "none",
+              transform: settledIndex === i ? "translate(0%, 0%) scale(1)" : "scale(0.001)",
             }}
           >
             <l.Component />
