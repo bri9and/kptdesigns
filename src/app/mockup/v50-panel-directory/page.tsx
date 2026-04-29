@@ -1,11 +1,11 @@
 import { PageApproach } from "../_lib/PageApproach";
-import TraderTarpEngine from "./_engine/TraderTarpEngine";
+import PanelDirectoryEngine from "./_engine/PanelDirectoryEngine";
 
-export default function TraderTarpPage() {
+export default function PanelDirectoryPage() {
   return (
-    <main style={{ background: "#1A1916", color: "#F2C400", minHeight: "100vh" }}>
+    <main style={{ background: "#ECE6D2", color: "#1A1A18", minHeight: "100vh" }}>
       <PageApproach>
-        <TraderTarpEngine />
+        <PanelDirectoryEngine />
       </PageApproach>
     </main>
   );

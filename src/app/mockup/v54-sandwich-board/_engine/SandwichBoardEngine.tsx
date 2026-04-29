@@ -1,920 +1,643 @@
 "use client";
 
 /**
- * SoundStageEngine — V54 Sound Stage
+ * SandwichBoardEngine — V54 Sandwich Board
  *
- * The site reads as a film shoot — title cards open each section, gaffer-tape
- * labels mark equipment, hero is shot at 1.85:1. A clap-slate transitions
- * between scenes.
+ * A sidewalk A-frame chalkboard at full size — slate ground, hand-lettered
+ * chalk type, smudge-ghosts of last week's lettering still visible under
+ * this week's, terracotta sandbag at the foot. Agnostic skin with a
+ * landscaping showcase.
  *
- * Trade showcase: General Contractors.
+ * No Tailwind. Inline <style> only. Reduced-motion presents the finished
+ * board with no draw-in or wind-cycle lean.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const SCENES = [
+const THREE_LINES = [
   {
-    num: "01",
-    name: "PRE-CON",
-    title: "Pre-construction",
-    log: "Schedule, budget, RFP. The script before the shoot.",
-    rows: [
-      { take: "T-04", note: "Architect: HKS — IFC set issued 03/14. Page count: 187." },
-      { take: "T-05", note: "Budget: $4.6M GMP. Allowance buckets called out in Schedule A." },
-      { take: "T-06", note: "Trade buyout — 11 of 14 subs awarded; mech and elec out for second-look." },
-    ],
+    label: "DESIGN",
+    line2: "stake & flag walks · CAD plans",
+    price: "FREE 1ST WALK",
+    icon: "stake",
   },
   {
-    num: "02",
-    name: "FRAME",
-    title: "Frame",
-    log: "Subs in, walls up, dry-in. Production stills below.",
-    rows: [
-      { take: "T-12", note: "Foundation cure complete. SOG pour 04/02; psi 4500 break at 28 days." },
-      { take: "T-13", note: "Wall framing dry-in 80%. MEP rough-ins on critical path through wk 18." },
-      { take: "T-14", note: "Roof set, deck dried-in. PM walks Tuesday and Thursday before standup." },
-    ],
+    label: "INSTALL",
+    line2: "pavers · plantings · mulch ring",
+    price: "BY THE PROJECT",
+    icon: "shovel",
   },
   {
-    num: "03",
-    name: "PUNCH",
-    title: "Punch",
-    log: "Punch list as a dailies log. We ship clean, not fast.",
-    rows: [
-      { take: "T-22", note: "Architect punch — 38 items. 31 closed by Friday. 7 awaiting product." },
-      { take: "T-23", note: "Owner punch — 12 items. Touch-up paint, two HVAC balance points." },
-      { take: "T-24", note: "Final inspection scheduled 05/19 with city. CO targeted 05/23." },
-    ],
+    label: "MAINTAIN",
+    line2: "edge & blow · seasonal cleanup",
+    price: "SEASONAL · $185/MO",
+    icon: "mower",
   },
+] as const;
+
+const SPECIALS = [
+  { item: "SPRING CLEANUP", price: "$285" },
+  { item: "MULCH REFRESH · 6 YDS", price: "$540" },
+  { item: "PAVER RE-LEVEL · 80 SF", price: "$640" },
+  { item: "STAKE & FLAG WALK", price: "FREE" },
+  { item: "EDGE & BLOW · WEEKLY", price: "$95/VISIT" },
 ];
 
-const STILLS = [
-  { tag: "WK 17", scene: "Pour day", caption: "SOG, 4500 psi. Walked the joints with the iron-workers at 6:30." },
-  { tag: "WK 19", scene: "Walls up", caption: "Framers in at 7. Masonry at 9. Dry-in by Friday." },
-  { tag: "WK 22", scene: "MEP rough", caption: "Mech, elec, plumb stacked through the corridor — checked clearances Tuesday." },
-  { tag: "WK 26", scene: "Sheetrock", caption: "Hangers Monday, mud Wednesday, sand Friday. Texture Saturday." },
-  { tag: "WK 29", scene: "Trim & paint", caption: "Doors, base, casing. Paint behind millwork before set." },
-  { tag: "WK 31", scene: "Punch", caption: "Architect's pen, owner's eyes. We close 90% on the first walk." },
+const PROJECTS = [
+  { addr: "112 ALDER", date: "MAR 22", note: "DRY-LAID FLAGSTONE WALK" },
+  { addr: "44 SYCAMORE", date: "APR 04", note: "MULCH RING · 6 OAKS" },
+  { addr: "08 RIVERSIDE", date: "APR 11", note: "PAVER TERRACE 280 SF" },
+  { addr: "27 ELM CT", date: "APR 18", note: "SPRING CLEANUP" },
+  { addr: "61 BIRCH", date: "APR 25", note: "STAKE & FLAG, NEW BED" },
 ];
 
-const CALL_SHEET = [
-  { time: "06:00", crew: "Site lead", task: "Walk the trailer, unlock gate, hot coffee on by 06:30." },
-  { time: "06:45", crew: "Subs check-in", task: "Hard hat, fall harness, JHA signed. Whiteboard updated by 07:00." },
-  { time: "07:00", crew: "Standup", task: "Three things: yesterday, today, blockers. Five minutes flat." },
-  { time: "10:30", crew: "PM walk", task: "PM and super walk the floor. RFIs flagged by photo." },
-  { time: "12:30", crew: "Lunch", task: "30 min on site. Tools down, no work-while-eating on the deck." },
-  { time: "15:30", crew: "Inspector", task: "City framing inspection. Tape measure and code book on the rail." },
-  { time: "16:30", crew: "Cleanup", task: "Sweep, dump cart, lock the trailer. Tomorrow's plan to the group text." },
-];
+export default function SandwichBoardEngine() {
+  const [reduced, setReduced] = useState(false);
 
-export default function SoundStageEngine() {
-  const [activeScene, setActiveScene] = useState<string>("01");
-  const [paused, setPaused] = useState<string | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
 
   return (
-    <>
+    <div className="sb-root">
       <style>{css}</style>
-      <div className="ss-shell">
-        {/* GLOBAL SLATE */}
-        <div className="ss-bars" aria-hidden>
-          <div className="ss-bar ss-bar-top" />
-          <div className="ss-bar ss-bar-bottom" />
+
+      {/* HERO — A-frame chalkboard */}
+      <header className="sb-hero">
+        <div className={`sb-frame${reduced ? " sb-frame-still" : ""}`}>
+          <div className="sb-board">
+            {/* smudge ghosts */}
+            <div className="sb-ghost sb-ghost-1" aria-hidden>SPRING IS NEAR</div>
+            <div className="sb-ghost sb-ghost-2" aria-hidden>OPEN HOUSE SAT</div>
+            <div className="sb-ghost sb-ghost-3" aria-hidden>HELLO MARCH</div>
+
+            <div className="sb-eyebrow">EST. 2014 &middot; DESIGN-BUILD LANDSCAPE</div>
+            <h1 className="sb-headline">
+              <span className="sb-line sb-line-1">Design</span>
+              <span className="sb-slash">/</span>
+              <span className="sb-line sb-line-2">Install</span>
+              <span className="sb-slash">/</span>
+              <span className="sb-line sb-line-3">Maintain</span>
+            </h1>
+            <p className="sb-sub">
+              Design-build landscape for owners who want the same crew through the whole season &mdash; stake, pour, plant, mow, and the mulch ring done right.
+            </p>
+            <div className="sb-cta-row">
+              <a className="sb-btn sb-btn-primary" href="#three-lines">Walk the property</a>
+              <a className="sb-btn sb-btn-ghost" href="#projects">See this season&rsquo;s installs</a>
+            </div>
+
+            {/* small printed credit */}
+            <div className="sb-credit">EST. 2014 &middot; DESIGN-BUILD &middot; LIC LCO-2218</div>
+          </div>
+
+          {/* sandbag */}
+          <div className="sb-sandbag" aria-hidden>
+            <span>40 LB</span>
+          </div>
+          <div className="sb-sandbag sb-sandbag-r" aria-hidden>
+            <span>40 LB</span>
+          </div>
+        </div>
+      </header>
+
+      {/* THREE LINES */}
+      <section id="three-lines" className="sb-section">
+        <div className="sb-section-head">
+          <span className="sb-tag">LINE 01 &middot; THE THREE BOARDS</span>
+          <h2>Design / Install / Maintain</h2>
+          <p>Three boards stacked vertically. Hover redraws the chalk fresh.</p>
         </div>
 
-        {/* TOP — SLATE */}
-        <header className="ss-top">
-          <div className="ss-slate" aria-label="Production slate">
-            <div className="ss-slate-stripes" aria-hidden>
-              <span /><span /><span /><span /><span /><span />
-            </div>
-            <div className="ss-slate-body">
-              <span className="ss-slate-row">
-                <em>PROD.</em>
-                <strong>KPT&nbsp;CONSTRUCTION&nbsp;CO.</strong>
-              </span>
-              <span className="ss-slate-row">
-                <em>JOB</em>
-                <strong>BERKELEY&nbsp;SQUARE&nbsp;OFFICES</strong>
-              </span>
-              <span className="ss-slate-row">
-                <em>SCENE / TAKE</em>
-                <strong>54 / 26</strong>
-              </span>
-              <span className="ss-slate-row">
-                <em>DATE</em>
-                <strong>04 / 28 / 26</strong>
-              </span>
-            </div>
-          </div>
-          <nav className="ss-nav" aria-label="primary">
-            <a href="#scenes" className="ss-nav-link">Scenes</a>
-            <a href="#stills" className="ss-nav-link">Stills</a>
-            <a href="#call" className="ss-nav-link">Call Sheet</a>
-            <a href="#contact" className="ss-nav-link">Greenlight</a>
-          </nav>
-        </header>
-
-        {/* HERO — ACADEMY 1.85:1 */}
-        <section className="ss-hero" aria-label="Hero">
-          <div className="ss-frame">
-            <span className="ss-tape ss-tape-tl">FRAME 01</span>
-            <span className="ss-tape ss-tape-tr">A&nbsp;CAM</span>
-            <span className="ss-tape ss-tape-bl">EXT.&nbsp;JOBSITE&nbsp;&mdash;&nbsp;DAY</span>
-            <span className="ss-tape ss-tape-br">RUN&nbsp;TIME&nbsp;31&nbsp;WKS</span>
-            <div className="ss-hero-content">
-              <p className="ss-eyebrow">A KPT Production &mdash; in 4 acts</p>
-              <h1 className="ss-headline">
-                Pre-construction.
-                <br />
-                Frame. Punch.
-                <br />
-                <span className="ss-headline-fin">Premiere.</span>
-              </h1>
-              <p className="ss-sub">
-                General contracting on architect-led projects. Every phase a
-                scene, every change order a script note. We ship clean.
-              </p>
-              <div className="ss-cta-row">
-                <a className="ss-cta ss-cta-fill" href="#contact">Greenlight a project</a>
-                <a className="ss-cta ss-cta-line" href="#call">Read the call sheet</a>
+        <div className="sb-three-grid">
+          {THREE_LINES.map((b, i) => (
+            <article key={b.label} className="sb-three" tabIndex={0}>
+              <div className="sb-three-icon" aria-hidden>
+                {b.icon === "stake" ? <Stake /> : b.icon === "shovel" ? <Shovel /> : <Mower />}
               </div>
-            </div>
-          </div>
-          <p className="ss-hero-credit">
-            <span className="ss-cred-dot" /> Shot at 1.85:1 &middot; lensed by KPT &middot; SAG&minus;AIA collaboration
-          </p>
-        </section>
-
-        {/* SCENES */}
-        <section id="scenes" className="ss-section">
-          <div className="ss-section-head">
-            <span className="ss-clap" aria-hidden>
-              <span className="ss-clap-top" />
-              <span className="ss-clap-body">SCENE</span>
-            </span>
-            <h2 className="ss-section-title">Three scenes, one cut.</h2>
-            <p className="ss-section-meta">Click a scene tab to switch the dailies log.</p>
-          </div>
-
-          <div className="ss-scene-tabs" role="tablist">
-            {SCENES.map((s) => (
-              <button type="button"
-                key={s.num}
-                role="tab"
-                aria-selected={activeScene === s.num}
-                className={`ss-scene-tab${activeScene === s.num ? " on" : ""}`}
-                onClick={() => setActiveScene(s.num)}
-              >
-                <span className="ss-scene-num">{s.num}</span>
-                <span className="ss-scene-name">{s.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {SCENES.filter((s) => s.num === activeScene).map((s) => (
-            <div className="ss-scene-card" key={s.num}>
-              <div className="ss-titlecard">
-                <span className="ss-tc-eye">SCENE {s.num} &mdash; {s.name}</span>
-                <h3 className="ss-tc-title">{s.title}</h3>
-                <p className="ss-tc-log">{s.log}</p>
-              </div>
-              <ul className="ss-dailies">
-                {s.rows.map((r) => (
-                  <li key={r.take} className="ss-daily">
-                    <span className="ss-daily-take">{r.take}</span>
-                    <span className="ss-daily-note">{r.note}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+              <h3 className="sb-three-label">{b.label}</h3>
+              <div className="sb-three-line2">{b.line2}</div>
+              <div className="sb-three-price">{b.price}</div>
+              <div className="sb-three-num">0{i + 1}</div>
+            </article>
           ))}
-        </section>
+        </div>
+      </section>
 
-        {/* STILLS — production photos as caption frames */}
-        <section id="stills" className="ss-section">
-          <div className="ss-section-head">
-            <span className="ss-clap" aria-hidden>
-              <span className="ss-clap-top" />
-              <span className="ss-clap-body">STILLS</span>
-            </span>
-            <h2 className="ss-section-title">Production stills.</h2>
-            <p className="ss-section-meta">Hover a frame to freeze on the dailies caption.</p>
-          </div>
-          <div className="ss-stills">
-            {STILLS.map((st) => (
-              <article
-                key={st.tag}
-                className="ss-still"
-                tabIndex={0}
-                onMouseEnter={() => setPaused(st.tag)}
-                onMouseLeave={() => setPaused(null)}
-                onFocus={() => setPaused(st.tag)}
-                onBlur={() => setPaused(null)}
-                data-paused={paused === st.tag ? "true" : "false"}
-              >
-                <span className="ss-still-tag">{st.tag}</span>
-                <div className="ss-still-frame" aria-hidden>
-                  <div className="ss-still-art" />
-                  <div className="ss-still-grain" />
-                  {paused === st.tag && <span className="ss-still-freeze">FREEZE</span>}
-                </div>
-                <h3 className="ss-still-scene">{st.scene}</h3>
-                <p className="ss-still-cap">{st.caption}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+      {/* TODAY'S SPECIALS */}
+      <section className="sb-section">
+        <div className="sb-section-head">
+          <span className="sb-tag">LINE 02 &middot; TODAY&rsquo;S BOARD</span>
+          <h2>This season&rsquo;s specials</h2>
+          <p>Bistro-style. Mouseover swipes and rewrites the price.</p>
+        </div>
+        <ul className="sb-specials">
+          {SPECIALS.map((s) => (
+            <li key={s.item} tabIndex={0}>
+              <span className="sb-special-item">{s.item}</span>
+              <span className="sb-special-dots" aria-hidden>
+                ·····················································
+              </span>
+              <span className="sb-special-price">{s.price}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        {/* CALL SHEET */}
-        <section id="call" className="ss-section">
-          <div className="ss-section-head">
-            <span className="ss-clap" aria-hidden>
-              <span className="ss-clap-top" />
-              <span className="ss-clap-body">CALL</span>
-            </span>
-            <h2 className="ss-section-title">Daily call sheet.</h2>
-            <p className="ss-section-meta">A working GC's day, scheduled like a shoot.</p>
-          </div>
-          <table className="ss-callsheet">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Crew</th>
-                <th>Task</th>
-              </tr>
-            </thead>
-            <tbody>
-              {CALL_SHEET.map((c) => (
-                <tr key={c.time}>
-                  <td className="ss-cs-time">{c.time}</td>
-                  <td className="ss-cs-crew">{c.crew}</td>
-                  <td className="ss-cs-task">{c.task}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+      {/* THE WALK */}
+      <section id="projects" className="sb-section">
+        <div className="sb-section-head">
+          <span className="sb-tag">LINE 03 &middot; THE WALK</span>
+          <h2>This season, on the route</h2>
+          <p>Each property as an A-frame chalkboard caption, dated, hand-lettered.</p>
+        </div>
+        <div className="sb-walk">
+          {PROJECTS.map((p) => (
+            <article key={p.addr} className="sb-walk-card" tabIndex={0}>
+              <div className="sb-walk-date">{p.date}</div>
+              <div className="sb-walk-addr">{p.addr}</div>
+              <div className="sb-walk-note">{p.note}</div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-        {/* CTA */}
-        <section id="contact" className="ss-section ss-section-cta">
-          <div className="ss-cta-card">
-            <span className="ss-tape ss-tape-cta">END&nbsp;CARD</span>
-            <p className="ss-eyebrow">Final reel</p>
-            <h2 className="ss-cta-headline">Greenlight a project.</h2>
-            <p className="ss-cta-body">
-              We pre-con on architect-led commercial fit-outs and ground-up
-              under 60K SF. Send us the IFC set; we&rsquo;ll send a budget back
-              in 10 working days.
-            </p>
-            <div className="ss-cta-row">
-              <a className="ss-cta ss-cta-fill" href="#">Send drawings</a>
-              <a className="ss-cta ss-cta-line" href="#">Schedule a walk</a>
-            </div>
-          </div>
-        </section>
+      <footer className="sb-foot">
+        <div className="sb-foot-card" aria-hidden>
+          <div>KPT LANDSCAPE</div>
+          <div>(555) 014-0200</div>
+          <div>USDA ZONE 6b</div>
+          <div className="sb-foot-tack" />
+        </div>
+        <div>DESIGN &middot; INSTALL &middot; MAINTAIN &middot; LIC LCO-2218</div>
+      </footer>
+    </div>
+  );
+}
 
-        {/* FOOTER */}
-        <footer className="ss-footer">
-          <div className="ss-end-crawl">
-            <span>
-              KPT CONSTRUCTION CO. &middot; A KPT PRODUCTION &middot;
-              GENERAL CONTRACTOR LIC. #B-771-9931 &middot;
-              AIA / ABC member &middot; OSHA 30 in field, OSHA 10 minimum on every sub
-              &middot; Bonded &amp; insured &middot; Tempe / Mesa / Chandler
-            </span>
-          </div>
-          <p className="ss-foot-credit">
-            &copy; KPT 2026 &middot; lensed by KPT &middot; cut clean &middot; printed at 1.85:1
-          </p>
-        </footer>
-      </div>
-    </>
+function Stake() {
+  return (
+    <svg viewBox="0 0 64 64" width="44" height="44" aria-hidden>
+      <line x1="16" y1="14" x2="44" y2="14" stroke="#F0EBDC" strokeWidth="2" />
+      <polygon points="16,14 44,14 38,22 22,22" fill="#B6553B" stroke="#F0EBDC" strokeWidth="1.5" />
+      <line x1="30" y1="14" x2="30" y2="56" stroke="#F0EBDC" strokeWidth="2" />
+      <line x1="22" y1="56" x2="38" y2="56" stroke="#F0EBDC" strokeWidth="2" />
+    </svg>
+  );
+}
+function Shovel() {
+  return (
+    <svg viewBox="0 0 64 64" width="44" height="44" aria-hidden>
+      <line x1="32" y1="6" x2="32" y2="38" stroke="#F0EBDC" strokeWidth="2" />
+      <rect x="28" y="6" width="8" height="6" stroke="#F0EBDC" strokeWidth="1.5" fill="none" />
+      <path d="M 18 38 Q 32 60 46 38 Z" fill="#B6553B" stroke="#F0EBDC" strokeWidth="1.5" />
+    </svg>
+  );
+}
+function Mower() {
+  return (
+    <svg viewBox="0 0 64 64" width="44" height="44" aria-hidden>
+      <rect x="12" y="22" width="40" height="20" fill="#B6553B" stroke="#F0EBDC" strokeWidth="1.5" />
+      <line x1="20" y1="22" x2="20" y2="14" stroke="#F0EBDC" strokeWidth="2" />
+      <line x1="44" y1="22" x2="44" y2="14" stroke="#F0EBDC" strokeWidth="2" />
+      <line x1="20" y1="14" x2="44" y2="14" stroke="#F0EBDC" strokeWidth="2" />
+      <circle cx="20" cy="48" r="6" fill="none" stroke="#F0EBDC" strokeWidth="2" />
+      <circle cx="44" cy="48" r="6" fill="none" stroke="#F0EBDC" strokeWidth="2" />
+    </svg>
   );
 }
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,700;1,900&family=Inter:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
 
-.ss-shell {
-  --ss-slate: #131214;
-  --ss-bone: #F4EDD8;
-  --ss-tape: #FFCB05;
-  --ss-blood: #94221F;
-  --ss-grid: #2A282C;
-  background: var(--ss-slate);
-  color: var(--ss-bone);
-  min-height: 100vh;
-  font-family: 'Inter', system-ui, sans-serif;
-  padding: 0;
-}
+  .sb-root {
+    --slate: #1B1F1D;
+    --slate-deep: #11141A;
+    --chalk: #F0EBDC;
+    --chalk-dim: rgba(240,235,220,0.6);
+    --terra: #B6553B;
+    --terra-deep: #8C3F2A;
+    --oak: #6B4A2D;
+    background: var(--slate);
+    color: var(--chalk);
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  .sb-root *, .sb-root *::before, .sb-root *::after { box-sizing: border-box; }
 
-/* CINEMA BARS */
-.ss-bars {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 50;
-}
-.ss-bar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 18px;
-  background: #000;
-}
-.ss-bar-top { top: 0; }
-.ss-bar-bottom { bottom: 0; }
+  /* slate texture */
+  .sb-root::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(circle at 30% 30%, rgba(240,235,220,0.04) 0%, transparent 40%),
+      radial-gradient(circle at 70% 70%, rgba(240,235,220,0.03) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, rgba(240,235,220,0.018) 0 1px, transparent 1px 5px);
+  }
 
-.ss-top {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 24px;
-  align-items: flex-start;
-  padding: 38px 36px 12px;
-}
-.ss-slate {
-  border: 1.5px solid var(--ss-bone);
-  background: var(--ss-slate);
-  color: var(--ss-bone);
-  width: 360px;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.ss-slate-stripes {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  height: 18px;
-}
-.ss-slate-stripes span {
-  background: var(--ss-bone);
-}
-.ss-slate-stripes span:nth-child(2),
-.ss-slate-stripes span:nth-child(4),
-.ss-slate-stripes span:nth-child(6) { background: var(--ss-slate); }
-.ss-slate-body {
-  display: grid;
-  gap: 4px;
-  padding: 10px 12px 12px;
-  border-top: 1.5px solid var(--ss-bone);
-}
-.ss-slate-row {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 8px;
-  align-items: baseline;
-}
-.ss-slate-row em { font-style: normal; opacity: 0.7; }
-.ss-slate-row strong { font-weight: 500; }
+  .sb-hero {
+    position: relative;
+    z-index: 1;
+    padding: clamp(40px, 5vw, 80px) clamp(20px, 4vw, 60px) 0;
+    display: flex;
+    justify-content: center;
+  }
 
-.ss-nav {
-  display: flex;
-  justify-content: flex-end;
-  gap: 22px;
-  flex-wrap: wrap;
-  margin-top: 6px;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.ss-nav-link {
-  color: var(--ss-bone);
-  text-decoration: none;
-  position: relative;
-  padding: 6px 0;
-  transition: color 200ms ease;
-}
-.ss-nav-link::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 2px;
-  background: var(--ss-tape);
-  transform: scaleX(0);
-  transform-origin: left center;
-  transition: transform 240ms cubic-bezier(0.7, 0, 0.3, 1);
-}
-.ss-nav-link:hover, .ss-nav-link:focus-visible { color: var(--ss-tape); outline: none; }
-.ss-nav-link:hover::after, .ss-nav-link:focus-visible::after { transform: scaleX(1); }
+  .sb-frame {
+    position: relative;
+    max-width: 1100px;
+    width: 100%;
+    padding: 28px 28px 64px;
+    border: 8px solid var(--oak);
+    border-radius: 4px;
+    background: linear-gradient(180deg, #15181A 0%, #0F1214 100%);
+    box-shadow:
+      inset 0 0 60px rgba(0,0,0,0.5),
+      0 24px 60px -28px rgba(0,0,0,0.7);
+    transform-origin: 50% 100%;
+    animation: sb-lean 8s ease-in-out infinite;
+  }
+  .sb-frame-still { animation: none; }
+  @keyframes sb-lean {
+    0%, 100% { transform: rotate(-0.3deg); }
+    50% { transform: rotate(0.6deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sb-frame { animation: none; }
+  }
 
-/* HERO */
-.ss-hero { padding: 28px 36px 80px; }
-.ss-frame {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1.85 / 1;
-  background:
-    radial-gradient(circle at 20% 110%, rgba(255, 203, 5, 0.14) 0px, transparent 60%),
-    radial-gradient(circle at 90% 0%, rgba(148, 34, 31, 0.16) 0px, transparent 60%),
-    linear-gradient(180deg, #1A1A1C 0%, #0E0E10 100%);
-  border: 1.5px solid var(--ss-bone);
-  overflow: hidden;
-}
-.ss-frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(0deg, rgba(244, 237, 216, 0.04) 0px, transparent 1.5px, transparent 3px),
-    radial-gradient(circle at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.55) 100%);
-  pointer-events: none;
-}
-.ss-tape {
-  position: absolute;
-  background: var(--ss-tape);
-  color: #131214;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  font-weight: 700;
-  padding: 6px 10px;
-  text-transform: uppercase;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
-  animation: ss-tape-pull 200ms ease-out 200ms both;
-}
-@keyframes ss-tape-pull {
-  from { transform: translateX(-12px) rotate(-4deg); opacity: 0; }
-  to { transform: translateX(0) rotate(0); opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-tape { animation: none; }
-}
-.ss-tape-tl { top: 14px; left: 14px; transform: rotate(-2deg); }
-.ss-tape-tr { top: 14px; right: 14px; transform: rotate(2deg); }
-.ss-tape-bl { bottom: 14px; left: 14px; transform: rotate(-1deg); }
-.ss-tape-br { bottom: 14px; right: 14px; transform: rotate(2deg); }
+  .sb-board {
+    position: relative;
+    padding: 28px 32px;
+    border: 1px solid rgba(240,235,220,0.18);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(240,235,220,0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(240,235,220,0.03) 0%, transparent 60%),
+      var(--slate);
+    overflow: hidden;
+  }
+  .sb-board::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(45deg, rgba(240,235,220,0.02) 0 1px, transparent 1px 5px);
+    opacity: 0.7;
+  }
 
-.ss-hero-content {
-  position: absolute;
-  inset: auto 8% 12% 8%;
-  z-index: 2;
-  max-width: 720px;
-}
-.ss-eyebrow {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--ss-tape);
-  margin: 0 0 18px;
-}
-.ss-headline {
-  font-family: 'Playfair Display', 'Times New Roman', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: clamp(46px, 6.4vw, 96px);
-  line-height: 0.96;
-  margin: 0 0 20px;
-  color: var(--ss-bone);
-  letter-spacing: -0.01em;
-  text-shadow: 0 0 20px rgba(0, 0, 0, 0.55);
-}
-.ss-headline-fin { color: var(--ss-blood); }
-.ss-sub {
-  font-size: 16px;
-  line-height: 1.45;
-  margin: 0 0 24px;
-  max-width: 540px;
-  color: rgba(244, 237, 216, 0.92);
-}
+  /* smudge ghosts */
+  .sb-ghost {
+    position: absolute;
+    font-family: 'Caveat', cursive;
+    font-weight: 600;
+    color: rgba(240,235,220,0.07);
+    pointer-events: none;
+    text-transform: uppercase;
+    transform: rotate(-4deg);
+    letter-spacing: 0.04em;
+    user-select: none;
+  }
+  .sb-ghost-1 { top: 18px; right: 20px; font-size: 38px; transform: rotate(-7deg); }
+  .sb-ghost-2 { bottom: 84px; left: 28px; font-size: 30px; transform: rotate(3deg); }
+  .sb-ghost-3 { bottom: 36px; right: 36px; font-size: 26px; transform: rotate(-2deg); }
 
-.ss-cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
-.ss-cta {
-  display: inline-block;
-  padding: 14px 22px;
-  text-decoration: none;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  border: 1.5px solid var(--ss-bone);
-  font-weight: 700;
-  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
-}
-.ss-cta-fill {
-  background: var(--ss-tape);
-  color: #131214;
-  border-color: var(--ss-tape);
-}
-.ss-cta-fill:hover, .ss-cta-fill:focus-visible {
-  background: var(--ss-blood);
-  color: var(--ss-bone);
-  border-color: var(--ss-blood);
-  outline: none;
-  transform: translate(-1px, -1px);
-}
-.ss-cta-line {
-  background: transparent;
-  color: var(--ss-bone);
-}
-.ss-cta-line:hover, .ss-cta-line:focus-visible {
-  background: var(--ss-bone);
-  color: var(--ss-slate);
-  outline: none;
-  transform: translate(-1px, -1px);
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-cta { transition: background 200ms ease, color 200ms ease; }
-  .ss-cta:hover, .ss-cta:focus-visible { transform: none; }
-}
+  .sb-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+    margin-bottom: 12px;
+    border-bottom: 1px dashed rgba(240,235,220,0.2);
+    padding-bottom: 6px;
+    display: inline-block;
+  }
 
-.ss-hero-credit {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  margin: 18px 0 0;
-  color: rgba(244, 237, 216, 0.7);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.ss-cred-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--ss-blood);
-  border-radius: 50%;
-  display: inline-block;
-}
+  .sb-headline {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(64px, 12vw, 156px);
+    line-height: 0.94;
+    margin: 6px 0 18px;
+    color: var(--chalk);
+    text-shadow:
+      0 0 0.5px rgba(240,235,220,0.6),
+      1px 0 0 rgba(240,235,220,0.18),
+      -1px 0 0 rgba(240,235,220,0.18);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: baseline;
+  }
+  .sb-line {
+    display: inline-block;
+    animation: sb-draw 700ms ease both;
+  }
+  .sb-line-1 { animation-delay: 100ms; }
+  .sb-line-2 { animation-delay: 380ms; color: #FAD2C2; }
+  .sb-line-3 { animation-delay: 660ms; }
+  .sb-slash {
+    font-size: 0.7em;
+    color: var(--terra);
+    transform: translateY(-0.05em);
+  }
+  @keyframes sb-draw {
+    from { opacity: 0; transform: translateY(8px) rotate(-2deg); filter: blur(2px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sb-line { animation: none; opacity: 1; }
+  }
 
-/* SECTION HEAD — clap */
-.ss-section { padding: 36px 36px 56px; }
-.ss-section-head {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  gap: 4px 22px;
-  margin-bottom: 36px;
-  align-items: center;
-}
-.ss-clap {
-  grid-row: span 2;
-  width: 76px;
-  height: 76px;
-  position: relative;
-}
-.ss-clap-top {
-  position: absolute;
-  top: -2px;
-  left: 0;
-  width: 100%;
-  height: 18px;
-  background:
-    repeating-linear-gradient(110deg, var(--ss-bone) 0px, var(--ss-bone) 12px, var(--ss-slate) 12px, var(--ss-slate) 24px);
-  border: 1.5px solid var(--ss-bone);
-  transform-origin: top left;
-  animation: ss-clap-snap 600ms cubic-bezier(0.4, 0, 0.2, 1) both;
-}
-@keyframes ss-clap-snap {
-  0% { transform: rotate(-26deg); }
-  60% { transform: rotate(0deg); }
-  72% { transform: rotate(-3deg); }
-  100% { transform: rotate(0deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-clap-top { animation: none; }
-}
-.ss-clap-body {
-  position: absolute;
-  inset: 18px 0 0 0;
-  background: var(--ss-slate);
-  border: 1.5px solid var(--ss-bone);
-  display: grid;
-  place-items: center;
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  font-weight: 700;
-  color: var(--ss-bone);
-}
-.ss-section-title {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: clamp(28px, 3.4vw, 44px);
-  margin: 0;
-  line-height: 1;
-  letter-spacing: -0.01em;
-}
-.ss-section-meta {
-  grid-column: 2;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgba(244, 237, 216, 0.7);
-  margin: 0;
-}
+  .sb-sub {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(20px, 2vw, 26px);
+    color: var(--chalk-dim);
+    margin: 0 0 18px;
+    max-width: 720px;
+    line-height: 1.4;
+  }
 
-/* SCENES */
-.ss-scene-tabs {
-  display: flex;
-  gap: 0;
-  border: 1.5px solid var(--ss-bone);
-  width: fit-content;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-}
-.ss-scene-tab {
-  background: transparent;
-  border: 0;
-  border-right: 1.5px solid var(--ss-bone);
-  padding: 14px 22px;
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  cursor: pointer;
-  color: var(--ss-bone);
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  transition: background 200ms ease, color 200ms ease;
-}
-.ss-scene-tab:last-child { border-right: 0; }
-.ss-scene-tab.on { background: var(--ss-tape); color: var(--ss-slate); }
-.ss-scene-tab:hover, .ss-scene-tab:focus-visible { background: var(--ss-bone); color: var(--ss-slate); outline: none; }
-.ss-scene-num { font-weight: 700; }
-.ss-scene-name { font-weight: 500; }
+  .sb-cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .sb-btn {
+    display: inline-flex;
+    padding: 10px 20px;
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    border: 2px solid var(--chalk);
+    border-radius: 24px;
+    transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+  }
+  .sb-btn-primary { background: var(--chalk); color: var(--slate); }
+  .sb-btn-primary:hover, .sb-btn-primary:focus-visible {
+    background: var(--terra);
+    color: var(--chalk);
+    border-color: var(--terra);
+    transform: translateY(-2px) rotate(-1deg);
+    outline: none;
+  }
+  .sb-btn-ghost { background: transparent; color: var(--chalk); }
+  .sb-btn-ghost:hover, .sb-btn-ghost:focus-visible {
+    background: var(--chalk); color: var(--slate); transform: translateY(-2px) rotate(1deg); outline: none;
+  }
 
-.ss-scene-card {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 32px;
-  align-items: flex-start;
-  border: 1.5px solid var(--ss-bone);
-  padding: 28px;
-}
-.ss-titlecard {
-  background: var(--ss-bone);
-  color: var(--ss-slate);
-  padding: 24px;
-  border: 2px solid var(--ss-slate);
-  position: relative;
-}
-.ss-titlecard::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 1px solid var(--ss-slate);
-  pointer-events: none;
-}
-.ss-tc-eye {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-.ss-tc-title {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 36px;
-  margin: 12px 0 8px;
-  line-height: 1;
-}
-.ss-tc-log {
-  font-size: 14px;
-  line-height: 1.45;
-  margin: 0;
-}
+  .sb-credit {
+    position: absolute;
+    bottom: 6px;
+    left: 28px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--chalk-dim);
+    text-transform: uppercase;
+  }
 
-.ss-dailies {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 14px;
-}
-.ss-daily {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px dashed rgba(244, 237, 216, 0.3);
-}
-.ss-daily:last-child { border-bottom: 0; }
-.ss-daily-take {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  color: var(--ss-tape);
-}
-.ss-daily-note { font-size: 15px; line-height: 1.5; }
+  /* sandbags */
+  .sb-sandbag {
+    position: absolute;
+    bottom: -22px;
+    left: 12%;
+    width: 130px;
+    height: 70px;
+    background: linear-gradient(160deg, #C2654A 0%, #8C3F2A 60%, #5C2A1B 100%);
+    border-radius: 60% 40% 50% 50% / 60% 60% 40% 40%;
+    box-shadow: 0 6px 18px -6px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-3deg);
+  }
+  .sb-sandbag-r {
+    left: auto;
+    right: 12%;
+    transform: rotate(2deg);
+  }
+  .sb-sandbag span {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: rgba(255,255,255,0.7);
+  }
 
-/* STILLS */
-.ss-stills {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 22px;
-}
-.ss-still {
-  border: 1.5px solid var(--ss-bone);
-  padding: 14px;
-  outline: none;
-  transition: transform 220ms ease, background 220ms ease;
-}
-.ss-still:hover, .ss-still:focus-visible {
-  background: rgba(244, 237, 216, 0.08);
-  transform: translate(-1px, -2px);
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-still { transition: background 220ms ease; }
-  .ss-still:hover, .ss-still:focus-visible { transform: none; }
-}
-.ss-still-tag {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  display: inline-block;
-  background: var(--ss-tape);
-  color: var(--ss-slate);
-  padding: 4px 8px;
-  margin-bottom: 12px;
-}
-.ss-still-frame {
-  position: relative;
-  aspect-ratio: 1.85 / 1;
-  background:
-    radial-gradient(circle at 30% 70%, rgba(255, 203, 5, 0.18), transparent 50%),
-    radial-gradient(circle at 70% 30%, rgba(148, 34, 31, 0.22), transparent 55%),
-    linear-gradient(135deg, #2A282C 0%, #0F0F11 100%);
-  border: 1px solid rgba(244, 237, 216, 0.4);
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-.ss-still-art {
-  position: absolute;
-  inset: 0;
-  background:
-    repeating-linear-gradient(72deg, transparent 0px, transparent 16px, rgba(244, 237, 216, 0.05) 16px, rgba(244, 237, 216, 0.05) 17px),
-    repeating-linear-gradient(108deg, transparent 0px, transparent 30px, rgba(255, 203, 5, 0.06) 30px, rgba(255, 203, 5, 0.06) 31px);
-  mix-blend-mode: screen;
-}
-.ss-still-grain {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(244, 237, 216, 0.05) 0.4px, transparent 0.6px);
-  background-size: 4px 4px;
-  opacity: 0.6;
-}
-.ss-still-freeze {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: var(--ss-blood);
-  color: var(--ss-bone);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  padding: 4px 8px;
-  font-weight: 700;
-  animation: ss-freeze-in 220ms ease-out both;
-}
-@keyframes ss-freeze-in {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-still-freeze { animation: none; }
-}
-.ss-still-scene {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 22px;
-  margin: 0 0 6px;
-  line-height: 1.05;
-}
-.ss-still-cap {
-  font-size: 13px;
-  line-height: 1.5;
-  margin: 0;
-  color: rgba(244, 237, 216, 0.78);
-}
+  /* SECTIONS */
+  .sb-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(50px, 6vw, 96px) clamp(20px, 4vw, 48px);
+  }
+  .sb-section-head { margin-bottom: 28px; }
+  .sb-tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--terra);
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .sb-section-head h2 {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(40px, 5vw, 72px);
+    margin: 0 0 6px;
+    color: var(--chalk);
+  }
+  .sb-section-head p {
+    font-family: 'Caveat', cursive;
+    font-size: clamp(18px, 1.8vw, 22px);
+    color: var(--chalk-dim);
+  }
 
-/* CALL SHEET */
-.ss-callsheet {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1.5px solid var(--ss-bone);
-  font-family: 'DM Mono', monospace;
-  font-size: 13px;
-}
-.ss-callsheet thead th {
-  background: var(--ss-bone);
-  color: var(--ss-slate);
-  text-align: left;
-  padding: 12px 14px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 11px;
-}
-.ss-callsheet tbody tr {
-  border-top: 1px solid rgba(244, 237, 216, 0.3);
-  transition: background 180ms ease;
-}
-.ss-callsheet tbody tr:hover, .ss-callsheet tbody tr:focus-within {
-  background: rgba(255, 203, 5, 0.12);
-}
-.ss-callsheet td {
-  padding: 12px 14px;
-  vertical-align: top;
-}
-.ss-cs-time { color: var(--ss-tape); width: 90px; font-weight: 700; }
-.ss-cs-crew { width: 200px; color: var(--ss-bone); }
-.ss-cs-task { color: rgba(244, 237, 216, 0.86); line-height: 1.5; }
+  /* THREE LINES grid */
+  .sb-three-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .sb-three {
+    position: relative;
+    border: 1.5px solid rgba(240,235,220,0.4);
+    background: rgba(0,0,0,0.2);
+    padding: 24px 22px 28px;
+    transition: transform 220ms ease, border-color 220ms ease, background 220ms ease;
+    cursor: default;
+  }
+  .sb-three:hover, .sb-three:focus-visible {
+    transform: translateY(-4px) rotate(-0.6deg);
+    border-color: var(--terra);
+    background: rgba(0,0,0,0.35);
+    outline: none;
+  }
+  .sb-three-icon { margin-bottom: 14px; }
+  .sb-three-label {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 56px;
+    line-height: 0.95;
+    margin: 0 0 6px;
+    color: var(--chalk);
+  }
+  .sb-three-line2 {
+    font-family: 'Caveat', cursive;
+    font-size: 22px;
+    color: var(--chalk-dim);
+    margin-bottom: 18px;
+  }
+  .sb-three-price {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--terra);
+    border-top: 1px dashed rgba(240,235,220,0.25);
+    padding-top: 10px;
+  }
+  .sb-three-num {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--chalk-dim);
+    letter-spacing: 0.18em;
+  }
 
-/* CTA */
-.ss-section-cta { padding-bottom: 64px; }
-.ss-cta-card {
-  background: var(--ss-bone);
-  color: var(--ss-slate);
-  padding: 56px 48px;
-  border: 2px solid var(--ss-slate);
-  position: relative;
-}
-.ss-tape-cta {
-  position: absolute;
-  top: -16px;
-  left: 36px;
-}
-.ss-cta-card .ss-eyebrow { color: var(--ss-blood); }
-.ss-cta-headline {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 900;
-  font-size: clamp(40px, 5vw, 72px);
-  margin: 0 0 18px;
-  line-height: 0.96;
-  color: var(--ss-slate);
-}
-.ss-cta-body {
-  font-size: 17px;
-  line-height: 1.5;
-  margin: 0 0 28px;
-  max-width: 600px;
-  color: #2A282C;
-}
-.ss-cta-card .ss-cta-line { color: var(--ss-slate); border-color: var(--ss-slate); }
-.ss-cta-card .ss-cta-line:hover, .ss-cta-card .ss-cta-line:focus-visible { background: var(--ss-slate); color: var(--ss-bone); }
+  /* SPECIALS */
+  .sb-specials { list-style: none; margin: 0; padding: 0; }
+  .sb-specials li {
+    display: grid;
+    grid-template-columns: max-content 1fr max-content;
+    align-items: baseline;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px dashed rgba(240,235,220,0.2);
+    transition: color 140ms ease;
+    cursor: default;
+  }
+  .sb-specials li:hover, .sb-specials li:focus-visible {
+    color: var(--terra);
+    outline: none;
+  }
+  .sb-special-item {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(22px, 2.4vw, 32px);
+  }
+  .sb-special-dots {
+    font-family: 'Inter', sans-serif;
+    color: rgba(240,235,220,0.35);
+    overflow: hidden;
+    white-space: nowrap;
+    letter-spacing: 0.4em;
+  }
+  .sb-special-price {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: clamp(22px, 2.4vw, 32px);
+    color: var(--terra);
+    transition: transform 140ms ease;
+  }
+  .sb-specials li:hover .sb-special-price { transform: scale(1.06); }
 
-/* FOOTER */
-.ss-footer {
-  border-top: 1.5px solid var(--ss-bone);
-  padding: 18px 0 24px;
-  overflow: hidden;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.ss-end-crawl {
-  white-space: nowrap;
-  overflow: hidden;
-  position: relative;
-  margin-bottom: 12px;
-  border-bottom: 1px solid rgba(244, 237, 216, 0.3);
-  padding: 10px 0;
-}
-.ss-end-crawl span {
-  display: inline-block;
-  padding-left: 100%;
-  animation: ss-crawl 36s linear infinite;
-  color: rgba(244, 237, 216, 0.85);
-}
-@keyframes ss-crawl {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .ss-end-crawl span { animation: none; padding-left: 36px; }
-}
-.ss-foot-credit {
-  text-align: center;
-  margin: 0;
-  padding: 0 36px;
-  color: rgba(244, 237, 216, 0.6);
-}
+  /* WALK */
+  .sb-walk {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .sb-walk-card {
+    border: 1.5px solid rgba(240,235,220,0.35);
+    padding: 18px 20px;
+    background: rgba(0,0,0,0.2);
+    transition: transform 220ms ease, border-color 220ms ease, background 220ms ease;
+    cursor: default;
+  }
+  .sb-walk-card:nth-child(odd) { transform: rotate(-0.5deg); }
+  .sb-walk-card:nth-child(even) { transform: rotate(0.4deg); }
+  .sb-walk-card:hover, .sb-walk-card:focus-visible {
+    transform: translateY(-3px) rotate(0deg);
+    border-color: var(--terra);
+    background: rgba(0,0,0,0.3);
+    outline: none;
+  }
+  .sb-walk-date {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--terra);
+    margin-bottom: 4px;
+  }
+  .sb-walk-addr {
+    font-family: 'Caveat', cursive;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1.05;
+    color: var(--chalk);
+  }
+  .sb-walk-note {
+    font-family: 'Caveat', cursive;
+    font-size: 20px;
+    color: var(--chalk-dim);
+    margin-top: 4px;
+  }
 
-/* FOCUS */
-.ss-shell *:focus-visible { outline: 2px solid var(--ss-tape); outline-offset: 3px; }
+  /* FOOTER */
+  .sb-foot {
+    position: relative;
+    z-index: 1;
+    border-top: 1px dashed rgba(240,235,220,0.2);
+    padding: 28px clamp(20px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--chalk-dim);
+  }
+  .sb-foot-card {
+    position: relative;
+    background: #F2EBD7;
+    color: var(--slate);
+    padding: 10px 14px;
+    transform: rotate(-4deg);
+    box-shadow: 0 6px 14px -8px rgba(0,0,0,0.5);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.14em;
+  }
+  .sb-foot-tack {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: radial-gradient(circle at 30% 30%, #FF6A4A 0%, #B6553B 60%, #5C2A1B 100%);
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
 
-@media (max-width: 980px) {
-  .ss-top { grid-template-columns: 1fr; }
-  .ss-slate { width: 100%; }
-  .ss-nav { justify-content: flex-start; }
-  .ss-stills { grid-template-columns: 1fr 1fr; }
-  .ss-scene-card { grid-template-columns: 1fr; }
-  .ss-hero-content { inset: auto 5% 8% 5%; }
-}
-@media (max-width: 640px) {
-  .ss-stills { grid-template-columns: 1fr; }
-  .ss-callsheet { font-size: 12px; }
-  .ss-cs-crew { width: 120px; }
-}
+  @media (max-width: 720px) {
+    .sb-headline { font-size: clamp(56px, 16vw, 110px); }
+    .sb-special-dots { display: none; }
+    .sb-sandbag { width: 90px; height: 50px; }
+  }
 `;

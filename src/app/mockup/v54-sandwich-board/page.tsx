@@ -1,11 +1,11 @@
 import { PageApproach } from "../_lib/PageApproach";
-import SoundStageEngine from "./_engine/SoundStageEngine";
+import SandwichBoardEngine from "./_engine/SandwichBoardEngine";
 
-export default function SoundStagePage() {
+export default function SandwichBoardPage() {
   return (
-    <main style={{ background: "#131214", color: "#F4EDD8", minHeight: "100vh" }}>
+    <main style={{ background: "#1B1F1D", color: "#F0EBDC", minHeight: "100vh" }}>
       <PageApproach>
-        <SoundStageEngine />
+        <SandwichBoardEngine />
       </PageApproach>
     </main>
   );

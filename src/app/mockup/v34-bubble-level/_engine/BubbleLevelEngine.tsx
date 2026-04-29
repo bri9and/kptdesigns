@@ -1,979 +1,693 @@
 "use client";
 
 /**
- * GridNorthEngine — V34 Grid North
+ * BubbleLevelEngine — V34 Bubble Level
  *
- * Survey-plat composition for landscaping. Bearings, monuments, north arrow,
- * parcel hatch. Cadastral, exact, legal — borrows the artifact the property
- * owner already trusts.
+ * A torpedo-level instrument as the page rail. Three glass vials run across
+ * the top — PLUMB / LEVEL / 45° — and the bubble glides toward the active
+ * section's vial as the user scrolls. Brass end-caps mark sections; copy
+ * lives in the milled-aluminum body of the level. Trade: service plumbing.
+ *
+ * No Tailwind. Inline <style> only. Reduced-motion locks the bubble center.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const BEARINGS = [
-  {
-    bearing: "N 17°42' E",
-    distance: "184.6'",
-    name: "Stake-and-flag",
-    note: "Property walks with the owner. Bed lines staked, every plant location flagged before a shovel breaks ground.",
-  },
-  {
-    bearing: "S 64°05' E",
-    distance: "112.3'",
-    name: "Spec & Install",
-    note: "Drawn to plan. Hardscape set against the actual lot, not a marketing rendering. Softscape spec'd to the hardiness zone.",
-  },
-  {
-    bearing: "S 22°18' W",
-    distance: "227.9'",
-    name: "Maintain",
-    note: "Edge-and-blow rhythm. Mid-summer prune. Bed-line truing at the start of every season.",
-  },
+const VIALS = [
+  { id: "plumb", label: "PLUMB", note: "Vertical work" },
+  { id: "level", label: "LEVEL", note: "Horizontal runs" },
+  { id: "forty", label: "45°", note: "Offsets, traps" },
+] as const;
+
+const PLUMB_ITEMS = [
+  { spec: "DWV STACK · 3\" PVC", note: "Vent up through plate, plumb to within 1/8\" over 8'." },
+  { spec: "RISER · COPPER L", note: "Lav rough-in trued to the stud, no kicked plumb." },
+  { spec: "CLOSET FLANGE", note: "Top of flange 1/4\" proud of finished tile, dead level." },
 ];
 
-const MONUMENTS = [
-  {
-    label: "M-1",
-    name: "Brookline — Rear yard",
-    type: "Hardscape + softscape",
-    sf: "1,840 SF",
-    note: "Belgard Dimensions in Charcoal. Hakonechloa mass plant, Acer 'October Glory' specimen.",
-  },
-  {
-    label: "M-2",
-    name: "Wellesley — Driveway edge",
-    type: "Hardscape — granite cobble",
-    sf: "84 LF",
-    note: "Granite cobble border, Corten steel bed-to-lawn edge. Owner-spec'd in stone yard, May 4.",
-  },
-  {
-    label: "M-3",
-    name: "Newton — Canopy lift",
-    type: "Tree work + softscape",
-    sf: "0.6 AC",
-    note: "Two reds lifted to 14'. Mulch ring 4' radius. No volcano. Bed-line trued.",
-  },
-  {
-    label: "M-4",
-    name: "Needham — Install day",
-    type: "Softscape — full install",
-    sf: "3,210 SF",
-    note: "412 SF patio, 9 CY mulch, 22 Pennisetum at front-of-bed rhythm. Mulch on Friday.",
-  },
+const LEVEL_ITEMS = [
+  { spec: "TRAP ARM · 1/4 IN/FT", note: "Lav to stack, fall scribed on the joist." },
+  { spec: "BUILDING DRAIN · 4\" PVC", note: "Cleanout to street, 1/8\"/ft minimum, 1/4\"/ft preferred." },
+  { spec: "WATER MAIN · 3/4\" PEX-A", note: "Run buried, pressure-tested 80 psi for 15 min — held." },
 ];
 
-const PARCELS = [
-  { id: "P-01", soft: 64, hard: 28, lawn: 8 },
-  { id: "P-02", soft: 41, hard: 47, lawn: 12 },
-  { id: "P-03", soft: 78, hard: 14, lawn: 8 },
-  { id: "P-04", soft: 52, hard: 32, lawn: 16 },
-  { id: "P-05", soft: 39, hard: 51, lawn: 10 },
-  { id: "P-06", soft: 71, hard: 18, lawn: 11 },
+const FORTY_ITEMS = [
+  { spec: "OFFSET · 22.5° + 22.5°", note: "Around the joist drop, no double-trap." },
+  { spec: "TWO 45° SWEEPS", note: "Cleaner flow than a single 90° at the stack." },
+  { spec: "P-TRAP DEPTH · 2\"", note: "Sealed by the seal — measured wet." },
 ];
 
-export default function GridNorthEngine() {
-  const [hoveredBearing, setHoveredBearing] = useState<number | null>(null);
-  const [openMonument, setOpenMonument] = useState<number | null>(0);
+const FLANGES = [
+  { id: "F-01", caption: "Closet flange, shimmed plumb with cedar shake — winter rough." },
+  { id: "F-02", caption: "Hub-and-spigot wiped clean, still warm from the iron." },
+  { id: "F-03", caption: "1/2\" copper stub-out, sweat joint cooled, no flux smear." },
+  { id: "F-04", caption: "PEX-A manifold, color-coded, labeled by fixture." },
+];
+
+export default function BubbleLevelEngine() {
+  const [active, setActive] = useState<number>(1); // start on LEVEL (centered)
+  const [reduced, setReduced] = useState(false);
+  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (reduced) return;
+    const opts = { threshold: 0.45, rootMargin: "-20% 0px -30% 0px" };
+    const obs = new IntersectionObserver((entries) => {
+      const visible = entries.filter((e) => e.isIntersecting);
+      if (visible.length === 0) return;
+      const top = visible.sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      const idx = Number((top.target as HTMLElement).dataset.vial);
+      if (!Number.isNaN(idx)) setActive(idx);
+    }, opts);
+
+    sectionRefs.current.forEach((el) => el && obs.observe(el));
+    return () => obs.disconnect();
+  }, [reduced]);
+
+  // Bubble position: 0 → left vial, 1 → middle, 2 → right.
+  const bubblePct = reduced ? 50 : 16.6 + active * 33.3;
 
   return (
-    <>
+    <div className="bl-root">
       <style>{css}</style>
-      <div className="gn-shell">
-        {/* Plat margin grid */}
-        <div className="gn-margin" aria-hidden>
-          <div className="gn-margin-tick" style={{ top: "10%" }} />
-          <div className="gn-margin-tick" style={{ top: "30%" }} />
-          <div className="gn-margin-tick" style={{ top: "50%" }} />
-          <div className="gn-margin-tick" style={{ top: "70%" }} />
-          <div className="gn-margin-tick" style={{ top: "90%" }} />
-        </div>
 
-        {/* TOP TITLEBLOCK */}
-        <header className="gn-top">
-          <div className="gn-stamp">
-            <span className="gn-stamp-line">REGISTERED</span>
-            <span className="gn-stamp-line gn-stamp-bold">LAND DESIGN</span>
-            <span className="gn-stamp-line">EST. 2014 — N 42° 19'</span>
+      {/* ── HERO — torpedo level body ──────────────────────────────── */}
+      <header className="bl-hero">
+        <div className="bl-aluminum">
+          <div className="bl-stencil">
+            <div className="bl-stencil-line">KPT · INSTRUMENT GRADE</div>
+            <div className="bl-stencil-serial">SN · 0034 · TORPEDO · 9IN</div>
           </div>
-          <nav className="gn-nav" aria-label="Primary">
-            <a className="gn-nav-link" href="#bearings">Bearings</a>
-            <a className="gn-nav-link" href="#monuments">Monuments</a>
-            <a className="gn-nav-link" href="#parcels">Parcel detail</a>
-            <a className="gn-nav-link gn-nav-cta" href="#cta">Plat my property</a>
-          </nav>
 
-          {/* North arrow rosette */}
-          <div className="gn-rose" role="img" aria-label="North arrow, true north">
-            <svg viewBox="0 0 100 100" width="68" height="68" aria-hidden>
-              <circle cx="50" cy="50" r="46" fill="none" stroke="#0B0D10" strokeWidth="1" />
-              <circle cx="50" cy="50" r="38" fill="none" stroke="#0B0D10" strokeWidth="0.5" strokeDasharray="2 2" />
-              {/* compass points */}
-              <line x1="50" y1="6" x2="50" y2="14" stroke="#0B0D10" strokeWidth="1" />
-              <line x1="50" y1="86" x2="50" y2="94" stroke="#0B0D10" strokeWidth="1" />
-              <line x1="6" y1="50" x2="14" y2="50" stroke="#0B0D10" strokeWidth="1" />
-              <line x1="86" y1="50" x2="94" y2="50" stroke="#0B0D10" strokeWidth="1" />
-              {/* arrow */}
-              <polygon points="50,12 56,52 50,46 44,52" fill="#0B0D10" />
-              <polygon points="50,88 56,52 50,58 44,52" fill="none" stroke="#0B0D10" strokeWidth="1" />
-              <text x="50" y="22" textAnchor="middle" fontFamily="Inter, sans-serif" fontWeight="700" fontSize="9" fill="#B8377A">N</text>
-            </svg>
+          <div className="bl-vial-rail" role="presentation">
+            {VIALS.map((v, i) => {
+              const isActive = active === i;
+              return (
+                <button
+                  type="button"
+                  key={v.id}
+                  className={`bl-cap${isActive ? " bl-cap-on" : ""}`}
+                  onClick={() => {
+                    setActive(i);
+                    sectionRefs.current[i]?.scrollIntoView({
+                      behavior: reduced ? "auto" : "smooth",
+                      block: "start",
+                    });
+                  }}
+                  aria-label={`Jump to ${v.label} section`}
+                >
+                  <span className="bl-cap-label">{v.label}</span>
+                  <span className="bl-cap-note">{v.note}</span>
+                </button>
+              );
+            })}
+
+            {/* the long vial chamber */}
+            <div className="bl-vial-glass" aria-hidden>
+              <div className="bl-vial-fluid" />
+              <div className="bl-vial-marks">
+                <span style={{ left: "16.6%" }} />
+                <span style={{ left: "50%" }} />
+                <span style={{ left: "83.3%" }} />
+              </div>
+              <div
+                className="bl-bubble"
+                style={{ left: `calc(${bubblePct}% - 22px)` }}
+              />
+            </div>
           </div>
-        </header>
 
-        {/* HERO — bearings draw across the page */}
-        <section className="gn-hero">
-          <svg className="gn-hero-bearings" viewBox="0 0 1200 600" preserveAspectRatio="none" aria-hidden>
-            <defs>
-              <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="6" stroke="#B8377A" strokeWidth="1" opacity="0.55" />
-              </pattern>
-            </defs>
-            {/* parcel polygon */}
-            <polygon
-              points="180,60 1080,90 1100,520 220,490"
-              fill="url(#hatch)"
-              stroke="#0B0D10"
-              strokeWidth="1.5"
-              opacity="0.85"
-            />
-            <polygon
-              points="180,60 1080,90 1100,520 220,490"
-              fill="none"
-              stroke="#B8377A"
-              strokeWidth="2"
-            />
-            {/* bearing arrows */}
-            <line x1="180" y1="60" x2="1080" y2="90" stroke="#0B0D10" strokeWidth="0.75" />
-            <line x1="1080" y1="90" x2="1100" y2="520" stroke="#0B0D10" strokeWidth="0.75" />
-            <line x1="1100" y1="520" x2="220" y2="490" stroke="#0B0D10" strokeWidth="0.75" />
-            <line x1="220" y1="490" x2="180" y2="60" stroke="#0B0D10" strokeWidth="0.75" />
-            {/* monument markers */}
-            <circle cx="180" cy="60" r="5" fill="#0B0D10" />
-            <circle cx="1080" cy="90" r="5" fill="#0B0D10" />
-            <circle cx="1100" cy="520" r="5" fill="#0B0D10" />
-            <circle cx="220" cy="490" r="5" fill="#0B0D10" />
-          </svg>
-
-          <div className="gn-hero-content">
-            <p className="gn-hero-cite">PLAT OF SURVEY — JOB 2026-047</p>
-            <h1 className="gn-headline">
-              Spec&rsquo;d to plan.
-              <br />
-              Mulched to the property line.
-              <br />
-              <span className="gn-headline-mark">Bearings true</span> to the monument.
+          <div className="bl-headline">
+            <div className="bl-eyebrow">DISPATCH 04 · 28 · LATE EDITION</div>
+            <h1>
+              Plumb. <em>Level.</em> Tested.
             </h1>
-            <p className="gn-sub">
-              Landscape installs that survey, stake, and stay — designed
-              against the actual lot, not a marketing rendering.
+            <p>
+              Service plumbing for the houses where nothing&rsquo;s supposed to leave plumb &mdash;
+              DWV rough-in, repipe, and the inspection that didn&rsquo;t punch.
             </p>
-            <div className="gn-cta-row">
-              <a href="#cta" className="gn-cta gn-cta-primary">Plat my property</a>
-              <a href="#bearings" className="gn-cta gn-cta-secondary">See bearings</a>
-            </div>
-
-            <dl className="gn-hero-data">
-              <div>
-                <dt>Lot</dt><dd>0.47 AC</dd>
-              </div>
-              <div>
-                <dt>Frontage</dt><dd>184.6'</dd>
-              </div>
-              <div>
-                <dt>Zone</dt><dd>R-1 (single-family)</dd>
-              </div>
-              <div>
-                <dt>Hardiness</dt><dd>6b</dd>
-              </div>
-            </dl>
-          </div>
-        </section>
-
-        {/* BEARINGS */}
-        <section className="gn-section" id="bearings">
-          <header className="gn-section-head">
-            <span className="gn-section-num">§ 01</span>
-            <h2 className="gn-section-title">Bearings</h2>
-            <p className="gn-section-kicker">
-              Three named services as bearing-and-distance lines. Hover or
-              focus a bearing to drive the project at the end of the line.
-            </p>
-          </header>
-
-          <div className="gn-bearings">
-            <div className="gn-bearings-list">
-              {BEARINGS.map((b, i) => (
-                <button
-                  type="button"
-                  key={i}
-                  className={`gn-bearing-row${hoveredBearing === i ? " is-active" : ""}`}
-                  onMouseEnter={() => setHoveredBearing(i)}
-                  onMouseLeave={() =>
-                    setHoveredBearing((cur) => (cur === i ? null : cur))
-                  }
-                  onFocus={() => setHoveredBearing(i)}
-                  onBlur={() =>
-                    setHoveredBearing((cur) => (cur === i ? null : cur))
-                  }
-                  aria-pressed={hoveredBearing === i}
-                >
-                  <span className="gn-bearing-meta">
-                    <span className="gn-bearing-tag">{b.bearing}</span>
-                    <span className="gn-bearing-dist">{b.distance}</span>
-                  </span>
-                  <span className="gn-bearing-name">{b.name}</span>
-                  <span className="gn-bearing-arrow" aria-hidden>→</span>
-                </button>
-              ))}
-            </div>
-            <aside className="gn-bearings-detail" aria-live="polite">
-              <p className="gn-bearings-label">END OF LINE</p>
-              <h3 className="gn-bearings-title">
-                {hoveredBearing != null
-                  ? BEARINGS[hoveredBearing].name
-                  : "Hover a bearing"}
-              </h3>
-              <p className="gn-bearings-note">
-                {hoveredBearing != null
-                  ? BEARINGS[hoveredBearing].note
-                  : "Each line runs from a corner monument to a project at its terminus. Three services, three bearings."}
-              </p>
-              <div className="gn-bearings-key">
-                <span className="gn-bearings-key-row">
-                  <span className="gn-bearings-key-marker" aria-hidden />
-                  Monument cap (brass)
-                </span>
-                <span className="gn-bearings-key-row">
-                  <span className="gn-bearings-key-line" aria-hidden />
-                  Bearing line
-                </span>
-                <span className="gn-bearings-key-row">
-                  <span className="gn-bearings-key-hatch" aria-hidden />
-                  Project parcel (hatched)
-                </span>
-              </div>
-            </aside>
-          </div>
-        </section>
-
-        {/* MONUMENTS */}
-        <section className="gn-section" id="monuments">
-          <header className="gn-section-head">
-            <span className="gn-section-num">§ 02</span>
-            <h2 className="gn-section-title">Monuments</h2>
-            <p className="gn-section-kicker">
-              Past jobs as monument markers along a section line. Click to
-              pop the project card.
-            </p>
-          </header>
-
-          <div className="gn-monuments">
-            <div className="gn-section-line" aria-hidden>
-              <div className="gn-section-line-rule" />
-              {MONUMENTS.map((m, i) => (
-                <button
-                  type="button"
-                  key={m.label}
-                  className={`gn-monument-pin${openMonument === i ? " is-open" : ""}`}
-                  style={{ left: `${10 + i * 26}%` }}
-                  onClick={() => setOpenMonument((cur) => (cur === i ? null : i))}
-                  aria-label={`${m.label} ${m.name}`}
-                >
-                  <span className="gn-monument-cap" aria-hidden />
-                  <span className="gn-monument-label">{m.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="gn-monument-cards">
-              {MONUMENTS.map((m, i) => (
-                <article
-                  key={m.label}
-                  className={`gn-monument-card${openMonument === i ? " is-open" : ""}`}
-                  aria-hidden={openMonument !== i}
-                >
-                  <header className="gn-monument-card-head">
-                    <span className="gn-monument-card-label">{m.label}</span>
-                    <span className="gn-monument-card-sf">{m.sf}</span>
-                  </header>
-                  <h4 className="gn-monument-card-name">{m.name}</h4>
-                  <p className="gn-monument-card-type">{m.type}</p>
-                  <p className="gn-monument-card-note">{m.note}</p>
-                </article>
-              ))}
+            <div className="bl-cta-row">
+              <a className="bl-btn bl-btn-primary" href="#run-the-vials">Call a plumber</a>
+              <a className="bl-btn bl-btn-ghost" href="#inspection">Book a level-check</a>
             </div>
           </div>
-        </section>
+        </div>
+      </header>
 
-        {/* PARCEL DETAIL */}
-        <section className="gn-section" id="parcels">
-          <header className="gn-section-head">
-            <span className="gn-section-num">§ 03</span>
-            <h2 className="gn-section-title">Parcel Detail</h2>
-            <p className="gn-section-kicker">
-              Hatched parcels showing softscape, hardscape, and lawn
-              distribution per project.
-            </p>
-          </header>
+      {/* ── RUN THE VIALS ───────────────────────────────────────────── */}
+      <section
+        id="run-the-vials"
+        className="bl-section"
+        data-vial={0}
+        ref={(el) => { sectionRefs.current[0] = el; }}
+      >
+        <div className="bl-section-head">
+          <span className="bl-section-tag">VIAL 01</span>
+          <h2>Plumb &mdash; vertical work</h2>
+          <p>The stack rises, the riser stands, the flange sits proud of the tile. We don&rsquo;t leave a job until a 9&Prime; torpedo says yes on every face.</p>
+        </div>
+        <ul className="bl-spec-list">
+          {PLUMB_ITEMS.map((it) => (
+            <li key={it.spec}>
+              <span className="bl-spec-label">{it.spec}</span>
+              <span className="bl-spec-note">{it.note}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-          <ul className="gn-parcels">
-            {PARCELS.map((p) => (
-              <li key={p.id} className="gn-parcel">
-                <div className="gn-parcel-frame" tabIndex={0}>
-                  <span
-                    className="gn-parcel-band gn-parcel-soft"
-                    style={{ flex: p.soft }}
-                    title={`Softscape ${p.soft}%`}
-                  />
-                  <span
-                    className="gn-parcel-band gn-parcel-hard"
-                    style={{ flex: p.hard }}
-                    title={`Hardscape ${p.hard}%`}
-                  />
-                  <span
-                    className="gn-parcel-band gn-parcel-lawn"
-                    style={{ flex: p.lawn }}
-                    title={`Lawn ${p.lawn}%`}
-                  />
-                </div>
-                <div className="gn-parcel-meta">
-                  <span className="gn-parcel-id">{p.id}</span>
-                  <span className="gn-parcel-pct">
-                    SOFT {p.soft}% · HARD {p.hard}% · LAWN {p.lawn}%
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
+      <section
+        className="bl-section"
+        data-vial={1}
+        ref={(el) => { sectionRefs.current[1] = el; }}
+      >
+        <div className="bl-section-head">
+          <span className="bl-section-tag">VIAL 02</span>
+          <h2>Level &mdash; horizontal runs</h2>
+          <p>Drains have to fall. Mains have to hold. Trap arms run 1/4&Prime; per foot or the inspector hands you a punch list.</p>
+        </div>
+        <ul className="bl-spec-list">
+          {LEVEL_ITEMS.map((it) => (
+            <li key={it.spec}>
+              <span className="bl-spec-label">{it.spec}</span>
+              <span className="bl-spec-note">{it.note}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        {/* TITLEBLOCK FOOTER */}
-        <footer className="gn-foot" id="cta">
-          <div className="gn-foot-block">
-            <div className="gn-foot-stamp">
-              <p className="gn-foot-stamp-title">SURVEYOR&rsquo;S NOTE</p>
-              <p className="gn-foot-stamp-body">
-                All bearings shown are referenced to grid north (NAD83). All
-                distances are horizontal and in U.S. Survey Feet. Designed
-                against the deed, not the rendering.
-              </p>
+      <section
+        className="bl-section"
+        data-vial={2}
+        ref={(el) => { sectionRefs.current[2] = el; }}
+      >
+        <div className="bl-section-head">
+          <span className="bl-section-tag">VIAL 03</span>
+          <h2>45&deg; &mdash; offsets and traps</h2>
+          <p>Two 22.5&deg; sweeps beat a single 90&deg;. Two 45&deg; offsets clear a joist without doubling the trap. The vial reads truth at the bevel.</p>
+        </div>
+        <ul className="bl-spec-list">
+          {FORTY_ITEMS.map((it) => (
+            <li key={it.spec}>
+              <span className="bl-spec-label">{it.spec}</span>
+              <span className="bl-spec-note">{it.note}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* ── CLOSET FLANGE GALLERY ───────────────────────────────────── */}
+      <section className="bl-gallery">
+        <div className="bl-section-head">
+          <span className="bl-section-tag">GALLERY · TRIM-OUT</span>
+          <h2>Closet flange, copper stub, manifold</h2>
+          <p>Macro detail captioned in monospace. The work is the proof.</p>
+        </div>
+        <div className="bl-gallery-grid">
+          {FLANGES.map((f) => (
+            <figure key={f.id} className="bl-flange">
+              <div className="bl-flange-art" aria-hidden>
+                <svg viewBox="0 0 200 200" width="100%" height="100%">
+                  <defs>
+                    <radialGradient id={`grad-${f.id}`} cx="50%" cy="50%" r="55%">
+                      <stop offset="0%" stopColor="#2A2C30" />
+                      <stop offset="60%" stopColor="#1B1D21" />
+                      <stop offset="100%" stopColor="#0F1114" />
+                    </radialGradient>
+                  </defs>
+                  <rect width="200" height="200" fill={`url(#grad-${f.id})`} />
+                  <circle cx="100" cy="100" r="58" fill="none" stroke="#C7C9CB" strokeWidth="2.5" />
+                  <circle cx="100" cy="100" r="44" fill="none" stroke="#C7C9CB" strokeWidth="1" opacity="0.55" />
+                  <circle cx="100" cy="100" r="22" fill="#0F1114" stroke="#E0B348" strokeWidth="1" />
+                  {[0, 60, 120, 180, 240, 300].map((deg) => {
+                    const r = 58;
+                    const x = 100 + r * Math.cos((deg * Math.PI) / 180);
+                    const y = 100 + r * Math.sin((deg * Math.PI) / 180);
+                    return <circle key={deg} cx={x} cy={y} r="2.5" fill="#E0B348" />;
+                  })}
+                  <line x1="100" y1="20" x2="100" y2="180" stroke="#E0B348" strokeWidth="0.5" opacity="0.35" />
+                  <line x1="20" y1="100" x2="180" y2="100" stroke="#E0B348" strokeWidth="0.5" opacity="0.35" />
+                </svg>
+              </div>
+              <figcaption>
+                <span className="bl-flange-id">{f.id}</span>
+                <span className="bl-flange-cap">{f.caption}</span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      {/* ── INSPECTION SLIP ─────────────────────────────────────────── */}
+      <section id="inspection" className="bl-inspect">
+        <div className="bl-slip">
+          <div className="bl-slip-head">
+            <span>BUILDING DEPT &middot; ROUGH INSPECTION</span>
+            <span>FORM IR-12</span>
+          </div>
+          <div className="bl-slip-body">
+            <div className="bl-slip-row">
+              <span>PROJECT</span>
+              <span>2218 ELM &middot; SFR REPIPE</span>
             </div>
-            <div className="gn-foot-grid">
-              <div>
-                <p className="gn-foot-label">Designed by</p>
-                <p className="gn-foot-value">KPT Land Design — A. Halloran, ASLA</p>
-              </div>
-              <div>
-                <p className="gn-foot-label">Survey collaborator</p>
-                <p className="gn-foot-value">B. Marquez, R.L.S. #44218</p>
-              </div>
-              <div>
-                <p className="gn-foot-label">Service area</p>
-                <p className="gn-foot-value">Greater Boston — N 42° 19'</p>
-              </div>
-              <div>
-                <p className="gn-foot-label">Plat my property</p>
-                <p className="gn-foot-value">
-                  <a className="gn-foot-link" href="#cta">walk@kpt-design.work</a>
-                </p>
-              </div>
+            <div className="bl-slip-row">
+              <span>CONTRACTOR</span>
+              <span>KPT PLUMBING &middot; LIC PB-04412</span>
+            </div>
+            <div className="bl-slip-row">
+              <span>DATE</span>
+              <span>2026 &middot; 04 &middot; 28</span>
+            </div>
+            <div className="bl-slip-row">
+              <span>INSPECTOR</span>
+              <span>R. M.</span>
+            </div>
+            <div className="bl-stamp">
+              <span>PASS</span>
+              <span>NO PUNCH</span>
             </div>
           </div>
-          <div className="gn-foot-scale" aria-hidden>
-            <span className="gn-foot-scale-num">0</span>
-            <span className="gn-foot-scale-bar gn-foot-scale-bar-black" />
-            <span className="gn-foot-scale-bar gn-foot-scale-bar-white" />
-            <span className="gn-foot-scale-bar gn-foot-scale-bar-black" />
-            <span className="gn-foot-scale-bar gn-foot-scale-bar-white" />
-            <span className="gn-foot-scale-num">40'</span>
-            <span className="gn-foot-scale-label">SCALE 1&quot; = 20 FT</span>
-          </div>
-        </footer>
-      </div>
-    </>
+        </div>
+      </section>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────── */}
+      <footer className="bl-foot">
+        <div>KPT &middot; SERVICE PLUMBING</div>
+        <div>MASTER PLUMBER LIC PB-04412</div>
+        <div>UPC &sect;1101 &middot; DWV CHAPTER 7</div>
+      </footer>
+    </div>
   );
 }
 
 const css = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
-:root, .gn-shell {
-  --plat: #F8F5EE;
-  --plat-2: #EFEBDF;
-  --ink: #0B0D10;
-  --ink-soft: #2C2F35;
-  --magenta: #B8377A;
-  --magenta-soft: rgba(184,55,122,0.18);
-  --rule: #1F2126;
-}
-
-.gn-shell {
-  position: relative;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: var(--ink);
-  background: var(--plat);
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 28px 56px 80px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-.gn-shell::before {
-  content: "";
-  position: absolute;
-  inset: 16px;
-  border: 1px solid var(--ink);
-  pointer-events: none;
-}
-.gn-shell::after {
-  content: "";
-  position: absolute;
-  inset: 22px;
-  border: 1px dashed var(--ink-soft);
-  pointer-events: none;
-  opacity: 0.45;
-}
-.gn-margin { position: absolute; inset: 22px 14px 22px auto; width: 8px; pointer-events: none; }
-.gn-margin-tick {
-  position: absolute;
-  width: 8px;
-  height: 1px;
-  background: var(--ink);
-}
-
-/* TOP */
-.gn-top {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  gap: 32px;
-  align-items: center;
-  padding-bottom: 16px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--ink);
-}
-.gn-stamp {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--ink);
-  border: 1.5px solid var(--ink);
-  padding: 8px 14px;
-  line-height: 1.4;
-  text-transform: uppercase;
-}
-.gn-stamp-bold { font-weight: 700; font-size: 13px; letter-spacing: 0.14em; }
-.gn-nav {
-  display: flex;
-  gap: 24px;
-  font-size: 13px;
-  font-weight: 500;
-}
-.gn-nav-link {
-  color: var(--ink);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  padding-bottom: 2px;
-  transition: border-color 160ms, color 160ms;
-}
-.gn-nav-link:hover, .gn-nav-link:focus-visible {
-  border-bottom-color: var(--magenta);
-  color: var(--magenta);
-  outline: none;
-}
-.gn-nav-cta {
-  background: var(--ink);
-  color: var(--plat);
-  padding: 8px 14px;
-  border-bottom: none;
-}
-.gn-nav-cta:hover, .gn-nav-cta:focus-visible {
-  background: var(--magenta);
-  color: var(--plat);
-}
-
-.gn-rose {
-  width: 68px;
-  height: 68px;
-  display: grid;
-  place-items: center;
-}
-
-/* HERO */
-.gn-hero {
-  position: relative;
-  min-height: 540px;
-  margin-bottom: 96px;
-  border: 1px solid var(--ink);
-  background: var(--plat);
-  overflow: hidden;
-}
-.gn-hero-bearings {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.gn-hero-content {
-  position: relative;
-  padding: 56px 56px 48px;
-  max-width: 760px;
-}
-.gn-hero-cite {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--magenta);
-  margin: 0 0 18px;
-  font-weight: 700;
-}
-.gn-headline {
-  font-family: 'Inter', sans-serif;
-  font-weight: 800;
-  font-size: clamp(40px, 6.4vw, 76px);
-  line-height: 1.0;
-  letter-spacing: -0.02em;
-  margin: 0 0 24px;
-  font-stretch: 110%;
-}
-.gn-headline-mark {
-  background: var(--magenta);
-  color: var(--plat);
-  padding: 0 8px;
-  display: inline-block;
-}
-.gn-sub {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 19px;
-  line-height: 1.5;
-  max-width: 56ch;
-  margin: 0 0 28px;
-}
-.gn-cta-row { display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; }
-.gn-cta {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  text-decoration: none;
-  padding: 12px 18px;
-  border: 1.5px solid var(--ink);
-  transition: background 160ms, color 160ms, transform 160ms;
-}
-.gn-cta-primary { background: var(--ink); color: var(--plat); }
-.gn-cta-primary:hover, .gn-cta-primary:focus-visible {
-  background: var(--magenta);
-  border-color: var(--magenta);
-  outline: none;
-  transform: translate(-1px, -1px);
-}
-.gn-cta-secondary { background: var(--plat); color: var(--ink); }
-.gn-cta-secondary:hover, .gn-cta-secondary:focus-visible {
-  background: var(--ink);
-  color: var(--plat);
-  outline: none;
-  transform: translate(-1px, -1px);
-}
-
-.gn-hero-data {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px 24px;
-  border-top: 1px solid var(--ink);
-  padding-top: 18px;
-  margin: 0;
-  font-family: 'JetBrains Mono', monospace;
-}
-.gn-hero-data dt {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #555;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.gn-hero-data dd {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-}
-
-/* SECTIONS */
-.gn-section { margin-bottom: 96px; }
-.gn-section-head {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 24px 36px;
-  align-items: baseline;
-  margin-bottom: 36px;
-  border-top: 1px solid var(--ink);
-  padding-top: 24px;
-}
-.gn-section-num {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.16em;
-}
-.gn-section-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 800;
-  font-size: clamp(28px, 4vw, 44px);
-  letter-spacing: -0.01em;
-  margin: 0;
-  font-stretch: 115%;
-  text-transform: uppercase;
-}
-.gn-section-kicker {
-  grid-column: 2;
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 16px;
-  line-height: 1.5;
-  max-width: 60ch;
-  color: var(--ink-soft);
-  margin: 0;
-}
-
-/* BEARINGS */
-.gn-bearings {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 36px;
-}
-@media (max-width: 880px) {
-  .gn-bearings { grid-template-columns: 1fr; }
-}
-.gn-bearings-list {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--ink);
-}
-.gn-bearing-row {
-  display: grid;
-  grid-template-columns: 200px 1fr 30px;
-  gap: 16px;
-  align-items: center;
-  width: 100%;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--ink);
-  padding: 22px 0;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: var(--ink);
-  transition: background 160ms, color 160ms;
-}
-.gn-bearing-row:hover, .gn-bearing-row:focus-visible, .gn-bearing-row.is-active {
-  background: var(--magenta-soft);
-  outline: none;
-}
-.gn-bearing-row.is-active .gn-bearing-arrow,
-.gn-bearing-row:hover .gn-bearing-arrow,
-.gn-bearing-row:focus-visible .gn-bearing-arrow {
-  color: var(--magenta);
-  transform: translateX(8px);
-}
-.gn-bearing-meta {
-  font-family: 'JetBrains Mono', monospace;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.gn-bearing-tag {
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  color: var(--magenta);
-}
-.gn-bearing-dist { font-size: 11px; color: var(--ink-soft); letter-spacing: 0.08em; }
-.gn-bearing-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 22px;
-  letter-spacing: -0.01em;
-}
-.gn-bearing-arrow {
-  font-size: 22px;
-  font-weight: 400;
-  text-align: right;
-  transition: transform 200ms, color 200ms;
-}
-
-.gn-bearings-detail {
-  background: var(--plat-2);
-  border: 1px solid var(--ink);
-  padding: 28px;
-  align-self: start;
-}
-.gn-bearings-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--magenta);
-  margin: 0 0 8px;
-  font-weight: 700;
-}
-.gn-bearings-title {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 26px;
-  letter-spacing: -0.01em;
-  margin: 0 0 14px;
-}
-.gn-bearings-note {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 15px;
-  line-height: 1.55;
-  margin: 0 0 20px;
-  color: var(--ink-soft);
-}
-.gn-bearings-key {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  border-top: 1px dashed var(--ink-soft);
-  padding-top: 12px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-}
-.gn-bearings-key-row { display: inline-flex; align-items: center; gap: 10px; }
-.gn-bearings-key-marker {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--ink); border: 1px solid var(--ink);
-}
-.gn-bearings-key-line {
-  width: 18px; height: 1px; background: var(--ink);
-}
-.gn-bearings-key-hatch {
-  width: 18px; height: 12px;
-  background-image: repeating-linear-gradient(45deg, var(--magenta) 0 1px, transparent 1px 4px);
-  border: 1px solid var(--magenta);
-}
-
-/* MONUMENTS */
-.gn-monuments { display: flex; flex-direction: column; gap: 32px; }
-.gn-section-line {
-  position: relative;
-  height: 80px;
-  border: 1px solid var(--ink);
-  background: var(--plat);
-  background-image:
-    repeating-linear-gradient(90deg, transparent 0 24px, rgba(11,13,16,0.08) 24px 25px);
-}
-.gn-section-line-rule {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--ink);
-}
-.gn-monument-pin {
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  font: inherit;
-  color: var(--ink);
-}
-.gn-monument-pin:focus-visible { outline: 2px solid var(--magenta); outline-offset: 4px; }
-.gn-monument-cap {
-  width: 16px; height: 16px; border-radius: 50%;
-  background: var(--ink); border: 2px solid var(--plat);
-  box-shadow: 0 0 0 1px var(--ink);
-  transition: transform 160ms, background 160ms, box-shadow 160ms;
-}
-.gn-monument-pin:hover .gn-monument-cap,
-.gn-monument-pin.is-open .gn-monument-cap {
-  background: var(--magenta);
-  transform: scale(1.25);
-  box-shadow: 0 0 0 2px var(--magenta);
-}
-.gn-monument-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-}
-.gn-monument-pin:hover .gn-monument-label,
-.gn-monument-pin.is-open .gn-monument-label {
-  color: var(--magenta);
-}
-
-.gn-monument-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-@media (max-width: 720px) { .gn-monument-cards { grid-template-columns: 1fr; } }
-.gn-monument-card {
-  background: var(--plat);
-  border: 1px solid var(--ink);
-  padding: 22px 26px;
-  opacity: 0.45;
-  transition: opacity 220ms, border-color 220ms, box-shadow 220ms;
-}
-.gn-monument-card.is-open {
-  opacity: 1;
-  border-color: var(--magenta);
-  box-shadow: 4px 4px 0 0 var(--magenta);
-}
-.gn-monument-card-head {
-  display: flex;
-  justify-content: space-between;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  margin-bottom: 10px;
-}
-.gn-monument-card-label { color: var(--magenta); font-weight: 700; }
-.gn-monument-card-sf { color: var(--ink-soft); }
-.gn-monument-card-name {
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  font-size: 20px;
-  letter-spacing: -0.01em;
-  margin: 0 0 6px;
-}
-.gn-monument-card-type {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  margin: 0 0 12px;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-.gn-monument-card-note {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 14px;
-  line-height: 1.55;
-  margin: 0;
-}
-
-/* PARCELS */
-.gn-parcels {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px 24px;
-}
-@media (max-width: 880px) { .gn-parcels { grid-template-columns: repeat(2, 1fr); } }
-.gn-parcel { display: flex; flex-direction: column; gap: 8px; }
-.gn-parcel-frame {
-  display: flex;
-  height: 96px;
-  border: 1px solid var(--ink);
-  overflow: hidden;
-  cursor: default;
-  transition: box-shadow 200ms;
-}
-.gn-parcel-frame:hover, .gn-parcel-frame:focus-visible {
-  box-shadow: 4px 4px 0 0 var(--magenta);
-  outline: none;
-}
-.gn-parcel-band { display: block; }
-.gn-parcel-soft { background: #2c4d3a; }
-.gn-parcel-hard { background-image: repeating-linear-gradient(45deg, #0B0D10 0 2px, var(--plat-2) 2px 8px); }
-.gn-parcel-lawn { background: #c8d8a3; }
-.gn-parcel-meta {
-  display: flex;
-  justify-content: space-between;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  color: var(--ink-soft);
-}
-.gn-parcel-id { color: var(--magenta); font-weight: 700; }
-
-/* FOOTER */
-.gn-foot {
-  border-top: 4px solid var(--ink);
-  padding-top: 32px;
-  display: grid;
-  gap: 32px;
-}
-.gn-foot-block { display: grid; grid-template-columns: 320px 1fr; gap: 36px; }
-@media (max-width: 880px) { .gn-foot-block { grid-template-columns: 1fr; } }
-.gn-foot-stamp {
-  border: 2px solid var(--ink);
-  padding: 18px 22px;
-  background: var(--plat-2);
-  font-family: 'JetBrains Mono', monospace;
-}
-.gn-foot-stamp-title {
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  font-weight: 700;
-  color: var(--magenta);
-  margin: 0 0 8px;
-}
-.gn-foot-stamp-body {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 13px;
-  line-height: 1.55;
-  margin: 0;
-  color: var(--ink);
-}
-.gn-foot-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px 24px;
-}
-.gn-foot-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  color: var(--ink-soft);
-  margin: 0 0 4px;
-  text-transform: uppercase;
-}
-.gn-foot-value {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0;
-}
-.gn-foot-link {
-  color: var(--magenta);
-  text-decoration: underline;
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 3px;
-}
-.gn-foot-link:hover, .gn-foot-link:focus-visible { color: var(--ink); outline: none; }
-.gn-foot-scale {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--ink);
-  border-top: 1px solid var(--ink);
-  padding-top: 12px;
-}
-.gn-foot-scale-num { padding: 0 8px; font-weight: 700; }
-.gn-foot-scale-bar { display: inline-block; width: 50px; height: 8px; border: 1px solid var(--ink); }
-.gn-foot-scale-bar-black { background: var(--ink); }
-.gn-foot-scale-bar-white { background: var(--plat); }
-.gn-foot-scale-label { margin-left: 16px; color: var(--ink-soft); }
-
-@media (prefers-reduced-motion: reduce) {
-  .gn-bearing-row, .gn-bearing-arrow, .gn-monument-cap, .gn-monument-card,
-  .gn-cta, .gn-nav-link, .gn-parcel-frame {
-    transition: none !important;
+  .bl-root {
+    --aluminum: #C7C9CB;
+    --aluminum-deep: #9B9DA0;
+    --aluminum-dark: #5C5E62;
+    --vial-amber: #E0B348;
+    --vial-glow: #F4CC6B;
+    --plumb-black: #131516;
+    --plumb-deep: #0A0B0C;
+    --paper: #ECECEA;
+    --brass: #C99A4A;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--paper);
+    background: var(--plumb-black);
+    min-height: 100vh;
+    line-height: 1.55;
   }
-}
+
+  .bl-root *, .bl-root *::before, .bl-root *::after { box-sizing: border-box; }
+  .bl-root h1, .bl-root h2 {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .bl-hero {
+    padding: clamp(40px, 6vw, 80px) clamp(20px, 4vw, 60px) 60px;
+  }
+
+  .bl-aluminum {
+    position: relative;
+    background:
+      linear-gradient(180deg, #D9DBDC 0%, #B5B7BA 30%, #C7C9CB 55%, #9B9DA0 100%);
+    border: 1px solid #2C2E32;
+    border-radius: 6px;
+    padding: clamp(28px, 3vw, 48px) clamp(24px, 4vw, 56px) clamp(36px, 4vw, 56px);
+    color: var(--plumb-black);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.6),
+      inset 0 -1px 0 rgba(0,0,0,0.25),
+      0 24px 60px -32px rgba(0,0,0,0.85);
+    overflow: hidden;
+  }
+  .bl-aluminum::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.04) 0 1px, transparent 1px 4px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.06) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    opacity: 0.6;
+  }
+
+  .bl-stencil {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--plumb-black);
+    opacity: 0.7;
+    margin-bottom: 28px;
+    border-top: 1px solid rgba(0,0,0,0.18);
+    border-bottom: 1px solid rgba(0,0,0,0.18);
+    padding: 8px 0;
+    text-transform: uppercase;
+  }
+
+  .bl-vial-rail {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    align-items: stretch;
+    margin-bottom: 36px;
+    background: linear-gradient(180deg, #84878B 0%, #6B6E72 100%);
+    border-top: 1px solid #2C2E32;
+    border-bottom: 1px solid #2C2E32;
+    border-radius: 4px;
+    padding: 18px 0 36px;
+  }
+
+  .bl-cap {
+    background: linear-gradient(180deg, #D8AF5C 0%, #B98C36 100%);
+    border: 1px solid #6F5320;
+    border-radius: 3px;
+    margin: 0 8px;
+    padding: 10px 14px;
+    color: var(--plumb-black);
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 2px 0 rgba(0,0,0,0.35);
+    z-index: 2;
+  }
+  .bl-cap:hover, .bl-cap:focus-visible {
+    transform: translateY(-2px);
+    background: linear-gradient(180deg, #E5BB66 0%, #C8993E 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 4px 0 rgba(0,0,0,0.4);
+    outline: none;
+  }
+  .bl-cap-on {
+    background: linear-gradient(180deg, #F0C66E 0%, #D2A042 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 5px 0 rgba(0,0,0,0.5);
+  }
+  .bl-cap-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+  .bl-cap-note {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  .bl-vial-glass {
+    position: absolute;
+    left: 18%;
+    right: 18%;
+    bottom: 6px;
+    height: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.18) 50%, rgba(0,0,0,0.15));
+    border: 1px solid rgba(0,0,0,0.45);
+    border-radius: 12px;
+    overflow: visible;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.45), inset 0 -2px 4px rgba(0,0,0,0.35);
+  }
+  .bl-vial-fluid {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(224,179,72,0.55) 0%, rgba(196,140,40,0.4) 60%, rgba(120,84,20,0.3) 100%);
+    border-radius: 12px;
+    mix-blend-mode: screen;
+  }
+  .bl-vial-marks { position: absolute; inset: 0; }
+  .bl-vial-marks span {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 1px;
+    background: rgba(0,0,0,0.55);
+  }
+  .bl-bubble {
+    position: absolute;
+    top: -2px;
+    width: 44px;
+    height: 24px;
+    border-radius: 14px;
+    background: radial-gradient(ellipse at 35% 30%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 30%, rgba(255,235,180,0.18) 60%, transparent 80%);
+    border: 1px solid rgba(255,255,255,0.55);
+    box-shadow: inset 0 0 8px rgba(255,255,255,0.6);
+    transition: left 580ms cubic-bezier(0.22, 0.96, 0.32, 1);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bl-bubble { transition: none; }
+  }
+
+  .bl-headline {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    gap: 16px;
+    max-width: 880px;
+  }
+  .bl-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--plumb-black);
+    opacity: 0.65;
+  }
+  .bl-headline h1 {
+    font-size: clamp(36px, 6vw, 76px);
+    line-height: 0.96;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--plumb-black);
+  }
+  .bl-headline h1 em {
+    font-style: normal;
+    color: #6F5320;
+    border-bottom: 4px solid #6F5320;
+    padding-bottom: 2px;
+  }
+  .bl-headline p {
+    font-size: clamp(15px, 1.4vw, 18px);
+    margin: 4px 0 8px;
+    color: #1F2126;
+    max-width: 640px;
+  }
+
+  .bl-cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .bl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 3px;
+    transition: transform 140ms ease, background 140ms ease, color 140ms ease;
+  }
+  .bl-btn-primary {
+    background: var(--plumb-black);
+    color: var(--vial-glow);
+    border: 1px solid var(--plumb-black);
+  }
+  .bl-btn-primary:hover, .bl-btn-primary:focus-visible {
+    background: var(--vial-amber);
+    color: var(--plumb-black);
+    transform: translateY(-1px);
+    outline: none;
+  }
+  .bl-btn-ghost {
+    background: transparent;
+    color: var(--plumb-black);
+    border: 1px solid var(--plumb-black);
+  }
+  .bl-btn-ghost:hover, .bl-btn-ghost:focus-visible {
+    background: var(--plumb-black);
+    color: var(--vial-glow);
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  .bl-section {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(40px, 5vw, 80px) clamp(20px, 4vw, 48px);
+    border-top: 1px solid rgba(199,201,203,0.08);
+  }
+  .bl-section-head { margin-bottom: 28px; }
+  .bl-section-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--vial-amber);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .bl-section-head h2 {
+    font-size: clamp(26px, 3vw, 40px);
+    margin: 0 0 8px;
+  }
+  .bl-section-head p {
+    font-size: 15px;
+    color: rgba(236,236,234,0.78);
+    max-width: 640px;
+  }
+
+  .bl-spec-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1px;
+    background: rgba(199,201,203,0.12);
+    border: 1px solid rgba(199,201,203,0.15);
+  }
+  .bl-spec-list li {
+    background: var(--plumb-black);
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: 24px;
+    transition: background 140ms ease;
+  }
+  .bl-spec-list li:hover { background: #1A1D20; }
+  .bl-spec-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--vial-amber);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .bl-spec-note { color: rgba(236,236,234,0.92); font-size: 14px; }
+
+  .bl-gallery {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(40px, 5vw, 80px) clamp(20px, 4vw, 48px);
+    border-top: 1px solid rgba(199,201,203,0.08);
+  }
+  .bl-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .bl-flange {
+    margin: 0;
+    border: 1px solid rgba(199,201,203,0.18);
+    background: var(--plumb-deep);
+    transition: transform 220ms ease, border-color 220ms ease;
+  }
+  .bl-flange:hover, .bl-flange:focus-within {
+    transform: translateY(-3px);
+    border-color: var(--vial-amber);
+  }
+  .bl-flange-art { aspect-ratio: 1 / 1; background: #0F1114; }
+  .bl-flange figcaption { padding: 12px 14px; display: grid; gap: 4px; font-size: 12px; }
+  .bl-flange-id {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--vial-amber);
+    letter-spacing: 0.14em;
+  }
+  .bl-flange-cap { color: rgba(236,236,234,0.85); line-height: 1.5; }
+
+  .bl-inspect {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: clamp(40px, 5vw, 80px) clamp(20px, 4vw, 48px);
+  }
+  .bl-slip {
+    background: #F2EEE2;
+    color: var(--plumb-black);
+    border: 1px solid #1F2126;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 18px 50px -28px rgba(0,0,0,0.6);
+    background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.025) 0 1px, transparent 1px 28px);
+  }
+  .bl-slip-head {
+    display: flex;
+    justify-content: space-between;
+    background: var(--plumb-black);
+    color: var(--paper);
+    padding: 10px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .bl-slip-body { padding: 24px 22px; }
+  .bl-slip-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.18);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+  }
+  .bl-slip-row span:first-child { color: rgba(0,0,0,0.55); }
+  .bl-stamp {
+    margin-top: 22px;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 24px;
+    border: 3px solid #B0241B;
+    color: #B0241B;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    transform: rotate(-4deg);
+    background: rgba(176,36,27,0.04);
+  }
+  .bl-stamp span:first-child { font-size: 22px; }
+  .bl-stamp span:last-child { font-size: 11px; }
+
+  .bl-foot {
+    border-top: 1px solid rgba(199,201,203,0.12);
+    padding: 20px clamp(20px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(236,236,234,0.65);
+  }
+
+  @media (max-width: 720px) {
+    .bl-cap-note { display: none; }
+    .bl-spec-list li { grid-template-columns: 1fr; gap: 6px; }
+    .bl-slip-row { grid-template-columns: 100px 1fr; }
+    .bl-vial-glass { left: 6%; right: 6%; }
+  }
 `;

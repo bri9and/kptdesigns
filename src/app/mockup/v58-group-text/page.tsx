@@ -3,7 +3,7 @@ import GroupTextEngine from "./_engine/GroupTextEngine";
 
 export default function GroupTextPage() {
   return (
-    <main style={{ background: "#F2F2F7", color: "#0B0B10", minHeight: "100vh" }}>
+    <main style={{ background: "#1B1E22", color: "#E6E6E1", minHeight: "100vh" }}>
       <PageApproach>
         <GroupTextEngine />
       </PageApproach>

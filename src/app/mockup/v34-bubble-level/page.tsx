@@ -1,11 +1,11 @@
 import { PageApproach } from "../_lib/PageApproach";
-import GridNorthEngine from "./_engine/GridNorthEngine";
+import BubbleLevelEngine from "./_engine/BubbleLevelEngine";
 
-export default function GridNorthPage() {
+export default function BubbleLevelPage() {
   return (
-    <main style={{ background: "#F8F5EE", color: "#0B0D10", minHeight: "100vh" }}>
+    <main style={{ background: "#13161A", color: "#ECECEA", minHeight: "100vh" }}>
       <PageApproach>
-        <GridNorthEngine />
+        <BubbleLevelEngine />
       </PageApproach>
     </main>
   );

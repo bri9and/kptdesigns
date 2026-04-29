@@ -1,558 +1,560 @@
 "use client";
 
 /**
- * TraderTarpEngine — V50 Trader Tarp
+ * PanelDirectoryEngine — V50 Panel Directory
  *
- * Yellow corrugated polypropylene with stenciled black text — borrowed from
- * the "FRESH OIL — DO NOT DRIVE" temporary jobsite sign — reset as a TYPE
- * SYSTEM. Headings live on corrugated panels with vertical scan-line ridges.
- * Trade: Paving (sealcoat / crack-fill / small-job).
+ * The site is a residential breaker-panel directory at full size — a ruled
+ * grid of circuits, hand-lettered loads in tight all-caps draftsman's hand,
+ * red AFCI rosette stamps, pencil marginalia where the panel was rebalanced.
+ * Trade: electricians.
  *
- * Cliché-trap notes followed: no curving-road-line logo, no "smooth as
- * glass" puns, no steamroller mascot. Sign is structural, not decorative.
+ * No Tailwind. Inline <style> only. Reduced-motion presents the directory
+ * as a finished sheet (no per-character draw-in, no rosette thumps).
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const TODAY = [
-  { id: "ELM-1408", line1: "ELM ST · 1408", line2: "SEALCOAT 4,200 SF", state: "CURING" },
-  { id: "RIVER-22", line1: "RIVERSIDE · 22", line2: "CRACK-FILL 320 LF", state: "DONE" },
-  { id: "MEADOW-7", line1: "MEADOW LN · 07", line2: "PATCH 6 SF + SEAL", state: "CURING" },
-  { id: "OAK-310", line1: "OAK CT · 310", line2: "STRIPE RE-PAINT", state: "QUEUED" },
-  { id: "PINE-44", line1: "PINE BLVD · 44", line2: "MILL-AND-FILL 600 SF", state: "QUEUED" },
+type Row = {
+  no: number;
+  load: string;
+  amps: string;
+  detail: string;
+  afci?: boolean;
+  notes?: string;
+};
+
+const ROWS: Row[] = [
+  { no: 1, load: "KIT GFCI · COUNTER", amps: "20A", detail: "DISHWASHER, COFFEE", afci: true },
+  { no: 2, load: "KIT FRIDGE", amps: "20A", detail: "DEDICATED RUN" },
+  { no: 3, load: "KIT DISPOSAL", amps: "15A", detail: "SWITCH UNDER SINK" },
+  { no: 4, load: "KIT MICRO", amps: "20A", detail: "OTR HOOD", afci: true },
+  { no: 5, load: "DINING REC", amps: "15A", detail: "WALL DUPLEX × 4", afci: true },
+  { no: 6, load: "LIVING REC", amps: "15A", detail: "TV WALL + LAMPS", afci: true },
+  { no: 7, load: "FRONT PORCH", amps: "15A", detail: "GFCI EXTERIOR", notes: "REBAL 03/22" },
+  { no: 8, load: "GARAGE DOOR", amps: "20A", detail: "OPENER + CEILING" },
+  { no: 9, load: "LAUNDRY", amps: "20A", detail: "WASHER ONLY", afci: true },
+  { no: 10, load: "DRYER", amps: "30A", detail: "240V · NEMA 14-30" },
+  { no: 11, load: "FURN / AHU", amps: "15A", detail: "CONTROL BOARD" },
+  { no: 12, load: "AC CONDENSER", amps: "30A", detail: "240V · 2-POLE" },
+  { no: 13, load: "WATER HEATER", amps: "30A", detail: "240V · ELEC" },
+  { no: 14, load: "BATH GFCI", amps: "20A", detail: "PRIMARY VANITY", afci: true },
+  { no: 15, load: "BATH 2 GFCI", amps: "20A", detail: "HALL BATH", afci: true },
+  { no: 16, load: "BR1 REC + LT", amps: "15A", detail: "MASTER", afci: true },
+  { no: 17, load: "BR2 REC + LT", amps: "15A", detail: "GUEST", afci: true },
+  { no: 18, load: "BR3 REC + LT", amps: "15A", detail: "OFFICE", afci: true, notes: "ADD CKT 02/26" },
+  { no: 19, load: "HALL LIGHTS", amps: "15A", detail: "RECESSED × 6" },
+  { no: 20, load: "ATTIC FAN", amps: "15A", detail: "SUMMER ONLY" },
+  { no: 21, load: "EV CHARGER", amps: "50A", detail: "240V · NEMA 14-50" },
+  { no: 22, load: "SUMP PUMP", amps: "15A", detail: "BSMT GFCI" },
+  { no: 23, load: "BSMT REC", amps: "15A", detail: "WORKSHOP", afci: true },
+  { no: 24, load: "BSMT LIGHTS", amps: "15A", detail: "FLUOR + STAIR" },
+  { no: 25, load: "EXT LIGHTS", amps: "15A", detail: "DUSK PHOTO" },
+  { no: 26, load: "POOL PUMP", amps: "20A", detail: "GFCI · 240V" },
+  { no: 27, load: "SHED", amps: "20A", detail: "DETACHED · GFCI" },
+  { no: 28, load: "SOLAR DISC", amps: "60A", detail: "BACKFEED · 240V" },
+  { no: 29, load: "SPARE", amps: "—", detail: "AVAILABLE" },
+  { no: 30, load: "SPARE", amps: "—", detail: "AVAILABLE" },
 ];
 
-const CURE = [
-  { time: "0:00", note: "Crew off the lot. Tape down. Cones in." },
-  { time: "0:30", note: "Surface skin sets. No foot traffic yet." },
-  { time: "2:00", note: "Walk-able for residents. Bag the can off the curb." },
-  { time: "4:00", note: "Bicycles, strollers OK." },
-  { time: "8:00", note: "Tires. Move the car back on slow." },
-  { time: "24:00", note: "Heavy. Trash truck, delivery box. Park anywhere." },
+const AFCI_STORIES = [
+  { ckt: "01", room: "KITCHEN GFCI", year: "2023", reason: "KITCHEN REMODEL" },
+  { ckt: "06", room: "LIVING ROOM REC", year: "2024", reason: "INSURANCE INSPECTION" },
+  { ckt: "09", room: "LAUNDRY", year: "2025", reason: "WASHER UPGRADE" },
+  { ckt: "14", room: "BATH GFCI", year: "2024", reason: "VANITY REMODEL" },
+  { ckt: "16-18", room: "BEDROOMS", year: "2024", reason: "NEC 210.12 RETROFIT" },
 ];
 
-const CRACK = [
-  {
-    label: "ROUTE & SEAL",
-    width: "≥ 1/4\"",
-    method: "Diamond-blade router, hot-pour rubberized sealant, squeegee finish.",
-    life: "5–7 yrs",
-  },
-  {
-    label: "OVERBAND",
-    width: "1/8\" – 1/4\"",
-    method: "Hot-pour banded across crack with 4\" tape strike. Fast, jobsite-true.",
-    life: "3–5 yrs",
-  },
-  {
-    label: "CLEAN & FILL",
-    width: "≤ 1/8\"",
-    method: "Compressed-air clean, cold-pour for hairline mapping. Surface-only.",
-    life: "1–2 yrs",
-  },
-];
+export default function PanelDirectoryEngine() {
+  const [reduced, setReduced] = useState(false);
+  const [hover, setHover] = useState<number | null>(null);
 
-export default function TraderTarpEngine() {
-  const [hovered, setHovered] = useState<string | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
 
   return (
-    <>
+    <div className="pd-root">
       <style>{css}</style>
-      <div className="tt-shell">
 
-        {/* HERO SIGN */}
-        <section className="tt-hero">
-          <div className="tt-hero-sign tt-corrugated" data-tilt={hovered === "HERO" ? "1" : "0"}>
-            <Zip pos="tl" />
-            <Zip pos="tr" />
-            <Zip pos="bl" />
-            <Zip pos="br" />
-            <span className="tt-hero-eyebrow">CAUTION · TEMPORARY · KPT PAVING CO.</span>
-            <h1 className="tt-hero-line tt-stencil">FRESH OIL.</h1>
-            <h1 className="tt-hero-line tt-stencil">CURING THROUGH</h1>
-            <h1 className="tt-hero-line tt-stencil">SUNDOWN.</h1>
-            <p className="tt-hero-sub">
-              Sealcoating · crack-fill · small-job paving. The temporary signs
-              are ours; the permanent driveways too.
-            </p>
-            <div className="tt-cta-row">
-              <button className="tt-cta tt-cta-fill" type="button">
-                QUOTE A SEALCOAT
-              </button>
-              <button className="tt-cta tt-cta-ghost" type="button">
-                READ THE CURE SCHEDULE
-              </button>
-            </div>
+      <header className="pd-hero">
+        <div className="pd-hero-side">
+          <div className="pd-nameplate">
+            <div className="pd-nameplate-line">PANEL · MAIN</div>
+            <div className="pd-nameplate-addr">2218 ELM ST</div>
+            <div className="pd-nameplate-spec">200A · 30 SLOT · CU BUS</div>
           </div>
-
-          <aside className="tt-hero-aside">
-            <div className="tt-tag tt-corrugated tt-tag-small">
-              <span className="tt-tag-no">SIGN 04</span>
-              <span className="tt-tag-line tt-stencil">DO NOT</span>
-              <span className="tt-tag-line tt-stencil">DRIVE</span>
-            </div>
-            <div className="tt-tag tt-corrugated tt-tag-small">
-              <span className="tt-tag-no">SIGN 11</span>
-              <span className="tt-tag-line tt-stencil">CONES</span>
-              <span className="tt-tag-line tt-stencil">UP 24H</span>
-            </div>
-          </aside>
-        </section>
-
-        {/* TODAY'S SIGNS */}
-        <section className="tt-section">
-          <h2 className="tt-h2 tt-stencil">TODAY'S SIGNS</h2>
-          <p className="tt-section-sub">
-            Each is a job. Hover the sign for state, scope, address. The yard is
-            a list of jobs we wouldn't fake.
+          <div className="pd-pencil-clip" aria-hidden>
+            <div className="pd-pencil" />
+          </div>
+          <div className="pd-eyebrow">FOREMAN · M. K. · LIC EC-08812</div>
+          <h1 className="pd-headline">
+            Every breaker labeled.
+            <br />
+            <em>Every load known.</em>
+          </h1>
+          <p className="pd-sub">
+            Residential and light-commercial electrical for owners who want to
+            open the panel and recognize their own house.
           </p>
-          <ul className="tt-yard">
-            {TODAY.map((s) => (
-              <li
-                key={s.id}
-                className={`tt-yard-sign tt-corrugated ${hovered === s.id ? "is-hovered" : ""}`}
-                onMouseEnter={() => setHovered(s.id)}
-                onMouseLeave={() => setHovered(null)}
-                onFocus={() => setHovered(s.id)}
-                onBlur={() => setHovered(null)}
-                tabIndex={0}
-                aria-label={`Job ${s.id}, ${s.line1}, ${s.line2}, ${s.state}`}
-              >
-                <Zip pos="tl" />
-                <Zip pos="tr" />
-                <Zip pos="bl" />
-                <Zip pos="br" />
-                <span className={`tt-yard-state tt-yard-state-${s.state.toLowerCase()}`}>{s.state}</span>
-                <span className="tt-yard-line tt-stencil">{s.line1}</span>
-                <span className="tt-yard-line tt-stencil tt-yard-line-sm">{s.line2}</span>
-                <span className="tt-yard-id">JOB {s.id}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+          <div className="pd-cta">
+            <a className="pd-btn pd-btn-primary" href="#directory">Schedule a panel walk</a>
+            <a className="pd-btn pd-btn-ghost" href="#afci">See a directory</a>
+          </div>
+        </div>
 
-        {/* CURE TIMES */}
-        <section className="tt-section">
-          <h2 className="tt-h2 tt-stencil">CURE SCHEDULE</h2>
-          <p className="tt-section-sub">
-            Cure clock starts when the crew lifts off. Walk before you drive.
-            Drive before you park heavy. No exceptions on day one.
-          </p>
-          <ol className="tt-cure">
-            {CURE.map((c) => (
-              <li key={c.time} className="tt-cure-row" tabIndex={0}>
-                <span className="tt-cure-time tt-stencil">+{c.time}</span>
-                <span className="tt-cure-bar" aria-hidden />
-                <span className="tt-cure-note">{c.note}</span>
-              </li>
-            ))}
+        <div id="directory" className="pd-directory">
+          <div className="pd-dir-head">
+            <span>CIRCUIT</span>
+            <span>LOAD</span>
+            <span>A</span>
+            <span>NOTES</span>
+          </div>
+          <ol className="pd-dir-grid">
+            {ROWS.map((r, i) => {
+              const delay = reduced ? 0 : Math.min(i * 60, 1400);
+              const isHover = hover === r.no;
+              return (
+                <li
+                  key={r.no}
+                  className={`pd-row${reduced ? " pd-row-static" : ""}${isHover ? " pd-row-hover" : ""}`}
+                  style={{ animationDelay: `${delay}ms` }}
+                  onMouseEnter={() => setHover(r.no)}
+                  onMouseLeave={() => setHover(null)}
+                  onFocus={() => setHover(r.no)}
+                  onBlur={() => setHover(null)}
+                  tabIndex={0}
+                >
+                  <span className="pd-no">{String(r.no).padStart(2, "0")}</span>
+                  <span className="pd-load">{r.load}</span>
+                  <span className="pd-amps">{r.amps}</span>
+                  <span className="pd-detail">
+                    {r.detail}
+                    {r.notes ? <em className="pd-marg"> &mdash; {r.notes}</em> : null}
+                  </span>
+                  {r.afci ? <span className="pd-rosette" aria-label="AFCI">AFCI</span> : null}
+                </li>
+              );
+            })}
           </ol>
-        </section>
+        </div>
+      </header>
 
-        {/* CRACK-FILL */}
-        <section className="tt-section">
-          <h2 className="tt-h2 tt-stencil">CRACK-FILL · METHODS</h2>
-          <p className="tt-section-sub">
-            Three ways, picked by crack width on the day. Hover for what each
-            buys you in life-of-pavement.
-          </p>
-          <div className="tt-crack-grid">
-            {CRACK.map((m) => (
-              <article
-                key={m.label}
-                className="tt-crack tt-corrugated"
-                tabIndex={0}
-              >
-                <Zip pos="tl" />
-                <Zip pos="tr" />
-                <Zip pos="bl" />
-                <Zip pos="br" />
-                <span className="tt-crack-label tt-stencil">{m.label}</span>
-                <div className="tt-crack-illus" aria-hidden>
-                  {m.label === "ROUTE & SEAL" && <CrackRoute />}
-                  {m.label === "OVERBAND" && <CrackOverband />}
-                  {m.label === "CLEAN & FILL" && <CrackClean />}
-                </div>
-                <dl className="tt-crack-dl">
-                  <div><dt>WIDTH</dt><dd>{m.width}</dd></div>
-                  <div><dt>LIFE</dt><dd>{m.life}</dd></div>
-                </dl>
-                <p className="tt-crack-method">{m.method}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+      <section id="afci" className="pd-section">
+        <div className="pd-section-head">
+          <span className="pd-tag">SECTION 02 · UPGRADES</span>
+          <h2>AFCI / GFCI retrofits, by circuit</h2>
+          <p>Per NEC 210.12 — every habitable room added or modified gets the protection. Stamped here when finished, signed off by the foreman.</p>
+        </div>
+        <ul className="pd-upgrade-list">
+          {AFCI_STORIES.map((s, i) => (
+            <li key={i} style={{ animationDelay: `${i * 120}ms` }}>
+              <span className="pd-up-ckt">CKT {s.ckt}</span>
+              <span className="pd-up-room">{s.room}</span>
+              <span className="pd-up-year">{s.year}</span>
+              <span className="pd-up-reason">{s.reason}</span>
+              <span className="pd-rosette pd-rosette-list">AFCI</span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        {/* FOOTER */}
-        <footer className="tt-foot tt-corrugated">
-          <Zip pos="tl" /><Zip pos="tr" /><Zip pos="bl" /><Zip pos="br" />
-          <div className="tt-foot-grid">
-            <div>
-              <span className="tt-foot-label">CO.</span>
-              <span className="tt-foot-value tt-stencil">KPT PAVING</span>
-            </div>
-            <div>
-              <span className="tt-foot-label">CERT.</span>
-              <span className="tt-foot-value">NAPA · CFA</span>
-            </div>
-            <div>
-              <span className="tt-foot-label">DOT MC</span>
-              <span className="tt-foot-value">MC-770118</span>
-            </div>
-            <div>
-              <span className="tt-foot-label">DISPATCH</span>
-              <span className="tt-foot-value tt-stencil">315.555.0188</span>
-            </div>
-            <div>
-              <span className="tt-foot-label">FRESH OIL</span>
-              <span className="tt-foot-value">DO NOT DRIVE 24H</span>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </>
-  );
-}
+      <section className="pd-section">
+        <div className="pd-section-head">
+          <span className="pd-tag">SECTION 03 · HOME-RUN MAP</span>
+          <h2>The pulls back to the panel</h2>
+          <p>Drawn in graphite. Just the runs &mdash; not the energized circuit, not the schematic.</p>
+        </div>
 
-function Zip({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  return <span aria-hidden className={`tt-zip tt-zip-${pos}`} />;
-}
-function CrackRoute() {
-  return (
-    <svg viewBox="0 0 200 60" width="100%" height="60">
-      <rect x="0" y="0" width="200" height="60" fill="#1F1B12" />
-      <path d="M0 30 L40 28 L52 36 L70 22 L96 32 L120 26 L150 38 L180 28 L200 32" stroke="#F2C400" strokeWidth="6" fill="none" strokeLinecap="round" />
-      <path d="M0 30 L40 28 L52 36 L70 22 L96 32 L120 26 L150 38 L180 28 L200 32" stroke="#1F1B12" strokeWidth="2" fill="none" strokeLinecap="round" />
-    </svg>
-  );
-}
-function CrackOverband() {
-  return (
-    <svg viewBox="0 0 200 60" width="100%" height="60">
-      <rect x="0" y="0" width="200" height="60" fill="#1F1B12" />
-      <rect x="0" y="22" width="200" height="16" fill="#F2C400" />
-      <path d="M0 30 L40 28 L52 31 L70 26 L96 32 L120 28 L150 33 L180 29 L200 31" stroke="#1F1B12" strokeWidth="2" fill="none" />
-    </svg>
-  );
-}
-function CrackClean() {
-  return (
-    <svg viewBox="0 0 200 60" width="100%" height="60">
-      <rect x="0" y="0" width="200" height="60" fill="#1F1B12" />
-      <g stroke="#F2C400" strokeWidth="1.5" fill="none" strokeLinecap="round">
-        <path d="M10 30 L40 28 L48 32" />
-        <path d="M60 22 L80 26 L92 24" />
-        <path d="M100 36 L130 34 L140 38" />
-        <path d="M150 28 L172 30 L190 27" />
-      </g>
-    </svg>
+        <div className="pd-iso">
+          <svg viewBox="0 0 600 320" width="100%" height="auto" role="img" aria-label="Isometric home-run map">
+            <defs>
+              <pattern id="pd-graph" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1A1A18" strokeWidth="0.4" opacity="0.18" />
+              </pattern>
+            </defs>
+            <rect width="600" height="320" fill="url(#pd-graph)" />
+            {/* panel */}
+            <rect x="40" y="120" width="60" height="120" fill="#ECE6D2" stroke="#1A1A18" strokeWidth="1.6" />
+            <text x="70" y="190" textAnchor="middle" fontFamily="ui-monospace" fontSize="10" fill="#1A1A18" letterSpacing="2">PANEL</text>
+
+            {/* runs */}
+            <g stroke="#1A1A18" strokeWidth="1.4" fill="none" strokeLinecap="square">
+              <path d="M100 140 L200 140 L200 80 L320 80" />
+              <path d="M100 160 L260 160 L260 220 L380 220" />
+              <path d="M100 180 L180 180 L180 270 L420 270" />
+              <path d="M100 200 L240 200 L240 60 L500 60" />
+              <path d="M100 220 L300 220 L300 130 L520 130" />
+              <path d="M100 240 L340 240 L340 180 L540 180" />
+            </g>
+
+            {/* room nodes */}
+            <g fontFamily="ui-monospace" fontSize="9" fill="#1A1A18" letterSpacing="1.2">
+              <circle cx="320" cy="80" r="5" fill="#B0241B" />
+              <text x="332" y="84">CKT 04 · MICRO</text>
+              <circle cx="380" cy="220" r="5" fill="#1A1A18" />
+              <text x="392" y="224">CKT 09 · LAUNDRY</text>
+              <circle cx="420" cy="270" r="5" fill="#1A1A18" />
+              <text x="432" y="274">CKT 21 · EV CHG</text>
+              <circle cx="500" cy="60" r="5" fill="#B0241B" />
+              <text x="476" y="50">CKT 14 · BATH GFCI</text>
+              <circle cx="520" cy="130" r="5" fill="#1A1A18" />
+              <text x="466" y="124">CKT 16 · BR1</text>
+              <circle cx="540" cy="180" r="5" fill="#B0241B" />
+              <text x="486" y="174">CKT 18 · BR3</text>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <footer className="pd-foot">
+        <div>KPT &middot; ELECTRIC &middot; LIC EC-08812</div>
+        <div>NEC 210.12 / 240.4 / 408.4</div>
+        <div>BRADY &middot; (555) 014 &middot; 0200</div>
+      </footer>
+    </div>
   );
 }
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Stardos+Stencil:wght@400;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Special+Elite&family=Inter:wght@400;500;600;700&display=swap');
 
-  .tt-shell {
-    --coro: #F2C400;
-    --coro-shadow: #B59000;
-    --stencil: #100F0D;
-    --tar: #3D2D1E;
-    --night: #1A1916;
-    --hot: #E04A1C;
-    font-family: 'IBM Plex Sans', system-ui, sans-serif;
-    background:
-      radial-gradient(circle at 30% 0%, #25231D 0%, var(--night) 60%);
-    color: var(--coro);
+  .pd-root {
+    --cream: #ECE6D2;
+    --cream-deep: #DAD2B8;
+    --ink: #1A1A18;
+    --ink-soft: #2C2C28;
+    --afci: #B0241B;
+    --pencil: #4D4D48;
+    background: var(--cream);
+    color: var(--ink);
     min-height: 100vh;
-    padding: 28px 24px 64px 24px;
-    box-sizing: border-box;
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.5;
   }
+  .pd-root *, .pd-root *::before, .pd-root *::after { box-sizing: border-box; }
 
-  .tt-stencil {
-    font-family: 'Stardos Stencil', 'Courier New', monospace;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-  }
-
-  /* CORRUGATED — vertical scan-line ridges on yellow ground */
-  .tt-corrugated {
-    background:
-      repeating-linear-gradient(
-        90deg,
-        var(--coro) 0 12px,
-        rgba(0,0,0,0.06) 12px 12.6px,
-        var(--coro) 12.6px 14px,
-        rgba(0,0,0,0.18) 14px 14.6px,
-        var(--coro) 14.6px 16px,
-        rgba(0,0,0,0.06) 16px 16.6px
-      );
-    color: var(--stencil);
-    position: relative;
-    box-shadow:
-      inset 0 0 0 2px rgba(16,15,13,0.85),
-      inset 0 0 60px rgba(0,0,0,0.08),
-      0 6px 0 var(--coro-shadow),
-      0 12px 26px rgba(0,0,0,0.4);
-  }
-
-  /* zip-tie corners */
-  .tt-zip {
-    position: absolute;
-    width: 22px; height: 22px;
-    background: #2A2925;
-    border: 2px solid var(--stencil);
-    box-shadow: inset 1px 1px 2px rgba(255,255,255,0.18), inset -1px -1px 2px rgba(0,0,0,0.4);
-    border-radius: 4px;
-    z-index: 2;
-  }
-  .tt-zip::after {
+  /* dead-front cream texture */
+  .pd-root::before {
     content: "";
-    position: absolute; inset: 6px;
-    border: 1px solid #5A554C;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      radial-gradient(circle at 30% 20%, rgba(218,210,184,0.6) 0%, transparent 40%),
+      radial-gradient(circle at 75% 60%, rgba(218,210,184,0.45) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, rgba(26,26,24,0.025) 0 1px, transparent 1px 4px);
+    z-index: 0;
+  }
+
+  .pd-hero {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(280px, 360px) 1fr;
+    gap: clamp(32px, 4vw, 60px);
+    padding: clamp(40px, 5vw, 80px) clamp(20px, 4vw, 60px);
+  }
+  @media (max-width: 900px) { .pd-hero { grid-template-columns: 1fr; } }
+
+  .pd-hero-side { position: relative; }
+  .pd-nameplate {
+    display: inline-block;
+    padding: 12px 18px;
+    background: linear-gradient(180deg, #C9A65A 0%, #A6822F 100%);
+    color: var(--ink);
+    border: 1px solid #6F5320;
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 0 rgba(0,0,0,0.4);
+    margin-bottom: 28px;
+  }
+  .pd-nameplate-line { font-size: 12px; opacity: 0.85; }
+  .pd-nameplate-addr { font-size: 18px; font-weight: 700; margin: 4px 0; }
+  .pd-nameplate-spec { font-size: 10px; letter-spacing: 0.18em; opacity: 0.85; }
+
+  .pd-pencil-clip {
+    position: absolute;
+    top: 12px;
+    right: 0;
+    width: 6px;
+    height: 110px;
+    transform: rotate(8deg);
+  }
+  .pd-pencil {
+    width: 6px;
+    height: 110px;
+    background: linear-gradient(180deg, #E8C257 0%, #C8A23B 60%, #A88029 100%);
+    border-radius: 1px;
+    box-shadow: inset -1px 0 0 rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.25);
+  }
+  .pd-pencil::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: -1px;
+    width: 8px;
+    height: 12px;
+    background: linear-gradient(180deg, #4D4D48 0%, #1A1A18 100%);
     border-radius: 1px;
   }
-  .tt-zip-tl { top: 8px; left: 8px; }
-  .tt-zip-tr { top: 8px; right: 8px; }
-  .tt-zip-bl { bottom: 8px; left: 8px; }
-  .tt-zip-br { bottom: 8px; right: 8px; }
 
-  /* HERO */
-  .tt-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
-    gap: 20px;
-    margin-bottom: 36px;
+  .pd-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
   }
-  .tt-hero-sign {
-    padding: 56px 56px 44px 56px;
-    transform-origin: 50% 50%;
-    transition: transform 220ms ease-out;
-  }
-  .tt-hero-sign[data-tilt="1"] { transform: rotate(0.6deg); }
-  @media (prefers-reduced-motion: reduce) {
-    .tt-hero-sign { transition: none; }
-  }
-  .tt-hero-eyebrow {
-    display: block;
-    font-size: 11px; letter-spacing: 0.28em;
-    color: var(--stencil);
-    border-top: 2px solid var(--stencil);
-    border-bottom: 2px solid var(--stencil);
-    padding: 6px 0;
-    margin-bottom: 24px;
-    font-weight: 700;
-  }
-  .tt-hero-line {
-    display: block;
-    margin: 0;
-    color: var(--stencil);
-    font-size: clamp(46px, 9vw, 132px);
-    line-height: 0.92;
-    letter-spacing: 0.01em;
-  }
-  .tt-hero-line:nth-child(4) { color: var(--hot); }
-  .tt-hero-sub {
-    margin: 28px 0 24px 0;
-    font-size: 16px;
-    line-height: 1.5;
-    color: var(--stencil);
-    max-width: 60ch;
-    border-top: 2px dashed rgba(16,15,13,0.4);
-    padding-top: 18px;
-  }
-  .tt-cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
-  .tt-cta {
-    font: inherit;
-    font-family: 'Stardos Stencil', monospace;
-    font-size: 14px;
-    letter-spacing: 0.16em;
-    padding: 14px 22px;
-    border: 3px solid var(--stencil);
-    cursor: pointer;
-    transition: transform 120ms, background 120ms, color 120ms;
-  }
-  .tt-cta-fill { background: var(--stencil); color: var(--coro); }
-  .tt-cta-ghost { background: transparent; color: var(--stencil); }
-  .tt-cta:hover, .tt-cta:focus-visible {
-    background: var(--hot);
-    color: var(--coro);
-    border-color: var(--stencil);
-    transform: translateY(-2px);
-    outline: none;
-  }
-  .tt-cta-fill:hover, .tt-cta-fill:focus-visible { background: var(--hot); color: #fff; }
-
-  .tt-hero-aside {
-    display: flex; flex-direction: column; gap: 18px; justify-content: center;
-  }
-  .tt-tag {
-    padding: 28px 22px 22px 22px;
-    display: flex; flex-direction: column; gap: 6px; align-items: center;
-    transform: rotate(-1.4deg);
-    transition: transform 200ms;
-  }
-  .tt-tag:hover { transform: rotate(0deg) scale(1.02); }
-  .tt-tag:nth-child(2) { transform: rotate(2deg); }
-  .tt-tag:nth-child(2):hover { transform: rotate(0deg) scale(1.02); }
-  .tt-tag-no {
-    font-size: 10px; letter-spacing: 0.24em; color: rgba(16,15,13,0.6);
-    margin-bottom: 4px;
-  }
-  .tt-tag-line { font-size: 28px; line-height: 1; color: var(--stencil); }
-
-  /* SECTION */
-  .tt-section { margin-bottom: 56px; }
-  .tt-h2 {
-    font-size: clamp(28px, 4vw, 56px);
-    margin: 0 0 4px 0;
-    color: var(--coro);
-    line-height: 1;
-    text-shadow: 2px 2px 0 var(--stencil);
-  }
-  .tt-section-sub {
-    font-size: 14px;
-    max-width: 64ch;
-    color: rgba(242,196,0,0.78);
-    margin: 8px 0 24px 0;
-    line-height: 1.55;
-    border-left: 3px solid var(--coro);
-    padding-left: 14px;
-  }
-
-  /* YARD */
-  .tt-yard {
-    list-style: none; margin: 0; padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 18px;
-  }
-  .tt-yard-sign {
-    padding: 36px 18px 18px 18px;
-    display: flex; flex-direction: column; align-items: center;
-    cursor: pointer;
-    transition: transform 220ms;
-    transform: rotate(-1deg);
-    aspect-ratio: 1.4 / 1;
-    justify-content: center;
-    gap: 4px;
-  }
-  .tt-yard-sign:nth-child(2n) { transform: rotate(1deg); }
-  .tt-yard-sign:nth-child(3n) { transform: rotate(-2deg); }
-  .tt-yard-sign:hover, .tt-yard-sign.is-hovered, .tt-yard-sign:focus-visible {
-    transform: rotate(0deg) scale(1.03);
-    outline: none;
-    box-shadow:
-      inset 0 0 0 2px var(--stencil),
-      inset 0 0 60px rgba(0,0,0,0.1),
-      0 8px 0 var(--coro-shadow),
-      0 14px 30px rgba(0,0,0,0.45);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .tt-yard-sign { transition: none; }
-    .tt-yard-sign:hover, .tt-yard-sign.is-hovered { transform: rotate(0deg); }
-  }
-  .tt-yard-state {
-    position: absolute; top: 36px; right: 36px;
-    font-family: 'Stardos Stencil', monospace;
-    font-size: 10px; letter-spacing: 0.2em;
-    padding: 3px 6px;
-    border: 2px solid var(--stencil);
-    background: var(--stencil); color: var(--coro);
-  }
-  .tt-yard-state-curing { background: var(--hot); color: var(--coro); }
-  .tt-yard-state-done { background: var(--coro); color: var(--stencil); }
-  .tt-yard-state-queued { background: var(--stencil); color: var(--coro); }
-  .tt-yard-line { font-size: 28px; line-height: 1; color: var(--stencil); }
-  .tt-yard-line-sm { font-size: 14px; opacity: 0.78; margin-top: 4px; }
-  .tt-yard-id {
-    margin-top: 8px;
-    font-size: 10px; letter-spacing: 0.2em; color: rgba(16,15,13,0.6);
-  }
-
-  /* CURE */
-  .tt-cure { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-  .tt-cure-row {
-    display: grid;
-    grid-template-columns: 96px 100px 1fr;
-    gap: 18px; align-items: center;
-    padding: 14px 16px;
-    border-left: 4px solid var(--coro);
-    background: rgba(242,196,0,0.06);
-    color: var(--coro);
-    cursor: pointer;
-    transition: background 120ms, padding 120ms;
-  }
-  .tt-cure-row:hover, .tt-cure-row:focus-visible {
-    background: rgba(242,196,0,0.16);
-    padding-left: 22px;
-    border-left-color: var(--hot);
-    outline: none;
-  }
-  .tt-cure-time { font-size: 22px; color: var(--coro); }
-  .tt-cure-bar {
-    height: 8px;
-    background: linear-gradient(90deg, var(--hot), var(--coro));
-    border: 1px solid var(--coro);
-  }
-  .tt-cure-note { font-size: 14px; opacity: 0.86; }
-  .tt-cure-row:nth-child(1) .tt-cure-bar { background: linear-gradient(90deg, var(--hot) 0%, var(--hot) 95%, var(--coro) 100%); }
-  .tt-cure-row:nth-child(2) .tt-cure-bar { background: linear-gradient(90deg, var(--hot) 0%, var(--hot) 75%, var(--coro) 100%); }
-  .tt-cure-row:nth-child(3) .tt-cure-bar { background: linear-gradient(90deg, var(--hot) 0%, var(--hot) 50%, var(--coro) 100%); }
-  .tt-cure-row:nth-child(4) .tt-cure-bar { background: linear-gradient(90deg, var(--hot) 0%, var(--hot) 30%, var(--coro) 100%); }
-  .tt-cure-row:nth-child(5) .tt-cure-bar { background: linear-gradient(90deg, var(--hot) 0%, var(--hot) 12%, var(--coro) 100%); }
-  .tt-cure-row:nth-child(6) .tt-cure-bar { background: var(--coro); }
-
-  /* CRACK */
-  .tt-crack-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-  }
-  .tt-crack {
-    padding: 36px 22px 22px 22px;
-    display: flex; flex-direction: column; gap: 14px;
-    cursor: pointer;
-    transition: transform 200ms;
-  }
-  .tt-crack:hover, .tt-crack:focus-visible {
-    transform: translateY(-4px);
-    outline: none;
-  }
-  .tt-crack-label { font-size: 22px; color: var(--stencil); letter-spacing: 0.04em; }
-  .tt-crack-illus { border: 2px solid var(--stencil); }
-  .tt-crack-dl {
-    display: flex; gap: 18px; margin: 0;
-    border-top: 2px solid var(--stencil); border-bottom: 2px solid var(--stencil);
-    padding: 8px 0;
-  }
-  .tt-crack-dl div { display: flex; flex-direction: column; }
-  .tt-crack-dl dt { font-size: 9px; letter-spacing: 0.22em; color: rgba(16,15,13,0.6); }
-  .tt-crack-dl dd { margin: 0; font-family: 'Stardos Stencil', monospace; font-size: 18px; color: var(--stencil); }
-  .tt-crack-method { font-size: 13px; line-height: 1.45; margin: 0; color: var(--stencil); }
-
-  /* FOOTER */
-  .tt-foot {
-    padding: 36px 28px 28px 28px;
-    margin-top: 24px;
-  }
-  .tt-foot-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 18px;
-  }
-  .tt-foot-grid > div { display: flex; flex-direction: column; gap: 4px; padding-right: 10px; border-right: 1px dashed rgba(16,15,13,0.4); }
-  .tt-foot-grid > div:last-child { border-right: none; }
-  .tt-foot-label {
-    font-size: 9px; letter-spacing: 0.24em; color: rgba(16,15,13,0.6);
+  .pd-headline {
+    font-family: 'Special Elite', 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-size: clamp(34px, 4.6vw, 56px);
+    line-height: 1.05;
+    letter-spacing: 0;
+    margin: 0 0 14px;
+    color: var(--ink);
     text-transform: uppercase;
   }
-  .tt-foot-value { color: var(--stencil); font-size: 16px; font-weight: 700; }
+  .pd-headline em {
+    font-style: normal;
+    border-bottom: 3px solid var(--afci);
+    padding-bottom: 2px;
+  }
+  .pd-sub {
+    font-size: 15px;
+    color: var(--ink-soft);
+    max-width: 360px;
+    margin: 0 0 22px;
+  }
+  .pd-cta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pd-btn {
+    display: inline-flex;
+    padding: 12px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+  }
+  .pd-btn-primary { background: var(--ink); color: var(--cream); }
+  .pd-btn-primary:hover, .pd-btn-primary:focus-visible {
+    background: var(--afci);
+    color: var(--cream);
+    border-color: var(--afci);
+    transform: translateY(-1px);
+    outline: none;
+  }
+  .pd-btn-ghost { background: transparent; color: var(--ink); }
+  .pd-btn-ghost:hover, .pd-btn-ghost:focus-visible {
+    background: var(--ink);
+    color: var(--cream);
+    transform: translateY(-1px);
+    outline: none;
+  }
 
-  @media (max-width: 900px) {
-    .tt-hero { grid-template-columns: 1fr; }
-    .tt-yard { grid-template-columns: repeat(2, 1fr); }
-    .tt-crack-grid { grid-template-columns: 1fr; }
-    .tt-foot-grid { grid-template-columns: repeat(2, 1fr); }
-    .tt-cure-row { grid-template-columns: 70px 60px 1fr; gap: 10px; }
+  /* ── DIRECTORY ─────────────────────────────────────────────────── */
+  .pd-directory {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(26,26,24,0.45);
+    box-shadow: 0 18px 40px -28px rgba(0,0,0,0.45);
+    background-image: repeating-linear-gradient(0deg, rgba(26,26,24,0.05) 0 1px, transparent 1px 32px);
+  }
+  .pd-dir-head {
+    display: grid;
+    grid-template-columns: 60px 1fr 60px 1.2fr;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 2px solid var(--ink);
+    background: var(--ink);
+    color: var(--cream);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+  }
+
+  .pd-dir-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: ckt;
+  }
+  .pd-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 60px 1.2fr;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(26,26,24,0.18);
+    font-family: 'Special Elite', 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    position: relative;
+    cursor: default;
+    opacity: 0;
+    transform: translateY(2px);
+    animation: pd-rowin 360ms ease forwards;
+    transition: background 140ms ease;
+  }
+  .pd-row-static { animation: none; opacity: 1; transform: none; }
+  .pd-row:hover, .pd-row.pd-row-hover, .pd-row:focus-visible {
+    background: rgba(176,36,27,0.08);
+    outline: none;
+  }
+  .pd-row:focus-visible::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1.5px solid var(--afci);
+    pointer-events: none;
+  }
+  @keyframes pd-rowin {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pd-row { animation: none; opacity: 1; transform: none; }
+  }
+  .pd-no { color: var(--ink); font-weight: 700; }
+  .pd-load { color: var(--ink); }
+  .pd-amps { color: var(--ink-soft); }
+  .pd-detail { color: var(--ink-soft); font-size: 12px; }
+  .pd-marg {
+    font-style: normal;
+    font-family: 'Special Elite', monospace;
+    color: var(--pencil);
+    font-size: 11px;
+  }
+
+  .pd-rosette {
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    background: var(--afci);
+    color: var(--cream);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    padding: 3px 6px;
+    border: 1.5px solid var(--afci);
+    border-radius: 2px;
+    transform: rotate(-6deg);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.6) inset;
+    animation: pd-stamp 240ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: 600ms;
+  }
+  .pd-rosette-list {
+    position: relative;
+    right: auto;
+    top: auto;
+    align-self: center;
+  }
+  @keyframes pd-stamp {
+    0% { opacity: 0; transform: rotate(-12deg) scale(1.6); }
+    60% { opacity: 1; transform: rotate(-4deg) scale(0.92); }
+    100% { opacity: 1; transform: rotate(-6deg) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pd-rosette { animation: none; }
+  }
+
+  /* ── SECTIONS ──────────────────────────────────────────────────── */
+  .pd-section {
+    position: relative;
+    z-index: 1;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(40px, 5vw, 80px) clamp(20px, 4vw, 48px);
+    border-top: 1px dashed rgba(26,26,24,0.25);
+  }
+  .pd-section-head { margin-bottom: 24px; max-width: 720px; }
+  .pd-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    color: var(--afci);
+    text-transform: uppercase;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .pd-section-head h2 {
+    font-family: 'Special Elite', monospace;
+    font-weight: 400;
+    font-size: clamp(24px, 3vw, 36px);
+    margin: 0 0 8px;
+    text-transform: uppercase;
+  }
+  .pd-section-head p { font-size: 14px; color: var(--ink-soft); }
+
+  .pd-upgrade-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid rgba(26,26,24,0.35);
+    background: rgba(255,255,255,0.55);
+  }
+  .pd-upgrade-list li {
+    display: grid;
+    grid-template-columns: 90px 1fr 80px 1.4fr 60px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(26,26,24,0.15);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 140ms ease;
+    opacity: 0;
+    animation: pd-rowin 400ms ease forwards;
+  }
+  .pd-upgrade-list li:last-child { border-bottom: none; }
+  .pd-upgrade-list li:hover { background: rgba(176,36,27,0.06); }
+  @media (prefers-reduced-motion: reduce) {
+    .pd-upgrade-list li { animation: none; opacity: 1; }
+  }
+  .pd-up-ckt { color: var(--afci); font-weight: 700; }
+  .pd-up-room { color: var(--ink); }
+  .pd-up-year { color: var(--ink-soft); }
+  .pd-up-reason { color: var(--ink-soft); font-size: 11px; }
+
+  .pd-iso {
+    background: var(--cream);
+    border: 1px solid rgba(26,26,24,0.3);
+    padding: 16px;
+  }
+
+  .pd-foot {
+    position: relative;
+    z-index: 1;
+    border-top: 2px solid var(--ink);
+    padding: 18px clamp(20px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 720px) {
+    .pd-dir-head, .pd-row { grid-template-columns: 40px 1fr 40px; }
+    .pd-detail { display: none; }
+    .pd-upgrade-list li { grid-template-columns: 60px 1fr 60px; }
+    .pd-up-reason { display: none; }
+    .pd-rosette-list { grid-column: 3 / span 1; }
   }
 `;

@@ -1,11 +1,11 @@
 import { PageApproach } from "../_lib/PageApproach";
-import GalaxyBrainEngine from "./_engine/GalaxyBrainEngine";
+import BroadsheetEngine from "./_engine/BroadsheetEngine";
 
-export default function GalaxyBrainPage() {
+export default function BroadsheetPage() {
   return (
-    <main style={{ background: "#06070C", color: "#E9F2F6", minHeight: "100vh" }}>
+    <main style={{ background: "#E9E2D2", color: "#0F0F0E", minHeight: "100vh" }}>
       <PageApproach>
-        <GalaxyBrainEngine />
+        <BroadsheetEngine />
       </PageApproach>
     </main>
   );
