@@ -4,6 +4,7 @@ import { Hero } from "./_sections/Hero";
 import { WhyPlay } from "./_sections/WhyPlay";
 import { CourseAtAGlance } from "./_sections/CourseAtAGlance";
 import { SignatureHoles } from "./_sections/SignatureHoles";
+import { Scorecard } from "./_sections/Scorecard";
 import { BookTeeTime } from "./_sections/BookTeeTime";
 import { Events } from "./_sections/Events";
 import { Visit } from "./_sections/Visit";
@@ -25,6 +26,7 @@ export function LakeArthurSite() {
         <WhyPlay />
         <CourseAtAGlance />
         <SignatureHoles />
+        <Scorecard />
         <BookTeeTime />
         <Events />
         <Visit />
