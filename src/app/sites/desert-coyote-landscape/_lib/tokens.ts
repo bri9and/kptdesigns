@@ -48,13 +48,22 @@ export const z = {
   intro: 70,
 };
 
-// Photo paths — files don't exist yet. The placeholder gradient component
-// inside each section provides the visual stand-in. When real photos drop
-// into /public/sites/desert-coyote-landscape/photos/ swap is one paste.
+// Real photos pulled from desertcoyotelandscape.com — their actual project
+// shots, before/after composite, Iron Bull trailer, and logos.
+const ROOT = "/sites/desert-coyote-landscape/photos";
 export const photos = {
-  hero:    "/sites/desert-coyote-landscape/photos/hero.jpg",
-  project01: "/sites/desert-coyote-landscape/photos/project-01.jpg",
-  project02: "/sites/desert-coyote-landscape/photos/project-02.jpg",
-  project03: "/sites/desert-coyote-landscape/photos/project-03.jpg",
-  project04: "/sites/desert-coyote-landscape/photos/project-04.jpg",
+  hero:           `${ROOT}/project-02.png`,
+  project02:      `${ROOT}/project-02.png`,
+  project03:      `${ROOT}/project-03.png`,
+  project04:      `${ROOT}/project-04.png`,
+  project05:      `${ROOT}/project-05.jpg`,
+  project06:      `${ROOT}/project-06.png`,
+  project07:      `${ROOT}/project-07.png`,
+  project08:      `${ROOT}/project-08.png`,
+  beforeAfter:    `${ROOT}/project-before-after.png`,
+  trailer1:       `${ROOT}/trailer-1.jpg`,
+  trailer2:       `${ROOT}/trailer-2.jpg`,
+  trailer3:       `${ROOT}/trailer-3.jpg`,
+  trailerLogo:    `${ROOT}/trailer-logo.jpg`,
+  logo:           `${ROOT}/logo.png`,
 } as const;

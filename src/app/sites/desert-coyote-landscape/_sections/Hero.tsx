@@ -1,6 +1,6 @@
 "use client";
 
-import { palette, fonts } from "../_lib/tokens";
+import { palette, fonts, photos } from "../_lib/tokens";
 
 // Full-bleed split hero. Left: huge condensed headline + mono eyebrow +
 // two CTAs. Right: placeholder photo block with project caption pinned
@@ -35,28 +35,20 @@ export function Hero() {
       </div>
 
       <div className="dc2-hero__right">
-        <PlaceholderPhoto tag="PROJECT 01 · 1,800 SF PAVER COURTYARD" />
+        <figure className="dc2-hero__photo">
+          <img
+            className="dc2-hero__img"
+            src={photos.hero}
+            alt="Recent Desert Coyote Landscape installation — paver patio and turf"
+            loading="eager"
+            decoding="async"
+          />
+          <figcaption className="dc2-hero__photo-tag">RECENT WORK · EAST VALLEY</figcaption>
+        </figure>
       </div>
 
       <style>{css}</style>
     </section>
-  );
-}
-
-// Inline placeholder photo block — warm-tan noise gradient evoking gravel
-// / pavers. Marked with data-placeholder-photo so QA can grep for swap
-// targets when real images drop in.
-function PlaceholderPhoto({ tag }: { tag: string }) {
-  return (
-    <div
-      className="dc2-hero__photo"
-      data-placeholder-photo="true"
-      role="img"
-      aria-label={tag}
-    >
-      <div className="dc2-hero__photo-grain" aria-hidden="true" />
-      <span className="dc2-hero__photo-tag">{tag}</span>
-    </div>
   );
 }
 
@@ -138,21 +130,16 @@ const css = `
   position: relative;
   width: 100%; height: 100%;
   min-height: 60vh;
+  margin: 0;
   border-radius: 4px;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 25% 25%, rgba(244, 239, 227, 0.55), transparent 55%),
-    radial-gradient(ellipse at 80% 75%, rgba(122, 117, 105, 0.35), transparent 60%),
-    linear-gradient(135deg, ${palette.bgDeep} 0%, ${palette.clay} 55%, ${palette.dust} 100%);
+  background: ${palette.bgDeep};
 }
-.dc2-hero__photo-grain {
-  position: absolute; inset: 0;
-  background-image:
-    repeating-radial-gradient(circle at 17% 31%, rgba(27,26,23,0.05) 0 1px, transparent 1px 4px),
-    repeating-radial-gradient(circle at 73% 64%, rgba(244,239,227,0.06) 0 1px, transparent 1px 5px);
-  mix-blend-mode: overlay;
-  opacity: 0.85;
-  pointer-events: none;
+.dc2-hero__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.04);
 }
 .dc2-hero__photo-tag {
   position: absolute;

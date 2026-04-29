@@ -2,6 +2,7 @@ import { DCFonts } from "./_lib/DCFonts";
 import { Header } from "./_sections/Header";
 import { Hero } from "./_sections/Hero";
 import { Services } from "./_sections/Services";
+import { RecentWork } from "./_sections/RecentWork";
 import { EstimateRequest } from "./_sections/EstimateRequest";
 import { Visit } from "./_sections/Visit";
 import { palette, fonts } from "./_lib/tokens";
@@ -18,6 +19,7 @@ export function DesertCoyoteSite() {
         <Header />
         <Hero />
         <Services />
+        <RecentWork />
         <EstimateRequest />
         <Visit />
       </main>
