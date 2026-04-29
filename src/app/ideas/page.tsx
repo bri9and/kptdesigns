@@ -61,21 +61,6 @@ type BrandCategory = {
 
 const catalog: Category[] = [
   {
-    id: "baseline",
-    title: "Baseline",
-    blurb: "The control group. Verbatim clone of the live site for A/B against every other direction.",
-    concepts: [
-      {
-        slug: "v1-current",
-        name: "V1 — Current Site",
-        emoji: "🏁",
-        descriptor: "F1 wind-tunnel aesthetic. Charcoal + terracotta. The benchmark we beat.",
-        risk: "Low Risk",
-        appeal: "Restrained",
-      },
-    ],
-  },
-  {
     id: "editorial",
     title: "Editorial / Print",
     blurb: "Typography first. The reverence and gravitas of a print object — manuscript, magazine, specimen book, broadsheet.",
@@ -1263,8 +1248,6 @@ const brandConcepts: BrandCategory[] = [
 // ─── derived counts ─────────────────────────────────────────────────────────
 const totalDirections = catalog.reduce((n, c) => n + c.concepts.length, 0);
 const totalCategories = catalog.length;
-const baselineCount = catalog.find((c) => c.id === "baseline")?.concepts.length ?? 0;
-const draftCount = totalDirections - baselineCount;
 const totalBrandConcepts = brandConcepts.reduce((n, c) => n + c.concepts.length, 0);
 const totalConcepts = totalDirections + totalBrandConcepts;
 
@@ -1319,11 +1302,10 @@ export default function IdeasIndex() {
         {/* stat strip */}
         <div className="mt-10 grid grid-cols-2 md:grid-cols-5 gap-px bg-white/[0.06] border border-white/[0.06]">
           {[
-            { k: "Concepts", v: String(totalConcepts) },
-            { k: "Categories", v: String(totalCategories) },
+            { k: "Total", v: String(totalConcepts) },
             { k: "Directions", v: String(totalDirections) },
-            { k: "Drafts", v: String(draftCount) },
-            { k: "Baseline", v: String(baselineCount) },
+            { k: "Brand studies", v: String(totalBrandConcepts) },
+            { k: "Categories", v: String(totalCategories) },
           ].map((s) => (
             <div key={s.k} className="bg-[#0A0A0A] px-5 py-4">
               <div className="font-mono text-[10px] tracking-[2.5px] text-white/40 uppercase">
