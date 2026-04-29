@@ -30,7 +30,7 @@ export function pickNByName<T>(name: string, options: readonly T[], n: number, s
   const used = new Set<number>();
   for (let i = 0; i < n; i++) {
     let attempts = 0;
-    let idx = cursor % options.length;
+    let idx = Math.abs(cursor) % options.length;
     while (used.has(idx) && attempts < options.length) {
       cursor = (cursor * 1103515245 + 12345) | 0;
       idx = Math.abs(cursor) % options.length;
