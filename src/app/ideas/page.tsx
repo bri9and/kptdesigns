@@ -76,53 +76,6 @@ const catalog: Category[] = [
     ],
   },
   {
-    id: "cosmic",
-    title: "Cosmic / Futuristic",
-    blurb: "Spatial depth, scroll-bound camera moves, infrastructure-as-spectacle. The web as a place you fly through.",
-    concepts: [
-      {
-        slug: "v2-cosmos",
-        name: "V2 — Cosmos",
-        emoji: "🌌",
-        descriptor: "Plasma violet + deep space. Three.js starfield hero, HUD chrome, exploratory.",
-        risk: "High Risk",
-        appeal: "Bold",
-      },
-      {
-        slug: "v5-tunnel",
-        name: "V5 — Tunnel",
-        emoji: "🛰️",
-        descriptor: "Cyan + electric blue void. Camera advances through a living tunnel of checkpoints.",
-        risk: "Experimental",
-        appeal: "Novel",
-      },
-      {
-        slug: "v6-strata",
-        name: "V6 — Strata",
-        emoji: "🪨",
-        descriptor: "Molten orange on paper. Sections as 2D planes stacked at Z-depth, sliding past camera.",
-        risk: "High Risk",
-        appeal: "Bold",
-      },
-      {
-        slug: "v7-recursive",
-        name: "V7 — Recursive Zoom",
-        emoji: "🔁",
-        descriptor: "Off-white + electric red. Powers-of-Ten — every section is a detail inside the previous.",
-        risk: "Experimental",
-        appeal: "Novel",
-      },
-      {
-        slug: "v69-pellucid",
-        name: "V69 — Pellucid",
-        emoji: "🫧",
-        descriptor: "Frosted-glass layered cards, depth-of-field blur behind each, soft pastel glow, prism-edge highlights.",
-        risk: "Medium Risk",
-        appeal: "Premium",
-      },
-    ],
-  },
-  {
     id: "editorial",
     title: "Editorial / Print",
     blurb: "Typography first. The reverence and gravitas of a print object — manuscript, magazine, specimen book, broadsheet.",
@@ -220,7 +173,7 @@ const catalog: Category[] = [
   {
     id: "technical",
     title: "Technical / Terminal",
-    blurb: "Information density as the visual. CRT phosphor, blueprints, instrument panels, mainframe documentation.",
+    blurb: "Information density as the visual. CRT phosphor, blueprints, instrument panels, mainframe documentation, dispatch-radio crew logs.",
     concepts: [
       {
         slug: "v4-terminal",
@@ -317,83 +270,6 @@ const catalog: Category[] = [
         descriptor: "Architectural sheet titleblock as global frame, sheet-number nav, revision triangles for updates.",
         risk: "Low Risk",
         appeal: "Restrained",
-      },
-      {
-        slug: "v52-mat-temperature",
-        name: "V52 — Mat Temperature",
-        emoji: "🌡️",
-        descriptor: "Live thermal-gradient accent system tied to user's local NOAA temperature; gradient drives palette.",
-        risk: "Experimental",
-        appeal: "Novel",
-      },
-    ],
-  },
-  {
-    id: "luxury",
-    title: "Luxury / Tactile",
-    blurb: "Slow, expensive-feeling. Hand-stitched detail, warm wood and chrome, the patina of objects you keep.",
-    concepts: [
-      {
-        slug: "v10-atelier",
-        name: "V10 — Atelier",
-        emoji: "✂️",
-        descriptor: "Champagne pink + gold foil + oxblood. Couture lookbook, ultra-thin Saol display.",
-        risk: "Low Risk",
-        appeal: "Premium",
-      },
-      {
-        slug: "v14-cassette",
-        name: "V14 — Cassette",
-        emoji: "📼",
-        descriptor: "Walnut + brushed aluminum + LED red. Skeuomorphic tape deck, Side A / Side B.",
-        risk: "High Risk",
-        appeal: "Novel",
-      },
-      {
-        slug: "v71-zinc-roof",
-        name: "V71 — Zinc Roof",
-        emoji: "🏠",
-        descriptor: "Standing-seam zinc panels run vertically as the page substrate, weathered patina at edges, rivet rhythm.",
-        risk: "Medium Risk",
-        appeal: "Premium",
-      },
-    ],
-  },
-  {
-    id: "physical",
-    title: "Physical-World",
-    blurb: "Borrowed metaphors from objects you can hold. Paper, ink, contour lines, thermal-printer scrolls.",
-    concepts: [
-      {
-        slug: "v15-atlas",
-        name: "V15 — Atlas",
-        emoji: "🗺️",
-        descriptor: "Cartographer's white + contour brown + forest green. Topographic map, portfolio as pins.",
-        risk: "Low Risk",
-        appeal: "Premium",
-      },
-      {
-        slug: "v18-receipt",
-        name: "V18 — Receipt",
-        emoji: "🧾",
-        descriptor: "Receipt white + ink fade + carbon red. One continuous thermal-printer strip.",
-        risk: "Experimental",
-        appeal: "Novel",
-      },
-    ],
-  },
-  {
-    id: "conversational",
-    title: "Conversational",
-    blurb: "AI-native. The whole site is a dialogue with KPT's agent — content arrives as responses.",
-    concepts: [
-      {
-        slug: "v13-conversation",
-        name: "V13 — Conversation",
-        emoji: "💬",
-        descriptor: "Soft white + agent navy + accent purple. Chat-as-site, ties to KPT Agents brand.",
-        risk: "Experimental",
-        appeal: "Novel",
       },
       {
         slug: "v58-group-text",
@@ -861,7 +737,7 @@ const catalog: Category[] = [
   {
     id: "tactile",
     title: "Tactile / Material",
-    blurb: "Surfaces you want to touch — kraft paper, deckle edges, wood-burned rails, debossed aluminum, road-case foam. Texture-led, depth-led, hand-made.",
+    blurb: "Surfaces you want to touch — kraft paper, deckle edges, wood-burned rails, debossed aluminum, road-case foam, walnut and gold foil, standing-seam zinc. Texture-led, depth-led, hand-made.",
     concepts: [
       {
         slug: "v23-fieldnotes",
@@ -917,6 +793,30 @@ const catalog: Category[] = [
         emoji: "🖨",
         descriptor: "Visible bite, ink halos, 100% cotton paper texture, deep impression letterforms, register marks.",
         risk: "Low Risk",
+        appeal: "Premium",
+      },
+      {
+        slug: "v10-atelier",
+        name: "V10 — Atelier",
+        emoji: "✂️",
+        descriptor: "Champagne pink + gold foil + oxblood. Couture lookbook, ultra-thin Saol display.",
+        risk: "Low Risk",
+        appeal: "Premium",
+      },
+      {
+        slug: "v14-cassette",
+        name: "V14 — Cassette",
+        emoji: "📼",
+        descriptor: "Walnut + brushed aluminum + LED red. Skeuomorphic tape deck, Side A / Side B.",
+        risk: "High Risk",
+        appeal: "Novel",
+      },
+      {
+        slug: "v71-zinc-roof",
+        name: "V71 — Zinc Roof",
+        emoji: "🏠",
+        descriptor: "Standing-seam zinc panels run vertically as the page substrate, weathered patina at edges, rivet rhythm.",
+        risk: "Medium Risk",
         appeal: "Premium",
       },
     ],
@@ -980,6 +880,14 @@ const catalog: Category[] = [
         emoji: "🪢",
         descriptor: "Hand-drawn climbing-knot diagrams as section markers, arborist saddle palette, rope-trace nav.",
         risk: "Medium Risk",
+        appeal: "Premium",
+      },
+      {
+        slug: "v15-atlas",
+        name: "V15 — Atlas",
+        emoji: "🗺️",
+        descriptor: "Cartographer's white + contour brown + forest green. Topographic map, portfolio as pins.",
+        risk: "Low Risk",
         appeal: "Premium",
       },
     ],
@@ -1161,6 +1069,82 @@ const catalog: Category[] = [
         descriptor: "Fresh parking-lot striping yellow on black-asphalt ground, lot-pattern grid, line-paint accents.",
         risk: "Medium Risk",
         appeal: "Bold",
+      },
+    ],
+  },
+  // ─── Experimental ──────────────────────────────────────────────────────
+  // Deepest end of the catalog. Heavy 3D, scroll-bound camera moves,
+  // depth-zoom entrances. The flag-planted explorations — every concept
+  // here either lived in the old Cosmic / Futuristic bucket or is tagged
+  // risk: "Experimental" elsewhere.
+  {
+    id: "experimental",
+    title: "Experimental",
+    blurb: "Heavy 3D, scroll-bound camera moves, depth-zoom entrances. The flag-planted explorations. Use sparingly.",
+    concepts: [
+      {
+        slug: "v2-cosmos",
+        name: "V2 — Cosmos",
+        emoji: "🌌",
+        descriptor: "Plasma violet + deep space. Three.js starfield hero, HUD chrome, exploratory.",
+        risk: "High Risk",
+        appeal: "Bold",
+      },
+      {
+        slug: "v5-tunnel",
+        name: "V5 — Tunnel",
+        emoji: "🛰️",
+        descriptor: "Cyan + electric blue void. Camera advances through a living tunnel of checkpoints.",
+        risk: "Experimental",
+        appeal: "Novel",
+      },
+      {
+        slug: "v6-strata",
+        name: "V6 — Strata",
+        emoji: "🪨",
+        descriptor: "Molten orange on paper. Sections as 2D planes stacked at Z-depth, sliding past camera.",
+        risk: "High Risk",
+        appeal: "Bold",
+      },
+      {
+        slug: "v7-recursive",
+        name: "V7 — Recursive Zoom",
+        emoji: "🔁",
+        descriptor: "Off-white + electric red. Powers-of-Ten — every section is a detail inside the previous.",
+        risk: "Experimental",
+        appeal: "Novel",
+      },
+      {
+        slug: "v69-pellucid",
+        name: "V69 — Pellucid",
+        emoji: "🫧",
+        descriptor: "Frosted-glass layered cards, depth-of-field blur behind each, soft pastel glow, prism-edge highlights.",
+        risk: "Medium Risk",
+        appeal: "Premium",
+      },
+      {
+        slug: "v13-conversation",
+        name: "V13 — Conversation",
+        emoji: "💬",
+        descriptor: "Soft white + agent navy + accent purple. Chat-as-site, ties to KPT Agents brand.",
+        risk: "Experimental",
+        appeal: "Novel",
+      },
+      {
+        slug: "v18-receipt",
+        name: "V18 — Receipt",
+        emoji: "🧾",
+        descriptor: "Receipt white + ink fade + carbon red. One continuous thermal-printer strip.",
+        risk: "Experimental",
+        appeal: "Novel",
+      },
+      {
+        slug: "v52-mat-temperature",
+        name: "V52 — Mat Temperature",
+        emoji: "🌡️",
+        descriptor: "Live thermal-gradient accent system tied to user's local NOAA temperature; gradient drives palette.",
+        risk: "Experimental",
+        appeal: "Novel",
       },
     ],
   },
@@ -1376,8 +1360,11 @@ export default function IdeasIndex() {
             </p>
             <div className="h-px bg-white/[0.07] mb-8" />
 
-            {/* card grid — gap-px on a tinted bg gives us hairline dividers */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06]">
+            {/* card grid — gap-px on a tinted bg gives us hairline dividers.
+                auto-rows-fr forces every row to share the tallest card's height
+                so cards across categories all line up regardless of descriptor
+                length. */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-white/[0.06] border border-white/[0.06] auto-rows-fr">
               {cat.concepts.map((c) => {
                 const cardBody = (
                   <>
@@ -1386,9 +1373,12 @@ export default function IdeasIndex() {
                       /{c.slug}
                     </div>
 
-                    {/* emoji sigil */}
+                    {/* emoji sigil — locked to a single size + line-height across
+                        the whole catalog so descriptors aren't pushed by glyph
+                        metrics. */}
                     <div
-                      className="text-[44px] md:text-[52px] leading-none mb-5 select-none transition-transform duration-500 group-hover:scale-[1.08] group-hover:-rotate-[2deg] origin-bottom-left"
+                      className="select-none transition-transform duration-500 group-hover:scale-[1.08] group-hover:-rotate-[2deg] origin-bottom-left mb-5"
+                      style={{ fontSize: "48px", lineHeight: 1 }}
                       aria-hidden
                     >
                       {c.emoji}
@@ -1399,13 +1389,21 @@ export default function IdeasIndex() {
                       {c.name}
                     </h3>
 
-                    {/* descriptor */}
-                    <p className="text-[13px] text-white/55 font-light leading-[1.65] flex-1">
+                    {/* descriptor — clamp at 3 lines so a long descriptor cannot
+                        inflate the card past its neighbors; ellipsis on overflow. */}
+                    <p
+                      className="text-[13px] text-white/55 font-light leading-[1.65] overflow-hidden"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
                       {c.descriptor}
                     </p>
 
-                    {/* tag row */}
-                    <div className="flex flex-wrap gap-2 mt-5">
+                    {/* tag row — pinned to the bottom of every card via mt-auto */}
+                    <div className="flex flex-wrap gap-2 mt-auto pt-5">
                       <span
                         className={`font-mono text-[10px] tracking-[1.5px] uppercase px-2 py-1 border rounded-[2px] ${riskStyles[c.risk]}`}
                       >
@@ -1428,8 +1426,10 @@ export default function IdeasIndex() {
                   </>
                 );
 
+                // identical padding / border / radius / hover treatment for every
+                // card regardless of category; height equalised by auto-rows-fr.
                 const cls =
-                  "group relative bg-[#0A0A0A] hover:bg-[#111] transition-colors p-7 flex flex-col min-h-[260px]";
+                  "group relative bg-[#0A0A0A] hover:bg-[#111] transition-colors p-7 flex flex-col h-full min-h-[260px]";
 
                 return c.external ? (
                   <a
