@@ -1,25 +1,25 @@
-// Visual tokens for Desert Coyote — Sonoran Field Guide aesthetic.
-// Sand / terra / sage / rock / sky palette evokes East Valley desert.
+// Visual tokens for Desert Coyote v2 — concrete + dust aesthetic.
+// Working-class warmth, not Sonoran field-guide editorial. Big block
+// headlines, terracotta signal accent used SPARINGLY.
 
 export const fonts = {
-  display: '"Playfair Display", "Iowan Old Style", Georgia, serif',
-  body: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+  display:
+    '"DM Serif Display", "Iowan Old Style", "Hoefler Text", Georgia, serif',
+  body:
+    '"Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
   mono: '"JetBrains Mono", "SF Mono", Menlo, monospace',
 };
 
 export const palette = {
-  sand:        "#EDE4D2",   // primary cream/paper background
-  sandDeep:    "#D9CCAF",   // shadowed sand
-  terra:       "#A85A3C",   // hot terracotta — accent
-  terraDeep:   "#7A3E28",   // deeper terra
-  sage:        "#7C8C6B",   // muted saguaro green
-  saguaro:     "#2D4A2A",   // deep cactus green
-  rock:        "#3F352D",   // dark earth
-  sky:         "#6E8FA8",   // sonoran dusk sky
-  sunGold:     "#D4A857",   // golden hour
-  charcoal:    "#1A1612",
-  paper:       "#F5EFDF",
-  white:       "#FFFFFF",
+  bg:      "#E9E2D4", // concrete cream
+  bgDeep:  "#D8CFB9", // sand shadow
+  ink:     "#1B1A17", // deep charcoal
+  terra:   "#9C4A2A", // signal terracotta — sparingly
+  clay:    "#C68B4E", // warm tan, secondary accent
+  dust:    "#7A7569", // muted brown-grey for captions
+  paper:   "#F4EFE3", // elevated surface
+  dark:    "#101012", // footer / inverted sections
+  white:   "#FFFFFF",
 } as const;
 
 export const easing = {
@@ -34,3 +34,14 @@ export const z = {
   drawer: 50,
   intro: 70,
 };
+
+// Photo paths — files don't exist yet. The placeholder gradient component
+// inside each section provides the visual stand-in. When real photos drop
+// into /public/sites/desert-coyote-landscape/photos/ swap is one paste.
+export const photos = {
+  hero:    "/sites/desert-coyote-landscape/photos/hero.jpg",
+  project01: "/sites/desert-coyote-landscape/photos/project-01.jpg",
+  project02: "/sites/desert-coyote-landscape/photos/project-02.jpg",
+  project03: "/sites/desert-coyote-landscape/photos/project-03.jpg",
+  project04: "/sites/desert-coyote-landscape/photos/project-04.jpg",
+} as const;
