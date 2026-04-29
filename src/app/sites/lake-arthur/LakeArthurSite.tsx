@@ -31,7 +31,17 @@ export function LakeArthurSite() {
         <Footer />
       </main>
       <style>{`
-        .la-site { background: ${palette.paper}; color: ${palette.ink}; font-family: ${fonts.body}; min-height: 100vh; }
+        .la-site {
+          background: ${palette.paper};
+          color: ${palette.ink};
+          font-family: ${fonts.body};
+          min-height: 100vh;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+          text-rendering: optimizeLegibility;
+          font-synthesis: none;
+        }
+        .la-site * { font-variation-settings: normal; }
         @media (prefers-reduced-motion: reduce) { .la-site * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
       `}</style>
     </>

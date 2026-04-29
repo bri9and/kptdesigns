@@ -67,8 +67,7 @@ const css = `
   color: ${palette.ink};
 }
 .la-hd.is-scrolled {
-  background: rgba(242,235,219,0.94);
-  backdrop-filter: saturate(140%) blur(14px);
+  background: ${palette.paper};
   border-bottom-color: rgba(22,20,15,0.08);
   padding: 0.7rem 2.5rem;
 }
