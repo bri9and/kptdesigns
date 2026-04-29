@@ -18,7 +18,9 @@ export function LenisProvider({ children }: { children: ReactNode }) {
     pathname?.startsWith("/mockup/v5-tunnel") ||
     pathname?.startsWith("/mockup/v2-cosmos") ||
     pathname?.startsWith("/sites/desert-coyote-landscape") ||
-    pathname?.startsWith("/proposal/desert-coyote-landscape")
+    pathname?.startsWith("/proposal/desert-coyote-landscape") ||
+    pathname?.startsWith("/sites/lake-arthur") ||
+    pathname?.startsWith("/proposal/lake-arthur")
   ) {
     return <>{children}</>;
   }
