@@ -20,7 +20,7 @@ export function Header() {
   return (
     <header className={`la-hd${scrolled ? " is-scrolled" : ""}${open ? " is-open" : ""}`}>
       <a href="#hero" className="la-hd__brand" aria-label="Lake Arthur Golf Club">
-        <span className="la-hd__brand-mark">{meta.short ?? "Lake Arthur"}</span>
+        <span className="la-hd__brand-mark">Lake Arthur</span>
         <span className="la-hd__brand-sub">Golf Club · Butler, PA</span>
       </a>
       <nav className="la-hd__nav" aria-label="Primary">

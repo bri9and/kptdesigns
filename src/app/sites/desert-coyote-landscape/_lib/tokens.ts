@@ -20,6 +20,19 @@ export const palette = {
   paper:   "#F4EFE3", // elevated surface
   dark:    "#101012", // footer / inverted sections
   white:   "#FFFFFF",
+
+  // Legacy aliases — the proposal chrome (AnnotationRail, BeforeAfter,
+  // Intro, ScopeDrawer) was written against v1 token names. Mapping to
+  // the v2 palette keeps the chrome rendering without rewriting it.
+  charcoal:  "#1B1A17", // → ink
+  saguaro:   "#3A4A36", // → muted desert green stand-in
+  rock:      "#3F352D", // → dark earth
+  sand:      "#E9E2D4", // → bg
+  sandDeep:  "#D8CFB9", // → bgDeep
+  sunGold:   "#C68B4E", // → clay
+  sage:      "#7C8C6B", // → sage stand-in
+  sky:       "#6E8FA8", // → desert sky stand-in
+  terraDeep: "#7A3E28", // → deeper terra
 } as const;
 
 export const easing = {

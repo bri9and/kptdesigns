@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { PageApproach } from "@/app/mockup/_lib/PageApproach";
 import { LakeArthurSite } from "./LakeArthurSite";
 
 export const metadata: Metadata = {
@@ -10,8 +9,6 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <PageApproach>
       <LakeArthurSite />
-    </PageApproach>
   );
 }
