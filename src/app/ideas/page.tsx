@@ -1260,63 +1260,13 @@ const brandConcepts: BrandCategory[] = [
   },
 ];
 
-// ─── Built customer sites ──────────────────────────────────────────────────
-// All 35 customer sites that have been built and shipped under /sites/<slug>.
-// Lake Arthur and Desert Coyote got the v2 photographic-editorial redesign
-// pass and are marked with ★. The rest are legacy v1 builds.
-type BuiltSite = {
-  slug: string;
-  name: string;
-  industry: string;
-  v2?: boolean;
-};
-
-const BUILT_SITES: BuiltSite[] = [
-  { slug: "lake-arthur",                name: "Lake Arthur Golf Club",      industry: "Hospitality / Golf",   v2: true },
-  { slug: "desert-coyote-landscape",    name: "Desert Coyote Landscape",    industry: "Trades / Landscape",   v2: true },
-  { slug: "grand-view-golf",            name: "Grand View Golf Club",       industry: "Hospitality / Golf" },
-  { slug: "andersons-nutrition",        name: "Anderson's Nutrition",       industry: "Health / Wellness" },
-  { slug: "arizona-law-group",          name: "Arizona Law Group",          industry: "Legal" },
-  { slug: "az-offices",                 name: "AZ Offices",                 industry: "Commercial RE" },
-  { slug: "big-door-realty",            name: "Big Door Realty",            industry: "Real Estate" },
-  { slug: "caliguris-martial-arts",     name: "Caliguri's Martial Arts",    industry: "Recreation" },
-  { slug: "cirigliano-plumbing",        name: "Cirigliano Plumbing",        industry: "Trades / Plumbing" },
-  { slug: "cmp-holdings",               name: "CMP Holdings",               industry: "Holding Co." },
-  { slug: "dna-custom-homes",           name: "DNA Custom Homes",           industry: "Construction" },
-  { slug: "east-valley-mediator",       name: "East Valley Mediator",       industry: "Legal / Mediation" },
-  { slug: "edgewood-monuments",         name: "Edgewood Monuments",         industry: "Memorial" },
-  { slug: "fab-quantum-harmony",        name: "Fab Quantum Harmony",        industry: "Tech / Quantum" },
-  { slug: "great-bell-inc",             name: "Great Bell Inc.",            industry: "Industrial" },
-  { slug: "harbor-counseling",          name: "Harbor Counseling",          industry: "Health / Counseling" },
-  { slug: "inspirational-designs",      name: "Inspirational Designs",      industry: "Design Studio" },
-  { slug: "kelly-realty",               name: "Kelly Realty",               industry: "Real Estate" },
-  { slug: "koacc",                      name: "KOACC",                      industry: "Org / Coalition" },
-  { slug: "lcr-law-office",             name: "LCR Law Office",             industry: "Legal" },
-  { slug: "lebaron-carroll",            name: "LeBaron Carroll",            industry: "Legal" },
-  { slug: "marshall-law-firm",          name: "Marshall Law Firm",          industry: "Legal" },
-  { slug: "mba-real-estate",            name: "MBA Real Estate",            industry: "Real Estate" },
-  { slug: "mri-software",               name: "MRI Software",               industry: "Tech / SaaS" },
-  { slug: "nicholas-electric",          name: "Nicholas Electric",          industry: "Trades / Electrical" },
-  { slug: "palace-auto-detail",         name: "Palace Auto Detail",         industry: "Auto" },
-  { slug: "patriot-pest-control",       name: "Patriot Pest Control",       industry: "Trades / Pest" },
-  { slug: "peterson-law-firm",          name: "Peterson Law Firm",          industry: "Legal" },
-  { slug: "servpro-phoenix",            name: "ServPro Phoenix",            industry: "Trades / Restoration" },
-  { slug: "ssa-k12",                    name: "SSA K-12",                   industry: "Education" },
-  { slug: "three-rivers-pickleball",    name: "Three Rivers Pickleball",    industry: "Recreation" },
-  { slug: "varney-family-law",          name: "Varney Family Law",          industry: "Legal" },
-  { slug: "vitesse-worldwide",          name: "Vitesse Worldwide",          industry: "Logistics" },
-  { slug: "western-cleaning-solutions", name: "Western Cleaning Solutions", industry: "Trades / Cleaning" },
-  { slug: "zeke-son-roofing",           name: "Zeke & Son Roofing",         industry: "Trades / Roofing" },
-];
-
 // ─── derived counts ─────────────────────────────────────────────────────────
 const totalDirections = catalog.reduce((n, c) => n + c.concepts.length, 0);
 const totalCategories = catalog.length;
 const baselineCount = catalog.find((c) => c.id === "baseline")?.concepts.length ?? 0;
 const draftCount = totalDirections - baselineCount;
 const totalBrandConcepts = brandConcepts.reduce((n, c) => n + c.concepts.length, 0);
-const totalBuiltSites = BUILT_SITES.length;
-const totalConcepts = totalDirections + totalBrandConcepts + totalBuiltSites;
+const totalConcepts = totalDirections + totalBrandConcepts;
 
 // ─── tag styling ────────────────────────────────────────────────────────────
 const riskStyles: Record<Risk, string> = {
@@ -1369,11 +1319,11 @@ export default function IdeasIndex() {
         {/* stat strip */}
         <div className="mt-10 grid grid-cols-2 md:grid-cols-5 gap-px bg-white/[0.06] border border-white/[0.06]">
           {[
-            { k: "Total", v: String(totalConcepts) },
-            { k: "Built sites", v: String(totalBuiltSites) },
-            { k: "Directions", v: String(totalDirections) },
-            { k: "Brand studies", v: String(totalBrandConcepts) },
+            { k: "Concepts", v: String(totalConcepts) },
             { k: "Categories", v: String(totalCategories) },
+            { k: "Directions", v: String(totalDirections) },
+            { k: "Drafts", v: String(draftCount) },
+            { k: "Baseline", v: String(baselineCount) },
           ].map((s) => (
             <div key={s.k} className="bg-[#0A0A0A] px-5 py-4">
               <div className="font-mono text-[10px] tracking-[2.5px] text-white/40 uppercase">
@@ -1391,90 +1341,6 @@ export default function IdeasIndex() {
 
       {/* ── Categories ──────────────────────────────────────────────────── */}
       <main className="px-6 md:px-10 pb-24 max-w-[1320px] mx-auto">
-
-        {/* ── Built sites — shipped customer work ────────────────────────── */}
-        <div className="mb-12">
-          <div className="flex items-baseline gap-4 mb-3">
-            <span className="font-mono text-[10px] tracking-[3px] text-qyellow uppercase">
-              /sites
-            </span>
-            <span className="h-px flex-1 bg-white/10 max-w-[120px]" />
-            <span className="font-mono text-[10px] tracking-[3px] text-white/35 uppercase tabular-nums">
-              {totalBuiltSites} shipped
-            </span>
-          </div>
-          <h2 className="text-[clamp(28px,4vw,56px)] font-semibold tracking-[-0.5px] leading-[1] max-w-[1000px]">
-            Built sites.
-            <br />
-            <span className="text-white/40">Live, public, billable work.</span>
-          </h2>
-          <p className="text-[14px] md:text-[15px] text-white/55 mt-6 max-w-[640px] leading-[1.7] font-light">
-            Every customer site shipped under /sites/&lt;slug&gt;. Two are on
-            the new v2 photographic-editorial pass (★); the rest are v1
-            builds standing as-is.
-          </p>
-          <div className="w-12 h-[2px] bg-qyellow mt-8 opacity-80" />
-        </div>
-
-        <section className="mb-20 md:mb-28">
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-px bg-white/[0.06] border border-white/[0.06]">
-            {BUILT_SITES.map((s) => (
-              <Link
-                key={s.slug}
-                href={`/sites/${s.slug}`}
-                className="group relative bg-[#0A0A0A] hover:bg-[#111] transition-colors p-4 md:p-5 flex flex-col min-h-[140px]"
-              >
-                <div className="font-mono text-[9px] tracking-[2px] text-white/25 uppercase mb-3 truncate">
-                  /sites/{s.slug}
-                </div>
-                <div className="flex items-start gap-2 mb-2">
-                  {s.v2 && (
-                    <span
-                      className="text-[18px] leading-none text-qyellow select-none"
-                      title="v2 redesign"
-                      aria-label="v2 redesign"
-                    >
-                      ★
-                    </span>
-                  )}
-                  <h3 className="text-[14px] md:text-[15px] font-semibold tracking-[-0.1px] text-white group-hover:text-qyellow transition-colors leading-[1.25] pt-[1px]">
-                    {s.name}
-                  </h3>
-                </div>
-                <p className="text-[11px] font-mono text-white/40 tracking-[1px] uppercase mt-auto">
-                  {s.industry}
-                </p>
-                <span className="absolute top-3 right-3 font-mono text-[11px] text-white/15 group-hover:text-qyellow group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all">
-                  →
-                </span>
-                {s.v2 && (
-                  <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-qyellow opacity-60 group-hover:opacity-100 transition-opacity" />
-                )}
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* ── /mockup directions divider ──────────────────────────────────── */}
-        <div className="mb-12 mt-4">
-          <div className="h-px bg-white/[0.12]" />
-          <div className="flex items-baseline gap-4 mt-12 mb-3">
-            <span className="font-mono text-[10px] tracking-[3px] text-qyellow uppercase">
-              /mockup
-            </span>
-            <span className="h-px flex-1 bg-white/10 max-w-[120px]" />
-            <span className="font-mono text-[10px] tracking-[3px] text-white/35 uppercase tabular-nums">
-              {totalDirections} directions
-            </span>
-          </div>
-          <h2 className="text-[clamp(28px,4vw,56px)] font-semibold tracking-[-0.5px] leading-[1] max-w-[1000px]">
-            Mockup directions.
-            <br />
-            <span className="text-white/40">Full marketing-page builds, ready to polish.</span>
-          </h2>
-          <div className="w-12 h-[2px] bg-qyellow mt-8 opacity-80" />
-        </div>
-
         {catalog.map((cat, idx) => (
           <section key={cat.id} className="mb-20 md:mb-28">
             {/* category header */}
