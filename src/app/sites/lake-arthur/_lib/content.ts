@@ -187,7 +187,7 @@ export const whyPlay = [
     slug: "all-levels",
     title: "Every handicap, welcome",
     body: "Four tee boxes ranging from 5,140 to 6,637 yards. Wide fairways where they matter; clear bailouts where they don't. Bring the kids; bring the boss.",
-    photo: "/sites/lake-arthur/photos/course-lake-bg.jpg",
+    photo: "/sites/lake-arthur/photos/banner_1.jpg",
   },
   {
     slug: "events",
