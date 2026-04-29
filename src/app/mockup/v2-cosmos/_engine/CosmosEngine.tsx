@@ -1,26 +1,21 @@
 "use client";
 
 /**
- * StrataEngine — V6 Strata (snap-to-station, NOT continuous scrub)
+ * CosmosEngine — V2 Cosmos (snap-to-station, NOT continuous scrub).
  *
- * Mirrors the V5 Tunnel snap-to-station pattern exactly. Identity-defining
- * mechanic preserved: 8 Z-stacked 2D planes traveling through depth via CSS
- * perspective. The continuous scrollYProgress driver is replaced by a
- * discrete `targetStationRef` (0..N-1) plus a lerped `progressRef`, giving
- * the same forward-flight feel as V5 Tunnel — one wheel notch == one plane.
+ * Architecture mirrors v5-tunnel/_engine/TunnelEngine exactly: 100vh fixed
+ * wrapper · overflow:hidden · 3 layers (backdrop / panels / HUD) · all input
+ * (wheel, touch, keyboard) hijacked into discrete station advances.
  *
- * Architecture:
- *   ┌───────────────────────────────────────────┐
- *   │ 100vh wrapper, overflow:hidden            │  ← single viewport (NO page scroll)
- *   │  ├─ fixed BackgroundField     (z 0)       │  ← void hatching + sage/molten glows
- *   │  ├─ overlay plane layer       (z 10)      │  ← 8 absolutely-positioned planes
- *   │  └─ fixed HUD chrome          (z 30+)     │  ← top bar, dot nav, prev/next, hint
- *   └───────────────────────────────────────────┘
+ * Forward-flight (Option B): no 3D camera dolly. Each panel zooms
+ * 0.92 → 1.00 → 1.08 as we "pass through" it; the cosmic backdrop is a
+ * static gradient/grid/grain stack; HeroCosmos's own fixed starfield Canvas
+ * paints over it while the hero panel is visible, hidden via parent
+ * visibility:hidden afterward.
  *
- * Per-plane motion (forward-flight): each plane translates in Z from
- * -2400 (deep behind camera) → 0 (sharp + interactive) → +1400 (rushing
- * past camera). With LERP_FACTOR 0.055 the lerp settles in ~0.7s, giving
- * a real flight per advance over a doubled depth range vs the old engine.
+ * Tunables — locked to V5 values: WHEEL_NOTCH=50, WHEEL_COOLDOWN_MS=1500
+ * (fixed, no refresh), TOUCH_THRESHOLD=80, SETTLE_EPSILON=0.005,
+ * SETTLE_IDLE_MS=100, LERP_FACTOR=0.055.
  */
 
 import {
@@ -30,63 +25,53 @@ import {
   useRef,
   useState,
 } from "react";
+import { JetBrains_Mono, Inter } from "next/font/google";
 import { motionValue, useReducedMotion } from "framer-motion";
 import { useLenis } from "lenis/react";
 
-import HeroPlane from "../_sections/HeroPlane";
-import PhilosophyPlane from "../_sections/PhilosophyPlane";
-import StackPlane from "../_sections/StackPlane";
-import TelemetryPlane from "../_sections/TelemetryPlane";
-import PortfolioPlane from "../_sections/PortfolioPlane";
-import ProcessPlane from "../_sections/ProcessPlane";
-import FaqPlane from "../_sections/FaqPlane";
-import FinalePlane from "../_sections/FinalePlane";
-
 import {
-  BackgroundField,
-  MONO,
-  NavButtons,
-  NextHint,
+  ProgressBar,
+  SectionPill,
+  ScrollDots,
+  CornerHud,
+  skipLinkStyle,
+} from "./CosmosHud";
+import {
+  CHECKPOINTS,
+  CosmicBackdrop,
+  MobileFallback,
   PALETTE,
-  ScrollDotNav,
-  StaticStack,
-  StrataStyles,
-  TopChrome,
-  type PlaneDef,
-} from "./StrataHud";
+  ReducedMotionFallback,
+} from "./CosmosFallbacks";
 
-const PLANES: readonly PlaneDef[] = [
-  { id: "hero", label: "Origin", Component: HeroPlane },
-  { id: "philosophy", label: "Philosophy", Component: PhilosophyPlane },
-  { id: "stack", label: "Stack", Component: StackPlane },
-  { id: "telemetry", label: "Telemetry", Component: TelemetryPlane },
-  { id: "portfolio", label: "Field", Component: PortfolioPlane },
-  { id: "process", label: "Process", Component: ProcessPlane },
-  { id: "faq", label: "FAQ", Component: FaqPlane },
-  { id: "finale", label: "Signal", Component: FinalePlane },
-];
+/* --------------------------------- fonts --------------------------------- */
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--v2-mono",
+});
+const display = Inter({
+  subsets: ["latin"],
+  weight: ["200", "400", "700"],
+  variable: "--v2-display",
+});
+const FONT_VARS = `${mono.variable} ${display.variable}`;
 
-const N = PLANES.length;
-
-/* ---------- snap / settle tunables (match V5 Tunnel exactly) ---------- */
+/* ---------- snap / settle tunables (LOCKED to V5 values) ---------- */
 const WHEEL_NOTCH = 50;
-const WHEEL_COOLDOWN_MS = 1500;
+const WHEEL_COOLDOWN_MS = 1500; // fixed lockout — does NOT refresh on continued input
 const TOUCH_THRESHOLD = 80;
 const SETTLE_EPSILON = 0.005;
 const SETTLE_IDLE_MS = 100;
 const LERP_FACTOR = 0.055;
 
-/* ---------- depth tunables (V6 forward-flight) ---------- */
-const Z_BACK = -2400; // plane's Z when one full station behind active
-const Z_FORWARD = 1400; // plane's Z when one full station past active
-const BLUR_BACK_MAX = 12; // max blur on planes behind active (was 8)
-const BLUR_FORWARD_MAX = 8; // max blur on planes past active (was 6)
+const N = CHECKPOINTS.length;
 
 /* ===================================================================== */
-/* DEFAULT EXPORT — chooses appropriate variant                           */
+/* DEFAULT EXPORT — picks variant for viewport + motion prefs             */
 /* ===================================================================== */
 
-export default function StrataEngine() {
+export default function CosmosEngine() {
   const [mobile, setMobile] = useState<boolean | null>(null);
   const reduceMotion = useReducedMotion() ?? false;
 
@@ -97,16 +82,19 @@ export default function StrataEngine() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (mobile === null) return <div style={{ background: PALETTE.void, width: "100%", height: "100vh" }} />;
-  if (mobile || reduceMotion) return <StaticStack planes={PLANES} />;
-  return <DesktopStrata />;
+  if (mobile === null) {
+    return <div style={{ background: PALETTE.void, width: "100%", height: "100vh" }} />;
+  }
+  if (mobile) return <MobileFallback fontVars={FONT_VARS} />;
+  if (reduceMotion) return <ReducedMotionFallback fontVars={FONT_VARS} />;
+  return <DesktopCosmos />;
 }
 
 /* ===================================================================== */
-/* DESKTOP STRATA — snap-to-station, settle-aware interactivity           */
+/* DESKTOP COSMOS — snap-to-station, settle-aware interactivity           */
 /* ===================================================================== */
 
-function DesktopStrata() {
+function DesktopCosmos() {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
 
@@ -124,12 +112,13 @@ function DesktopStrata() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [settledIndex, setSettledIndex] = useState<number | null>(0);
 
-  // Kill global Lenis (would hijack window scroll).
+  // Kill global Lenis (would hijack window scroll & fight our wheel listener).
   const lenis = useLenis();
   useEffect(() => {
     if (lenis && typeof lenis.destroy === "function") lenis.destroy();
   }, [lenis]);
 
+  /* ---------- station mutators ---------- */
   const setStation = useCallback((i: number) => {
     const clamped = Math.max(0, Math.min(N - 1, i));
     if (clamped !== targetStationRef.current) {
@@ -155,6 +144,8 @@ function DesktopStrata() {
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
+      // If wheel happens inside the active settled panel AND that panel
+      // can still scroll in the wheel direction, let it scroll natively.
       if (settledIdxRef.current !== null) {
         const target = e.target as HTMLElement | null;
         const overlay = overlayRef.current;
@@ -172,8 +163,7 @@ function DesktopStrata() {
               if (scrollable) {
                 const atTop = node.scrollTop <= 0;
                 const atBot =
-                  node.scrollTop + node.clientHeight >=
-                  node.scrollHeight - 1;
+                  node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
                 const wantsDown = e.deltaY > 0;
                 const wantsUp = e.deltaY < 0;
                 if ((wantsDown && !atBot) || (wantsUp && !atTop)) {
@@ -192,6 +182,7 @@ function DesktopStrata() {
 
       const now = performance.now();
       if (now < wheelCooldownUntilRef.current) {
+        // FIXED cooldown — discard input until the lockout expires.
         wheelAccumRef.current = 0;
         return;
       }
@@ -208,7 +199,7 @@ function DesktopStrata() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [advanceStation]);
 
-  /* ---------- touch ---------- */
+  /* ---------- touch: per-swipe distance threshold ---------- */
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
@@ -221,7 +212,7 @@ function DesktopStrata() {
       if (touchStartYRef.current === null) return;
       const y = e.touches[0]?.clientY;
       if (y === undefined) return;
-      const dy = touchStartYRef.current - y;
+      const dy = touchStartYRef.current - y; // +ve = swipe up = next
       lastInputAtRef.current = performance.now();
       e.preventDefault();
       if (touchFiredRef.current) return;
@@ -248,13 +239,7 @@ function DesktopStrata() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (
-        t &&
-        (t.tagName === "INPUT" ||
-          t.tagName === "TEXTAREA" ||
-          t.isContentEditable)
-      )
-        return;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") {
         e.preventDefault();
         advanceStation(1);
@@ -292,6 +277,7 @@ function DesktopStrata() {
         setActiveIndex(idx);
       }
 
+      // Settled detection: lerp arrived AND idle window passed.
       const arrived = Math.abs(clamped - tgt) < SETTLE_EPSILON;
       const idleMs = performance.now() - lastInputAtRef.current;
       const shouldSettle = arrived && idleMs > SETTLE_IDLE_MS;
@@ -304,50 +290,36 @@ function DesktopStrata() {
         setSettledIndex(null);
       }
 
-      // Imperative plane styling — Z-translate forward-flight.
+      // Imperative panel styling — forward-flight via scale 0.92 → 1.00 → 1.08.
       const overlay = overlayRef.current;
       if (overlay) {
-        const planes = overlay.querySelectorAll<HTMLElement>("[data-panel]");
+        const panels = overlay.querySelectorAll<HTMLElement>("[data-panel]");
         const settledNow = settledIdxRef.current;
-        const stationP = clamped * (N - 1); // current camera position in station-space
-        planes.forEach((el) => {
+        panels.forEach((el) => {
           const stationIdx = Number(el.dataset.panel);
-          const d = stationP - stationIdx;
+          const stationP = stationIdx / (N - 1);
+          const d = clamped - stationP;
           const ad = Math.abs(d);
-
-          // Z-translation: linear in d.
-          // Negative d (camera behind plane) → plane far ahead in -Z (deep).
-          // Positive d (camera past plane) → plane behind us in +Z (rushing).
-          let z: number;
-          if (d <= 0) {
-            const a = Math.min(1, -d);
-            z = a * Z_BACK;
-          } else {
-            const a = Math.min(1, d);
-            z = a * Z_FORWARD;
-          }
-
-          // Opacity: peak at d=0, fades over ~1 station distance.
-          const t = Math.max(0, 1 - ad / 1.05);
+          const half = 1 / (N - 1) / 2;
+          const t = Math.max(0, 1 - ad / (half * 1.4));
           const opacity = t * t * (3 - 2 * t);
 
-          // Blur: stronger when behind, lighter when past.
-          const blur =
-            d < 0
-              ? Math.min(BLUR_BACK_MAX, ad * BLUR_BACK_MAX)
-              : Math.min(BLUR_FORWARD_MAX, ad * BLUR_FORWARD_MAX);
-
-          // Subtle rotateX for parallax feel.
-          const rotateX =
-            d < 0 ? Math.min(1.2, ad * 1.2) : -Math.min(1, ad);
+          // Forward-flight: behind-the-camera panels start small and grow,
+          // ahead-of-camera panels grow past as we "fly through" them.
+          let scale: number;
+          if (d <= 0) {
+            const a = Math.min(1, Math.max(0, 1 + d / (half * 1.6)));
+            scale = 0.92 + a * 0.08; // 0.92 → 1.00
+          } else {
+            const a = Math.min(1, Math.max(0, d / (half * 1.6)));
+            scale = 1 + a * 0.08; // 1.00 → 1.08
+          }
+          const blur = d < 0 ? Math.min(6, ad * 50) : 0;
 
           const isSettled = settledNow === stationIdx;
           el.style.opacity = isSettled ? "1" : String(opacity);
-          el.style.transform = `translate3d(-50%, -50%, ${z.toFixed(
-            2
-          )}px) rotateX(${rotateX.toFixed(3)}deg)`;
-          el.style.filter =
-            !isSettled && blur > 0.4 ? `blur(${blur.toFixed(2)}px)` : "none";
+          el.style.transform = `translate(-50%, -50%) scale(${(isSettled ? 1 : scale).toFixed(4)})`;
+          el.style.filter = !isSettled && blur > 0.4 ? `blur(${blur.toFixed(2)}px)` : "none";
           el.style.pointerEvents = isSettled ? "auto" : "none";
           el.style.visibility = opacity > 0.01 || isSettled ? "visible" : "hidden";
         });
@@ -360,14 +332,15 @@ function DesktopStrata() {
     return () => cancelAnimationFrame(raf);
   }, [scrollYProgress]);
 
+  const settledLabel =
+    settledIndex !== null ? CHECKPOINTS[settledIndex]?.label : null;
   const atFirst = activeIndex === 0;
   const atLast = activeIndex === N - 1;
-  const settledLabel =
-    settledIndex !== null ? PLANES[settledIndex]?.label : null;
 
   return (
     <div
       ref={wrapperRef}
+      className={FONT_VARS}
       style={{
         position: "fixed",
         inset: 0,
@@ -375,126 +348,142 @@ function DesktopStrata() {
         height: "100vh",
         overflow: "hidden",
         background: PALETTE.void,
-        color: PALETTE.paper,
-        fontFamily: MONO,
+        color: PALETTE.star,
+        fontFamily: "var(--v2-display), system-ui",
         overscrollBehavior: "none",
         touchAction: "none",
       }}
     >
-      <a href="#strata-content" className="strata-skip">
-        Skip to content
-      </a>
+      <a href="#cosmos-content" className="kpt-skip" style={skipLinkStyle}>Skip to content</a>
 
-      {/* fixed background field */}
-      <BackgroundField progress={scrollYProgress} />
+      {/* fixed cosmic backdrop (Option B forward-flight ambience) */}
+      <CosmicBackdrop anchor="absolute" vignette />
 
-      {/* frame chrome */}
+      {/* overlay panel layer */}
       <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          inset: 28,
-          border: `1px solid rgba(244,241,235,0.06)`,
-          zIndex: 2,
-          pointerEvents: "none",
-        }}
-      />
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: 28,
-          bottom: 28,
-          width: 1,
-          background:
-            "linear-gradient(180deg, transparent 0%, rgba(244,241,235,0.06) 20%, rgba(244,241,235,0.06) 80%, transparent 100%)",
-          zIndex: 2,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* overlay plane layer */}
-      <div
-        id="strata-content"
+        id="cosmos-content"
         ref={overlayRef}
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 10,
-          perspective: "1500px",
-          perspectiveOrigin: "50% 45%",
-          transformStyle: "preserve-3d",
+          perspective: "1400px",
+          perspectiveOrigin: "50% 50%",
         }}
       >
-        {PLANES.map((p, i) => {
+        {CHECKPOINTS.map((cp, i) => {
           const isSettled = settledIndex === i;
-          const C = p.Component;
           return (
             <div
-              key={p.id}
-              id={`stratum-${p.id}`}
+              key={cp.id}
+              id={cp.id}
               data-panel={i}
-              aria-label={p.label}
+              aria-label={cp.label}
               aria-hidden={settledIndex !== null && !isSettled}
-              className={`strata-panel${
-                isSettled ? " strata-panel-settled" : ""
-              }`}
+              className={`kpt-cpanel${isSettled ? " kpt-cpanel-settled" : ""}`}
               style={{
                 position: "absolute",
                 top: "50%",
                 left: "50%",
-                width: "min(1280px, 92vw)",
-                maxHeight: "86vh",
+                width: "min(1500px, 96vw)",
+                maxHeight: "92vh",
                 overflowY: "auto",
                 overflowX: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 willChange: "transform, opacity, filter",
                 transformStyle: "preserve-3d",
                 borderRadius: 6,
               }}
             >
-              {i === 0 ? (
-                <h1 className="strata-sr-only">KPT Designs — Strata</h1>
-              ) : null}
-              <C />
+              {i === 0 ? <h1 className="kpt-sr-only">KPT Designs — Cosmos</h1> : null}
+              <cp.Component />
             </div>
           );
         })}
       </div>
 
       {/* HUD chrome */}
-      <TopChrome
-        progress={scrollYProgress}
-        activeIndex={activeIndex}
-        planes={PLANES}
-      />
-      <ScrollDotNav
-        activeIndex={activeIndex}
-        settledIndex={settledIndex}
-        onJump={setStation}
-        planes={PLANES}
-      />
+      <ProgressBar scrollYProgress={scrollYProgress} />
+      <SectionPill scrollYProgress={scrollYProgress} activeIndex={activeIndex} checkpoints={CHECKPOINTS} />
+      <ScrollDots activeIndex={activeIndex} onJump={setStation} checkpoints={CHECKPOINTS} settledIndex={settledIndex} />
+      <CornerHud />
 
-      <NavButtons
-        onPrev={() => advanceStation(-1)}
-        onNext={() => advanceStation(1)}
-        atFirst={atFirst}
-        atLast={atLast}
-      />
+      {/* prev / next overlay buttons (top-right) */}
+      <div style={{ position: "fixed", top: 56, right: 56, zIndex: 56, display: "flex", gap: 8 }}>
+        <button
+          type="button"
+          onClick={() => advanceStation(-1)}
+          disabled={atFirst}
+          aria-label="Previous station"
+          className="kpt-cnav-btn"
+          style={{ opacity: atFirst ? 0.32 : 1, cursor: atFirst ? "default" : "pointer" }}
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          onClick={() => advanceStation(1)}
+          disabled={atLast}
+          aria-label="Next station"
+          className="kpt-cnav-btn"
+          style={{ opacity: atLast ? 0.32 : 1, cursor: atLast ? "default" : "pointer" }}
+        >
+          ↓
+        </button>
+      </div>
 
-      <NextHint visible={settledIndex !== null && !atLast} />
-
-      {/* ARIA live region */}
+      {/* bottom-center "scroll for next" hint — only when settled & not last */}
       <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="strata-sr-only"
+        aria-hidden
+        className={`kpt-cnext-hint ${settledIndex !== null && !atLast ? "is-on" : ""}`}
+        style={{
+          position: "fixed",
+          bottom: 38,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 51,
+          fontFamily: "var(--v2-mono), monospace",
+          fontSize: 10,
+          letterSpacing: "0.32em",
+          textTransform: "uppercase",
+          color: PALETTE.violet,
+          whiteSpace: "nowrap",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          pointerEvents: "none",
+        }}
       >
+        <span>SCROLL FOR NEXT</span>
+        <span className="kpt-cnext-arrow">↓</span>
+      </div>
+
+      {/* ARIA live region — announces settled station for AT */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="kpt-sr-only">
         {settledLabel ? `Active: ${settledLabel}` : ""}
       </div>
 
-      <StrataStyles />
+      <style>{`
+        .kpt-sr-only { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .kpt-skip:focus { left: 8px !important; outline: 2px solid ${PALETTE.amber}; }
+        html, body { overflow: hidden !important; height: 100%; }
+        .kpt-cpanel-settled { box-shadow: 0 0 0 1px ${PALETTE.violet}66, 0 0 28px ${PALETTE.violet}33, 0 0 80px ${PALETTE.pink}1f; transition: box-shadow 360ms ease-out; }
+        .kpt-cnav-btn { all: unset; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid ${PALETTE.violet}55; background: rgba(2,3,10,0.78); color: ${PALETTE.violet}; font-family: var(--v2-mono), monospace; font-size: 16px; letter-spacing: 0.04em; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: background 200ms, border-color 200ms, transform 200ms, box-shadow 200ms; }
+        .kpt-cnav-btn:hover:not(:disabled) { background: ${PALETTE.violet}1a; border-color: ${PALETTE.violet}; box-shadow: 0 0 14px ${PALETTE.pink}66; transform: translateY(-1px); }
+        .kpt-cnav-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px ${PALETTE.amber}, 0 0 14px ${PALETTE.violet}66; }
+        .kpt-cnav-btn:disabled { cursor: default; }
+        .kpt-cnext-hint { opacity: 0; transition: opacity 600ms ease-out; }
+        .kpt-cnext-hint.is-on { opacity: 0.85; }
+        .kpt-cnext-arrow { display: inline-block; animation: kpt-cbounce 1.6s ease-in-out infinite; }
+        @keyframes kpt-cbounce { 0%, 100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(4px); opacity: 1; } }
+        [data-panel]::-webkit-scrollbar { width: 6px; }
+        [data-panel]::-webkit-scrollbar-track { background: transparent; }
+        [data-panel]::-webkit-scrollbar-thumb { background: ${PALETTE.violet}33; border-radius: 3px; }
+        [data-panel]::-webkit-scrollbar-thumb:hover { background: ${PALETTE.violet}66; }
+        @media (prefers-reduced-motion: reduce) { .kpt-cnext-arrow { animation: none; } }
+      `}</style>
     </div>
   );
 }

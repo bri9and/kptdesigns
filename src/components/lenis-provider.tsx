@@ -11,7 +11,12 @@ export function LenisProvider({ children }: { children: ReactNode }) {
   // section fades. Lenis's smooth-scroll wrapper changes body overflow on
   // mount which races with sticky positioning and causes a blank first paint.
   // Render bare on this route and let the engine talk to scroll directly.
-  if (pathname?.startsWith("/mockup/v5-tunnel")) {
+  // The v2-cosmos mockup uses the same snap-to-station engine pattern and
+  // hijacks wheel/touch input directly — Lenis would fight it.
+  if (
+    pathname?.startsWith("/mockup/v5-tunnel") ||
+    pathname?.startsWith("/mockup/v2-cosmos")
+  ) {
     return <>{children}</>;
   }
 

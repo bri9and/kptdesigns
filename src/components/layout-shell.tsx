@@ -16,10 +16,13 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   // v5-tunnel mockup runs its own fixed canvas + HUD chrome — render bare so the
   // global header doesn't compete with the in-tunnel navigation.
   const isTunnelMockup = pathname.startsWith("/mockup/v5-tunnel");
+  // v2-cosmos mockup uses the same snap-to-station engine pattern with its own
+  // fixed backdrop + HUD chrome — opt out of the global header for the same reason.
+  const isCosmosMockup = pathname.startsWith("/mockup/v2-cosmos");
   // touchdesign is a 100vh canvas (operator network) with its own toolbar.
   const isTouchDesign = pathname.startsWith("/projects/touchdesign");
 
-  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isTouchDesign) {
+  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isCosmosMockup || isTouchDesign) {
     return <>{children}</>;
   }
 
