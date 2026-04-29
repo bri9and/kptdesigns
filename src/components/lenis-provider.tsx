@@ -13,9 +13,12 @@ export function LenisProvider({ children }: { children: ReactNode }) {
   // Render bare on this route and let the engine talk to scroll directly.
   // The v2-cosmos mockup uses the same snap-to-station engine pattern and
   // hijacks wheel/touch input directly — Lenis would fight it.
+  // Desert Coyote (sites + proposal) opts out — owner prefers native scroll.
   if (
     pathname?.startsWith("/mockup/v5-tunnel") ||
-    pathname?.startsWith("/mockup/v2-cosmos")
+    pathname?.startsWith("/mockup/v2-cosmos") ||
+    pathname?.startsWith("/sites/desert-coyote-landscape") ||
+    pathname?.startsWith("/proposal/desert-coyote-landscape")
   ) {
     return <>{children}</>;
   }
