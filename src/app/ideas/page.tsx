@@ -1064,6 +1064,14 @@ const catalog: Category[] = [
     blurb: "High-risk visual statements — depth-zoom entrances, scroll-bound camera moves, 3D fields, narrative storytelling. The flag-planted explorations. Use sparingly, but use them as the first impression.",
     concepts: [
       {
+        slug: "v73-marquee",
+        name: "V73 — Marquee",
+        emoji: "🎬",
+        descriptor: "Streaming-app hero language: looping background film, liquid-glass pill buttons with gradient hairline borders, blur-fade-up entrances, Inter type. Apple TV+ chrome, KPT copy.",
+        risk: "High Risk",
+        appeal: "Premium",
+      },
+      {
         slug: "v25-roadside-neon",
         name: "V25 — Roadside Neon",
         emoji: "🛣️",
