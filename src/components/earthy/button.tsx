@@ -12,10 +12,10 @@ export function BtnPrimary({ href, children, className }: ButtonProps) {
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg bg-earthy-orange px-8 py-3.5",
-        "font-[family-name:var(--font-earthy-display)] text-[15px] font-medium text-earthy-cream",
+        "inline-flex items-center justify-center gap-2 rounded-lg bg-brand-primary px-8 py-3.5",
+        "font-[family-name:var(--brand-display-font)] text-[15px] font-medium text-brand-canvas",
         "transition-all duration-200",
-        "hover:bg-earthy-orange-dark hover:shadow-[0_2px_12px_rgba(197,103,56,0.4)]",
+        "hover:bg-brand-primary-strong hover:shadow-[0_2px_12px_rgba(197,103,56,0.4)]",
         className
       )}
     >
@@ -29,10 +29,10 @@ export function BtnSecondary({ href, children, className }: ButtonProps) {
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg border border-earthy-stone-300 bg-earthy-cream px-8 py-3.5",
-        "font-[family-name:var(--font-earthy-display)] text-[15px] font-medium text-earthy-orange",
+        "inline-flex items-center justify-center gap-2 rounded-lg border border-brand-divider bg-brand-canvas px-8 py-3.5",
+        "font-[family-name:var(--brand-display-font)] text-[15px] font-medium text-brand-primary",
         "transition-all duration-200",
-        "hover:border-earthy-orange-light hover:bg-[rgba(197,103,56,0.04)]",
+        "hover:border-brand-primary-soft hover:bg-[rgba(197,103,56,0.04)]",
         className
       )}
     >

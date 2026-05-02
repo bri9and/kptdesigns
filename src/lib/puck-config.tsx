@@ -266,14 +266,14 @@ export const earthyConfig: Config = {
               : undefined,
         }));
         return (
-          <section className="bg-earthy-sand py-25" id="features">
+          <section className="bg-brand-surface py-25" id="features">
             <div className="mx-auto max-w-[1200px] px-6">
               <Reveal className="mx-auto mb-16 max-w-[640px] text-center">
                 <SectionLabel>{label as string}</SectionLabel>
-                <h2 className="font-[family-name:var(--font-earthy-serif)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-normal leading-tight tracking-[-0.5px] text-earthy-ink">
+                <h2 className="font-[family-name:var(--brand-serif-font)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-normal leading-tight tracking-[-0.5px] text-brand-ink">
                   {title as string}
                 </h2>
-                <p className="mt-4 text-[1.1rem] leading-relaxed text-earthy-stone-600">
+                <p className="mt-4 text-[1.1rem] leading-relaxed text-brand-text">
                   {body as string}
                 </p>
               </Reveal>
@@ -334,7 +334,7 @@ export const earthyConfig: Config = {
             <BarChartVisual />
           );
         return (
-          <section className="bg-earthy-cream py-20">
+          <section className="bg-brand-canvas py-20">
             <div className="mx-auto max-w-[1200px] px-6">
               <Reveal>
                 <ShowcaseRow

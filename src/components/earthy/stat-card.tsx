@@ -11,10 +11,10 @@ export type StatCardProps = {
 };
 
 const GRADIENTS = [
-  "from-earthy-orange to-earthy-sage",
-  "from-earthy-blue to-earthy-amber",
-  "from-earthy-amber to-earthy-sage",
-  "from-earthy-sage to-earthy-orange",
+  "from-brand-primary to-brand-accent-3",
+  "from-brand-accent-1 to-brand-accent-2",
+  "from-brand-accent-2 to-brand-accent-3",
+  "from-brand-accent-3 to-brand-primary",
 ] as const;
 
 export function StatCard({ target, suffix, label, index }: StatCardProps) {
@@ -33,7 +33,7 @@ export function StatCard({ target, suffix, label, index }: StatCardProps) {
         ref={numberRef}
         className={cn(
           "block bg-gradient-to-br bg-clip-text text-transparent",
-          "font-[family-name:var(--font-earthy-display)]",
+          "font-[family-name:var(--brand-display-font)]",
           "text-[clamp(2rem,4vw,3rem)] font-bold tracking-tight",
           "mb-2",
           gradient
@@ -41,7 +41,7 @@ export function StatCard({ target, suffix, label, index }: StatCardProps) {
       >
         0
       </span>
-      <p className="text-[0.95rem] text-earthy-stone-600">{label}</p>
+      <p className="text-[0.95rem] text-brand-text">{label}</p>
     </div>
   );
 }

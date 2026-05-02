@@ -34,10 +34,10 @@ export function ShowcaseRow({
     <div className="grid grid-cols-1 items-center gap-20 md:grid-cols-2">
       <div className={cn(reverse && "md:order-2")}>
         <SectionLabel className="mb-4">{label}</SectionLabel>
-        <h2 className="mb-5 font-[family-name:var(--font-earthy-display)] text-[clamp(1.6rem,3vw,2.25rem)] font-bold text-earthy-ink">
+        <h2 className="mb-5 font-[family-name:var(--brand-display-font)] text-[clamp(1.6rem,3vw,2.25rem)] font-bold text-brand-ink">
           {title}
         </h2>
-        <p className="mb-7 font-[family-name:var(--font-earthy-body)] text-[1.05rem] leading-relaxed text-earthy-stone-600">
+        <p className="mb-7 font-[family-name:var(--brand-body-font)] text-[1.05rem] leading-relaxed text-brand-text">
           {body}
         </p>
         <Btn href={cta.href}>{cta.label}</Btn>
@@ -51,12 +51,12 @@ export function ShowcaseRow({
 
 const BAR_HEIGHTS = [65, 85, 50, 95, 72, 58];
 const BAR_COLORS = [
-  "bg-earthy-orange",
-  "bg-earthy-blue",
-  "bg-earthy-amber",
-  "bg-earthy-sage",
-  "bg-earthy-orange",
-  "bg-earthy-blue",
+  "bg-brand-primary",
+  "bg-brand-accent-1",
+  "bg-brand-accent-2",
+  "bg-brand-accent-3",
+  "bg-brand-primary",
+  "bg-brand-accent-1",
 ];
 
 export function BarChartVisual() {
@@ -86,12 +86,12 @@ export function CircleRingVisual({ centerText }: { centerText: string }) {
         className="h-[200px] w-[200px] rounded-full"
         style={{
           background:
-            "conic-gradient(var(--color-earthy-orange) 0deg 120deg, var(--color-earthy-blue) 120deg 210deg, var(--color-earthy-amber) 210deg 280deg, var(--color-earthy-sage) 280deg 360deg)",
+            "conic-gradient(var(--brand-primary) 0deg 120deg, var(--brand-accent-1) 120deg 210deg, var(--brand-accent-2) 210deg 280deg, var(--brand-accent-3) 280deg 360deg)",
           animation: "earthySpinIn 1.5s var(--earthy-ease) both",
         }}
       />
-      <div className="absolute inset-10 rounded-full bg-earthy-sand" />
-      <div className="absolute inset-0 z-10 flex items-center justify-center font-[family-name:var(--font-earthy-display)] text-3xl font-bold text-earthy-ink">
+      <div className="absolute inset-10 rounded-full bg-brand-surface" />
+      <div className="absolute inset-0 z-10 flex items-center justify-center font-[family-name:var(--brand-display-font)] text-3xl font-bold text-brand-ink">
         {centerText}
       </div>
     </div>

@@ -5,12 +5,12 @@ function FooterLogo() {
   return (
     <Link
       href="/"
-      className="inline-flex items-end gap-[3px] font-[family-name:var(--font-earthy-display)] text-[22px] font-bold leading-none tracking-[-0.5px]"
+      className="inline-flex items-end gap-[3px] font-[family-name:var(--brand-display-font)] text-[22px] font-bold leading-none tracking-[-0.5px]"
     >
-      <span className="text-earthy-orange">K</span>
-      <span className="text-earthy-blue">P</span>
-      <span className="text-earthy-amber">T</span>
-      <span className="ml-2 mb-[2px] text-[0.62em] font-medium uppercase tracking-[0.18em] text-earthy-stone-700">
+      <span className="text-brand-primary">K</span>
+      <span className="text-brand-accent-1">P</span>
+      <span className="text-brand-accent-2">T</span>
+      <span className="ml-2 mb-[2px] text-[0.62em] font-medium uppercase tracking-[0.18em] text-brand-text-strong">
         Designs
       </span>
     </Link>
@@ -47,7 +47,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <h4 className="font-[family-name:var(--font-earthy-display)] text-[0.85rem] font-semibold uppercase tracking-[1px] text-earthy-stone-700 mb-[18px]">
+      <h4 className="font-[family-name:var(--brand-display-font)] text-[0.85rem] font-semibold uppercase tracking-[1px] text-brand-text-strong mb-[18px]">
         {heading}
       </h4>
       <ul className="space-y-[10px]">
@@ -55,7 +55,7 @@ function FooterCol({
           <li key={`${heading}-${item.label}`}>
             <Link
               href={item.href}
-              className="text-[0.9rem] text-earthy-stone-700 hover:text-earthy-orange transition-colors duration-200"
+              className="text-[0.9rem] text-brand-text-strong hover:text-brand-primary transition-colors duration-200"
             >
               {item.label}
             </Link>
@@ -71,15 +71,15 @@ export function EarthyFooter() {
   return (
     <>
       <ColorStrip />
-      <footer className="bg-earthy-sand pt-14 pb-8 border-t border-earthy-stone-200">
+      <footer className="bg-brand-surface pt-14 pb-8 border-t border-brand-divider">
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-12 mb-12">
             <div>
               <FooterLogo />
-              <p className="mt-4 text-[0.9rem] leading-[1.6] text-earthy-stone-700 max-w-[320px]">
+              <p className="mt-4 text-[0.9rem] leading-[1.6] text-brand-text-strong max-w-[320px]">
                 Custom websites for small businesses.
               </p>
-              <p className="mt-3 text-[0.9rem] leading-[1.6] text-earthy-stone-700 max-w-[320px]">
+              <p className="mt-3 text-[0.9rem] leading-[1.6] text-brand-text-strong max-w-[320px]">
                 Modern websites. Built to convert. Custom-coded, no templates &mdash; you own everything.
               </p>
             </div>
@@ -87,11 +87,11 @@ export function EarthyFooter() {
             <FooterCol heading="Company" items={company} />
             <FooterCol heading="Get help" items={help} />
           </div>
-          <div className="pt-7 border-t border-earthy-stone-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-            <p className="text-[0.8rem] text-earthy-stone-700">
+          <div className="pt-7 border-t border-brand-divider flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <p className="text-[0.8rem] text-brand-text-strong">
               &copy; {year} KPT Designs. All rights reserved.
             </p>
-            <p className="text-[0.8rem] text-earthy-stone-700 font-[family-name:var(--font-earthy-display)]">
+            <p className="text-[0.8rem] text-brand-text-strong font-[family-name:var(--brand-display-font)]">
               Modern websites. Built to convert.
             </p>
           </div>

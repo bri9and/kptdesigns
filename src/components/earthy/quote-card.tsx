@@ -7,29 +7,29 @@ type QuoteCardProps = {
 
 export function QuoteCard({ quote, author, meta, initials }: QuoteCardProps) {
   return (
-    <section className="bg-earthy-cream py-25 text-center">
+    <section className="bg-brand-canvas py-25 text-center">
       <div className="mx-auto max-w-6xl px-6">
-        <div className="relative mx-auto max-w-[700px] rounded-3xl bg-earthy-sand p-12">
+        <div className="relative mx-auto max-w-[700px] rounded-3xl bg-brand-surface p-12">
           <span
             aria-hidden
-            className="pointer-events-none absolute left-8 top-4 font-[Georgia,serif] text-[5rem] leading-none text-earthy-orange-light"
+            className="pointer-events-none absolute left-8 top-4 font-[Georgia,serif] text-[5rem] leading-none text-brand-primary-soft"
           >
             &ldquo;
           </span>
 
-          <p className="mb-6 font-[family-name:var(--font-earthy-display)] text-[1.35rem] font-normal leading-[1.6] text-earthy-ink">
+          <p className="mb-6 font-[family-name:var(--brand-display-font)] text-[1.35rem] font-normal leading-[1.6] text-brand-ink">
             {quote}
           </p>
 
           <div className="flex items-center justify-center gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-earthy-orange to-earthy-sage font-[family-name:var(--font-earthy-display)] text-[18px] font-semibold text-earthy-cream">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-accent-3 font-[family-name:var(--brand-display-font)] text-[18px] font-semibold text-brand-canvas">
               {initials}
             </div>
             <div className="text-left">
-              <strong className="block font-[family-name:var(--font-earthy-display)] text-sm text-earthy-ink">
+              <strong className="block font-[family-name:var(--brand-display-font)] text-sm text-brand-ink">
                 {author}
               </strong>
-              <span className="text-xs text-earthy-stone-700">{meta}</span>
+              <span className="text-xs text-brand-text-strong">{meta}</span>
             </div>
           </div>
         </div>

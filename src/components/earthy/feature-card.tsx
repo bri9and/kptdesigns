@@ -13,25 +13,25 @@ export type FeatureCardProps = {
 };
 
 const ACCENT_BG: Record<FeatureCardColor, string> = {
-  orange: "bg-earthy-orange",
-  blue: "bg-earthy-blue",
-  amber: "bg-earthy-amber",
-  sage: "bg-earthy-sage",
+  orange: "bg-brand-primary",
+  blue: "bg-brand-accent-1",
+  amber: "bg-brand-accent-2",
+  sage: "bg-brand-accent-3",
 };
 
 const ICON_TILE_BG: Record<FeatureCardColor, string> = {
-  orange: "bg-earthy-orange-light",
-  blue: "bg-earthy-blue-light",
-  amber: "bg-earthy-amber-light",
-  sage: "bg-earthy-sage-light",
+  orange: "bg-brand-primary-soft",
+  blue: "bg-brand-accent-1-soft",
+  amber: "bg-brand-accent-2-soft",
+  sage: "bg-brand-accent-3-soft",
 };
 
 const ICON_COLOR_CLASS: Record<FeatureCardColor, string> = {
-  orange: "text-earthy-orange",
-  blue: "text-earthy-blue",
+  orange: "text-brand-primary",
+  blue: "text-brand-accent-1",
   // Amber on light-amber bg uses #9A6B0F for contrast
   amber: "",
-  sage: "text-earthy-sage",
+  sage: "text-brand-accent-3",
 };
 
 export function FeatureCard({
@@ -44,9 +44,9 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-earthy-stone-200 bg-earthy-cream p-9",
+        "group relative overflow-hidden rounded-2xl border border-brand-divider bg-brand-canvas p-9",
         "transition-all duration-[350ms] ease-[var(--earthy-ease)]",
-        "hover:-translate-y-1 hover:border-transparent hover:shadow-[var(--earthy-shadow-hover)]"
+        "hover:-translate-y-1 hover:border-transparent hover:shadow-[var(--brand-shadow-hover)]"
       )}
     >
       <span
@@ -65,16 +65,16 @@ export function FeatureCard({
       >
         <Icon size={24} strokeWidth={2} />
       </div>
-      <h3 className="mb-2.5 font-[family-name:var(--font-earthy-display)] text-[1.35rem] font-semibold text-earthy-ink">
+      <h3 className="mb-2.5 font-[family-name:var(--brand-display-font)] text-[1.35rem] font-semibold text-brand-ink">
         {title}
       </h3>
-      <p className="font-[family-name:var(--font-earthy-body)] text-[0.95rem] leading-[1.65] text-earthy-stone-600">
+      <p className="font-[family-name:var(--brand-body-font)] text-[0.95rem] leading-[1.65] text-brand-text">
         {body}
       </p>
       {cta && (
         <Link
           href={cta.href}
-          className="mt-[18px] inline-block font-[family-name:var(--font-earthy-display)] text-[13px] font-medium text-earthy-orange transition-colors duration-200 hover:text-earthy-orange-dark"
+          className="mt-[18px] inline-block font-[family-name:var(--brand-display-font)] text-[13px] font-medium text-brand-primary transition-colors duration-200 hover:text-brand-primary-strong"
         >
           {cta.label} →
         </Link>

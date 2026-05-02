@@ -28,7 +28,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
   const secondaryCtaHref = props.secondaryCtaHref ?? DEFAULTS.secondaryCtaHref;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-earthy-cream to-earthy-sand pt-40 pb-30 text-center">
+    <section className="relative overflow-hidden bg-gradient-to-b from-brand-canvas to-brand-surface pt-40 pb-30 text-center">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 -translate-x-1/2"
@@ -43,7 +43,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="mb-7 inline-flex items-baseline gap-1">
           <span
-            className="inline-block font-[family-name:var(--font-earthy-display)] text-[clamp(5rem,12vw,9rem)] font-bold leading-none tracking-[-4px] text-earthy-orange"
+            className="inline-block font-[family-name:var(--brand-display-font)] text-[clamp(5rem,12vw,9rem)] font-bold leading-none tracking-[-4px] text-brand-primary"
             style={{
               animation:
                 "earthyLetterPop 0.6s var(--earthy-ease-bounce) 0.1s both",
@@ -52,7 +52,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
             K
           </span>
           <span
-            className="inline-block font-[family-name:var(--font-earthy-display)] text-[clamp(5rem,12vw,9rem)] font-bold leading-none tracking-[-4px] text-earthy-blue"
+            className="inline-block font-[family-name:var(--brand-display-font)] text-[clamp(5rem,12vw,9rem)] font-bold leading-none tracking-[-4px] text-brand-accent-1"
             style={{
               animation:
                 "earthyLetterPop 0.6s var(--earthy-ease-bounce) 0.25s both",
@@ -61,7 +61,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
             P
           </span>
           <span
-            className="inline-block font-[family-name:var(--font-earthy-display)] text-[clamp(5rem,12vw,9rem)] font-bold leading-none tracking-[-4px] text-earthy-amber"
+            className="inline-block font-[family-name:var(--brand-display-font)] text-[clamp(5rem,12vw,9rem)] font-bold leading-none tracking-[-4px] text-brand-accent-2"
             style={{
               animation:
                 "earthyLetterPop 0.6s var(--earthy-ease-bounce) 0.4s both",
@@ -71,7 +71,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
           </span>
         </div>
         <p
-          className="-mt-1 mb-5 font-[family-name:var(--font-earthy-display)] text-[clamp(1rem,2.4vw,1.5rem)] font-semibold uppercase text-earthy-sage"
+          className="-mt-1 mb-5 font-[family-name:var(--brand-display-font)] text-[clamp(1rem,2.4vw,1.5rem)] font-semibold uppercase text-brand-accent-3"
           style={{
             letterSpacing: "0.42em",
             textIndent: "0.42em",
@@ -81,7 +81,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
           Designs
         </p>
         <p
-          className="mx-auto mb-10 max-w-[640px] font-[family-name:var(--font-earthy-body)] text-[clamp(1.15rem,2.4vw,1.45rem)] leading-[1.55] text-earthy-stone-700"
+          className="mx-auto mb-10 max-w-[640px] font-[family-name:var(--brand-body-font)] text-[clamp(1.15rem,2.4vw,1.45rem)] leading-[1.55] text-brand-text-strong"
           style={{
             animation: "earthyFadeUp 0.8s var(--earthy-ease) 0.6s both",
           }}
@@ -96,23 +96,23 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
           }}
         >
           <span
-            className="h-3 w-3 rounded-full bg-earthy-orange"
+            className="h-3 w-3 rounded-full bg-brand-primary"
             style={{ animation: "earthyBounce 1.4s ease-in-out 0s infinite" }}
           />
           <span
-            className="h-3 w-3 rounded-full bg-earthy-blue"
+            className="h-3 w-3 rounded-full bg-brand-accent-1"
             style={{
               animation: "earthyBounce 1.4s ease-in-out 0.15s infinite",
             }}
           />
           <span
-            className="h-3 w-3 rounded-full bg-earthy-amber"
+            className="h-3 w-3 rounded-full bg-brand-accent-2"
             style={{
               animation: "earthyBounce 1.4s ease-in-out 0.3s infinite",
             }}
           />
           <span
-            className="h-3 w-3 rounded-full bg-earthy-sage"
+            className="h-3 w-3 rounded-full bg-brand-accent-3"
             style={{
               animation: "earthyBounce 1.4s ease-in-out 0.45s infinite",
             }}

@@ -19,12 +19,12 @@ function EarthyLogo() {
   return (
     <Link
       href="/"
-      className="flex items-end gap-[3px] font-[family-name:var(--font-earthy-display)] text-[24px] font-bold leading-none tracking-[-0.5px]"
+      className="flex items-end gap-[3px] font-[family-name:var(--brand-display-font)] text-[24px] font-bold leading-none tracking-[-0.5px]"
     >
-      <span className="text-earthy-orange">K</span>
-      <span className="text-earthy-blue">P</span>
-      <span className="text-earthy-amber">T</span>
-      <span className="ml-2 mb-[2px] text-[0.62em] font-medium uppercase tracking-[0.18em] text-earthy-stone-700">
+      <span className="text-brand-primary">K</span>
+      <span className="text-brand-accent-1">P</span>
+      <span className="text-brand-accent-2">T</span>
+      <span className="ml-2 mb-[2px] text-[0.62em] font-medium uppercase tracking-[0.18em] text-brand-text-strong">
         Designs
       </span>
     </Link>
@@ -46,8 +46,8 @@ export function EarthyNav() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 h-16 bg-[rgba(251,248,241,0.92)] backdrop-blur-xl backdrop-saturate-[180%] border-b border-earthy-stone-200 transition-shadow duration-300",
-        scrolled && "shadow-[var(--earthy-shadow-sm)]"
+        "fixed top-0 left-0 right-0 z-50 h-16 bg-[rgba(251,248,241,0.92)] backdrop-blur-xl backdrop-saturate-[180%] border-b border-brand-divider transition-shadow duration-300",
+        scrolled && "shadow-[var(--brand-shadow-sm)]"
       )}
     >
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-6">
@@ -58,7 +58,7 @@ export function EarthyNav() {
             <Link
               key={link.href}
               href={link.href}
-              className="font-[family-name:var(--font-earthy-display)] text-sm font-medium text-earthy-stone-600 px-4 py-2 rounded-full transition-colors duration-200 hover:text-earthy-ink hover:bg-earthy-stone-100"
+              className="font-[family-name:var(--brand-display-font)] text-sm font-medium text-brand-text px-4 py-2 rounded-full transition-colors duration-200 hover:text-brand-ink hover:bg-brand-surface-2"
             >
               {link.label}
             </Link>
@@ -66,7 +66,7 @@ export function EarthyNav() {
           {!isSignedIn ? (
             <Link
               href="/sign-up"
-              className="font-[family-name:var(--font-earthy-display)] text-sm font-medium text-white bg-earthy-orange hover:bg-earthy-orange-dark px-5 py-2 rounded-full ml-2 transition-colors duration-200"
+              className="font-[family-name:var(--brand-display-font)] text-sm font-medium text-white bg-brand-primary hover:bg-brand-primary-strong px-5 py-2 rounded-full ml-2 transition-colors duration-200"
             >
               Get Started
             </Link>
@@ -74,7 +74,7 @@ export function EarthyNav() {
             <>
               <Link
                 href="/dashboard"
-                className="font-[family-name:var(--font-earthy-display)] text-sm font-medium text-earthy-stone-600 px-4 py-2 rounded-full transition-colors duration-200 hover:text-earthy-ink hover:bg-earthy-stone-100"
+                className="font-[family-name:var(--brand-display-font)] text-sm font-medium text-brand-text px-4 py-2 rounded-full transition-colors duration-200 hover:text-brand-ink hover:bg-brand-surface-2"
               >
                 Dashboard
               </Link>
@@ -90,21 +90,21 @@ export function EarthyNav() {
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="md:hidden inline-flex items-center justify-center p-2 rounded-full text-earthy-stone-700 hover:bg-earthy-stone-100 transition-colors"
+          className="md:hidden inline-flex items-center justify-center p-2 rounded-full text-brand-text-strong hover:bg-brand-surface-2 transition-colors"
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {open && (
-        <div className="md:hidden absolute top-16 left-0 right-0 bg-[rgba(251,248,241,0.98)] backdrop-blur-xl border-b border-earthy-stone-200 shadow-[var(--earthy-shadow-sm)]">
+        <div className="md:hidden absolute top-16 left-0 right-0 bg-[rgba(251,248,241,0.98)] backdrop-blur-xl border-b border-brand-divider shadow-[var(--brand-shadow-sm)]">
           <nav className="flex flex-col p-4 gap-1">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="font-[family-name:var(--font-earthy-display)] text-base font-medium text-earthy-stone-700 px-4 py-3 rounded-lg hover:bg-earthy-stone-100 transition-colors"
+                className="font-[family-name:var(--brand-display-font)] text-base font-medium text-brand-text-strong px-4 py-3 rounded-lg hover:bg-brand-surface-2 transition-colors"
               >
                 {link.label}
               </Link>
@@ -113,7 +113,7 @@ export function EarthyNav() {
               <Link
                 href="/sign-up"
                 onClick={() => setOpen(false)}
-                className="mt-2 font-[family-name:var(--font-earthy-display)] text-base font-medium text-white bg-earthy-orange hover:bg-earthy-orange-dark px-4 py-3 rounded-full text-center transition-colors"
+                className="mt-2 font-[family-name:var(--brand-display-font)] text-base font-medium text-white bg-brand-primary hover:bg-brand-primary-strong px-4 py-3 rounded-full text-center transition-colors"
               >
                 Get Started
               </Link>
@@ -122,7 +122,7 @@ export function EarthyNav() {
                 <Link
                   href="/dashboard"
                   onClick={() => setOpen(false)}
-                  className="font-[family-name:var(--font-earthy-display)] text-base font-medium text-earthy-stone-700 px-4 py-3 rounded-lg hover:bg-earthy-stone-100 transition-colors"
+                  className="font-[family-name:var(--brand-display-font)] text-base font-medium text-brand-text-strong px-4 py-3 rounded-lg hover:bg-brand-surface-2 transition-colors"
                 >
                   Dashboard
                 </Link>

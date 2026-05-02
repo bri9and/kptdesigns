@@ -24,8 +24,12 @@ import { Float } from "@react-three/drei";
 import type { MotionValue } from "framer-motion";
 import * as THREE from "three";
 
-// Earthy palette mirrored from globals.css so materials match the rest of the brand.
-const PALETTE = {
+// Brand palette read at module load from CSS variables so per-customer
+// themes (which override --brand-* on a wrapper) flow into the R3F scene.
+// Three.js materials need string colors, not CSS classes — so we resolve
+// the variables once on initial mount. For the marketing site the values
+// are stable; per-customer themed sites mount fresh.
+const PALETTE_FALLBACK = {
   cream: "#FBF8F1",
   sand: "#F2EBDB",
   ink: "#2D241B",
@@ -34,6 +38,24 @@ const PALETTE = {
   amber: "#E8A547",
   sage: "#7BA15A",
 };
+
+function readBrand(): typeof PALETTE_FALLBACK {
+  if (typeof window === "undefined") return PALETTE_FALLBACK;
+  const cs = getComputedStyle(document.documentElement);
+  const get = (name: string, fallback: string) =>
+    cs.getPropertyValue(name).trim() || fallback;
+  return {
+    cream: get("--brand-canvas", PALETTE_FALLBACK.cream),
+    sand: get("--brand-surface", PALETTE_FALLBACK.sand),
+    ink: get("--brand-ink", PALETTE_FALLBACK.ink),
+    orange: get("--brand-primary", PALETTE_FALLBACK.orange),
+    blue: get("--brand-accent-1", PALETTE_FALLBACK.blue),
+    amber: get("--brand-accent-2", PALETTE_FALLBACK.amber),
+    sage: get("--brand-accent-3", PALETTE_FALLBACK.sage),
+  };
+}
+
+const PALETTE = readBrand();
 
 // Tiny easing so phase boundaries feel smooth instead of clicky.
 const ease = (t: number) => t * t * (3 - 2 * t);

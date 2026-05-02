@@ -94,14 +94,14 @@ export default function Home() {
 
       <EarthyRibbon />
 
-      <section id="features" className="bg-earthy-sand py-25">
+      <section id="features" className="bg-brand-surface py-25">
         <div className="mx-auto max-w-[1200px] px-6">
           <Reveal className="mx-auto mb-16 max-w-[640px] text-center">
             <SectionLabel>What we build</SectionLabel>
-            <h2 className="font-[family-name:var(--font-earthy-serif)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-medium leading-tight tracking-[-0.5px] text-earthy-ink">
+            <h2 className="font-[family-name:var(--brand-serif-font)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-medium leading-tight tracking-[-0.5px] text-brand-ink">
               Considered websites for considered businesses
             </h2>
-            <p className="mt-4 text-[1.1rem] leading-relaxed text-earthy-stone-600">
+            <p className="mt-4 text-[1.1rem] leading-relaxed text-brand-text">
               A one-page restaurant menu, a multi-page firm with online booking, an e-commerce build that respects its inventory — every site is hand-coded around how you actually serve your customers. From $500.
             </p>
           </Reveal>
@@ -109,7 +109,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="showcase" className="bg-earthy-cream py-25">
+      <section id="showcase" className="bg-brand-canvas py-25">
         <div className="mx-auto max-w-[1200px] space-y-25 px-6">
           <Reveal>
             <ShowcaseRow

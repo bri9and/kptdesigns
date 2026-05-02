@@ -73,19 +73,19 @@ export default async function PreviewPage({ params }: PageProps) {
   return (
     <>
       {/* Sticky preview banner — sits just below the global EarthyNav (h-16) */}
-      <div className="sticky top-16 z-40 border-b border-earthy-orange-dark bg-earthy-orange/95 text-earthy-cream backdrop-blur-sm">
+      <div className="sticky top-16 z-40 border-b border-brand-primary-strong bg-brand-primary/95 text-brand-canvas backdrop-blur-sm">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-3">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="font-[family-name:var(--font-earthy-mono)] text-[11px] uppercase tracking-[0.18em] text-earthy-cream/85">
+            <span className="font-[family-name:var(--brand-mono-font)] text-[11px] uppercase tracking-[0.18em] text-brand-canvas/85">
               Preview
             </span>
-            <span className="truncate font-[family-name:var(--font-earthy-display)] text-[14px] text-earthy-cream">
+            <span className="truncate font-[family-name:var(--brand-display-font)] text-[14px] text-brand-canvas">
               {headerLabel}
             </span>
           </div>
           <BtnPrimary
             href={claimHref}
-            className="bg-earthy-ink text-earthy-cream hover:bg-earthy-stone-700 hover:shadow-none"
+            className="bg-brand-ink text-brand-canvas hover:bg-brand-text-strong hover:shadow-none"
           >
             Make this mine — $500
           </BtnPrimary>
@@ -107,7 +107,7 @@ export default async function PreviewPage({ params }: PageProps) {
       />
 
       {/* Quiet disclosure */}
-      <p className="mx-auto max-w-[720px] px-6 py-12 text-center font-[family-name:var(--font-earthy-body)] text-sm leading-relaxed text-earthy-stone-700">
+      <p className="mx-auto max-w-[720px] px-6 py-12 text-center font-[family-name:var(--brand-body-font)] text-sm leading-relaxed text-brand-text-strong">
         This preview was AI-generated from your existing site in about 30 seconds. The real version
         we ship is hand-finished, custom-coded, and built around what your customers actually do.
       </p>
@@ -121,12 +121,12 @@ export default async function PreviewPage({ params }: PageProps) {
 
 function PreviewNotFound() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-earthy-cream px-6">
-      <div className="w-full max-w-[480px] rounded-2xl border border-earthy-stone-200 bg-earthy-cream p-10 text-center shadow-[0_1px_2px_rgba(45,36,27,0.04)]">
-        <h1 className="mb-3 font-[family-name:var(--font-earthy-serif)] text-[clamp(1.6rem,3vw,2.25rem)] font-normal leading-tight text-earthy-ink">
+    <div className="flex min-h-screen items-center justify-center bg-brand-canvas px-6">
+      <div className="w-full max-w-[480px] rounded-2xl border border-brand-divider bg-brand-canvas p-10 text-center shadow-[0_1px_2px_rgba(45,36,27,0.04)]">
+        <h1 className="mb-3 font-[family-name:var(--brand-serif-font)] text-[clamp(1.6rem,3vw,2.25rem)] font-normal leading-tight text-brand-ink">
           Preview not found
         </h1>
-        <p className="mb-7 text-[1rem] text-earthy-stone-600">
+        <p className="mb-7 text-[1rem] text-brand-text">
           It may have expired, or the link&rsquo;s wrong.
         </p>
         <div className="flex justify-center">
@@ -147,10 +147,10 @@ const STATUS_COPY: Record<IntakeJob["status"], { title: string; body?: string }>
 
 const DOT_DELAYS = ["0s", "0.2s", "0.4s", "0.6s"] as const;
 const DOT_COLORS = [
-  "bg-earthy-orange",
-  "bg-earthy-blue",
-  "bg-earthy-amber",
-  "bg-earthy-sage",
+  "bg-brand-primary",
+  "bg-brand-accent-1",
+  "bg-brand-accent-2",
+  "bg-brand-accent-3",
 ] as const;
 
 function PreviewStatus({ job }: { job: IntakeJob }) {
@@ -158,18 +158,18 @@ function PreviewStatus({ job }: { job: IntakeJob }) {
   const isFailed = job.status === "failed";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-earthy-cream px-6">
-      <div className="w-full max-w-[520px] rounded-2xl border border-earthy-stone-200 bg-earthy-cream p-10 text-center shadow-[0_1px_2px_rgba(45,36,27,0.04)]">
-        <h1 className="mb-4 font-[family-name:var(--font-earthy-serif)] text-[clamp(1.6rem,3vw,2.25rem)] font-normal italic leading-tight text-earthy-ink">
+    <div className="flex min-h-screen items-center justify-center bg-brand-canvas px-6">
+      <div className="w-full max-w-[520px] rounded-2xl border border-brand-divider bg-brand-canvas p-10 text-center shadow-[0_1px_2px_rgba(45,36,27,0.04)]">
+        <h1 className="mb-4 font-[family-name:var(--brand-serif-font)] text-[clamp(1.6rem,3vw,2.25rem)] font-normal italic leading-tight text-brand-ink">
           {copy.title}
         </h1>
         {!isFailed ? (
-          <p className="mb-2 text-[1rem] text-earthy-stone-600">
+          <p className="mb-2 text-[1rem] text-brand-text">
             We&rsquo;ll auto-refresh as soon as it&rsquo;s ready.
           </p>
         ) : null}
         {isFailed && job.error ? (
-          <p className="mb-6 break-words font-[family-name:var(--font-earthy-mono)] text-sm text-earthy-stone-500">
+          <p className="mb-6 break-words font-[family-name:var(--brand-mono-font)] text-sm text-brand-text-muted">
             {job.error}
           </p>
         ) : null}

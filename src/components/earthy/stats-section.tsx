@@ -12,7 +12,7 @@ export function StatsSection({ label, title, stats }: StatsSectionProps) {
   return (
     <section
       id="stats"
-      className="relative overflow-hidden bg-earthy-ink py-20"
+      className="relative overflow-hidden bg-brand-ink py-20"
     >
       <div
         aria-hidden
@@ -34,10 +34,10 @@ export function StatsSection({ label, title, stats }: StatsSectionProps) {
       <div className="relative mx-auto max-w-6xl px-6">
         <Reveal>
           <div className="mb-14 text-center">
-            <SectionLabel className="!text-earthy-orange-light">
+            <SectionLabel className="!text-brand-primary-soft">
               {label}
             </SectionLabel>
-            <h2 className="font-[family-name:var(--font-earthy-display)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-bold tracking-tight text-earthy-cream">
+            <h2 className="font-[family-name:var(--brand-display-font)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-bold tracking-tight text-brand-canvas">
               {title}
             </h2>
           </div>

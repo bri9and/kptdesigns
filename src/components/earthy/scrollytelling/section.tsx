@@ -61,7 +61,7 @@ export function Scrollytelling3D() {
   return (
     <section
       ref={ref}
-      className="relative bg-earthy-cream"
+      className="relative bg-brand-canvas"
       // 4 viewport heights — one per stage, generous so the camera can breathe.
       style={{ height: "400vh" }}
     >
@@ -70,7 +70,7 @@ export function Scrollytelling3D() {
           {/* Side copy — text changes per active stage. */}
           <div className="relative">
             <SectionLabel>How it works</SectionLabel>
-            <h2 className="font-[family-name:var(--font-earthy-serif)] text-[clamp(2rem,4vw,3.25rem)] font-medium leading-[1.1] tracking-tight text-earthy-ink">
+            <h2 className="font-[family-name:var(--brand-serif-font)] text-[clamp(2rem,4vw,3.25rem)] font-medium leading-[1.1] tracking-tight text-brand-ink">
               Four steps, one boutique site.
             </h2>
 
@@ -132,13 +132,13 @@ function Stage({
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="absolute inset-0"
     >
-      <p className="font-[family-name:var(--font-earthy-mono)] text-xs tracking-[0.2em] text-earthy-orange">
+      <p className="font-[family-name:var(--brand-mono-font)] text-xs tracking-[0.2em] text-brand-primary">
         {stage.n}
       </p>
-      <h3 className="mt-3 font-[family-name:var(--font-earthy-serif)] text-[clamp(1.6rem,2.6vw,2rem)] font-medium text-earthy-ink">
+      <h3 className="mt-3 font-[family-name:var(--brand-serif-font)] text-[clamp(1.6rem,2.6vw,2rem)] font-medium text-brand-ink">
         {stage.title}
       </h3>
-      <p className="mt-3 max-w-[460px] text-base leading-relaxed text-earthy-stone-700">
+      <p className="mt-3 max-w-[460px] text-base leading-relaxed text-brand-text-strong">
         {stage.body}
       </p>
     </motion.div>
@@ -163,9 +163,9 @@ function ProgressBar({
   });
 
   return (
-    <div className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-earthy-stone-200">
+    <div className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-brand-divider">
       <motion.div
-        className="absolute inset-y-0 left-0 bg-earthy-orange"
+        className="absolute inset-y-0 left-0 bg-brand-primary"
         style={{ width: segWidth }}
       />
     </div>

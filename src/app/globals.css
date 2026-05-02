@@ -794,3 +794,70 @@ textarea:focus-visible {
 .earthy-reveal-stagger-2 { transition-delay: 0.2s; }
 .earthy-reveal-stagger-3 { transition-delay: 0.3s; }
 .earthy-reveal-stagger-4 { transition-delay: 0.4s; }
+
+/* ──────────────────────────────────────────────────────────
+   Brand theming layer — single indirection so per-customer
+   themes can override the same components our marketing site
+   uses. Defaults map to the earthy palette so the marketing
+   site looks identical with brand-* classes vs earthy-*.
+
+   To theme a customer's generated site, override the
+   --brand-* values inside `.brand-themed` on a wrapper:
+
+     <div class="brand-themed" style="
+       --brand-canvas: #ffffff;
+       --brand-primary: #cc0000;
+       ...
+     "> {site contents} </div>
+   ────────────────────────────────────────────────────────── */
+:root {
+  --brand-canvas: #FBF8F1;
+  --brand-surface: #F2EBDB;
+  --brand-surface-2: #EDE5D3;
+  --brand-ink: #2D241B;
+  --brand-text-strong: #3F3729;
+  --brand-text: #5D5340;
+  --brand-text-muted: #8B7E64;
+  --brand-divider: #DDD2BB;
+  --brand-divider-soft: #EDE5D3;
+  --brand-primary: #C56738;
+  --brand-primary-strong: #9A4824;
+  --brand-primary-soft: #EFD8C0;
+  --brand-on-primary: #FBF8F1;
+  --brand-accent-1: #5B8FB9;
+  --brand-accent-1-soft: #D7E5EF;
+  --brand-accent-2: #E8A547;
+  --brand-accent-2-soft: #FAEAC4;
+  --brand-accent-3: #7BA15A;
+  --brand-accent-3-soft: #DBEACB;
+  --brand-display-font: var(--font-earthy-display, "Inter, system-ui, sans-serif");
+  --brand-serif-font: var(--font-earthy-serif, "Fraunces, Georgia, serif");
+  --brand-body-font: var(--font-earthy-body, "Roboto, system-ui, sans-serif");
+  --brand-mono-font: var(--font-earthy-mono, "Roboto Mono, monospace");
+  --brand-shadow-sm: var(--earthy-shadow-sm);
+  --brand-shadow-md: var(--earthy-shadow-md);
+  --brand-shadow-lg: var(--earthy-shadow-lg);
+  --brand-shadow-hover: var(--earthy-shadow-hover);
+}
+
+@theme inline {
+  --color-brand-canvas: var(--brand-canvas);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-surface-2: var(--brand-surface-2);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-text-strong: var(--brand-text-strong);
+  --color-brand-text: var(--brand-text);
+  --color-brand-text-muted: var(--brand-text-muted);
+  --color-brand-divider: var(--brand-divider);
+  --color-brand-divider-soft: var(--brand-divider-soft);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-strong: var(--brand-primary-strong);
+  --color-brand-primary-soft: var(--brand-primary-soft);
+  --color-brand-on-primary: var(--brand-on-primary);
+  --color-brand-accent-1: var(--brand-accent-1);
+  --color-brand-accent-1-soft: var(--brand-accent-1-soft);
+  --color-brand-accent-2: var(--brand-accent-2);
+  --color-brand-accent-2-soft: var(--brand-accent-2-soft);
+  --color-brand-accent-3: var(--brand-accent-3);
+  --color-brand-accent-3-soft: var(--brand-accent-3-soft);
+}

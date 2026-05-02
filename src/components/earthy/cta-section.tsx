@@ -10,10 +10,10 @@ type CtaSectionProps = {
 };
 
 const DOT_COLORS = [
-  "bg-earthy-orange",
-  "bg-earthy-blue",
-  "bg-earthy-amber",
-  "bg-earthy-sage",
+  "bg-brand-primary",
+  "bg-brand-accent-1",
+  "bg-brand-accent-2",
+  "bg-brand-accent-3",
 ] as const;
 
 const DOT_DELAYS = ["0s", "0.2s", "0.4s", "0.6s"] as const;
@@ -28,14 +28,14 @@ export function CtaSection({
   return (
     <section
       id="cta"
-      className="bg-gradient-to-b from-earthy-cream to-earthy-sand py-25 text-center"
+      className="bg-gradient-to-b from-brand-canvas to-brand-surface py-25 text-center"
     >
       <div className="mx-auto max-w-[600px] px-6">
         <SectionLabel>{label}</SectionLabel>
-        <h2 className="mb-4 font-[family-name:var(--font-earthy-display)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-bold tracking-tight text-earthy-ink">
+        <h2 className="mb-4 font-[family-name:var(--brand-display-font)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-bold tracking-tight text-brand-ink">
           {title}
         </h2>
-        <p className="mb-9 text-[1.1rem] text-earthy-stone-600">{body}</p>
+        <p className="mb-9 text-[1.1rem] text-brand-text">{body}</p>
 
         <div className="flex flex-wrap justify-center gap-3.5">
           <BtnPrimary href={primary.href}>{primary.label}</BtnPrimary>

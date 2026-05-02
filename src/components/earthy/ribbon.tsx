@@ -29,10 +29,10 @@ const DEFAULT_ITEMS: RibbonItem[] = [
 ];
 
 const COLOR_BG: Record<RibbonColor, string> = {
-  orange: "bg-earthy-orange",
-  blue: "bg-earthy-blue",
-  amber: "bg-earthy-amber",
-  sage: "bg-earthy-sage",
+  orange: "bg-brand-primary",
+  blue: "bg-brand-accent-1",
+  amber: "bg-brand-accent-2",
+  sage: "bg-brand-accent-3",
 };
 
 export type EarthyRibbonProps = {
@@ -41,7 +41,7 @@ export type EarthyRibbonProps = {
 
 export function EarthyRibbon({ items = DEFAULT_ITEMS }: EarthyRibbonProps = {}) {
   return (
-    <section className="border-y border-earthy-stone-200 bg-earthy-cream py-16">
+    <section className="border-y border-brand-divider bg-brand-canvas py-16">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-wrap items-center justify-center gap-12">
           {items.map((item) => (
@@ -52,13 +52,13 @@ export function EarthyRibbon({ items = DEFAULT_ITEMS }: EarthyRibbonProps = {}) 
             >
               <div
                 className={cn(
-                  "flex h-[52px] w-[52px] items-center justify-center rounded-full text-white shadow-[var(--earthy-shadow-sm)]",
+                  "flex h-[52px] w-[52px] items-center justify-center rounded-full text-white shadow-[var(--brand-shadow-sm)]",
                   COLOR_BG[item.color]
                 )}
               >
                 <item.Icon size={22} strokeWidth={2} />
               </div>
-              <span className="font-[family-name:var(--font-earthy-display)] text-xs font-medium tracking-wide text-earthy-stone-600">
+              <span className="font-[family-name:var(--brand-display-font)] text-xs font-medium tracking-wide text-brand-text">
                 {item.label}
               </span>
             </Link>
