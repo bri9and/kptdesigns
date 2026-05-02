@@ -20,7 +20,7 @@
  * concurrent customers we'll move agents to Vercel Sandbox / Queues.
  */
 import { readIntakeJob, updateIntakeJob, type IntakeJob } from "@/lib/intake-store";
-import type { Findings, Phase, StageId, StageMap, StageStatus } from "./types";
+import type { Phase, StageId, StageMap, StageStatus } from "./types";
 import { allAgents, AGENTS_BY_PHASE, type Agent } from "./agents";
 
 const ALL_STAGES: StageId[] = allAgents.map((a) => a.stage);
@@ -97,15 +97,41 @@ async function runPhase(jobId: string, phase: Phase): Promise<void> {
   const agents = AGENTS_BY_PHASE[phase] ?? [];
   if (agents.length === 0) return;
 
-  // Discovery + building run agents in parallel. Synthesis runs sequentially
-  // because each step depends on the previous one's output.
-  const parallel = phase !== "synthesis";
-
-  if (parallel) {
-    await Promise.all(agents.map((a) => runAgent(jobId, a)));
-  } else {
+  // Synthesis is fully sequential; the prompt of each step builds on the
+  // output of the previous one.
+  if (phase === "synthesis") {
     for (const a of agents) await runAgent(jobId, a);
+    return;
   }
+
+  // Discovery + building run in dependency-respecting waves. Each wave
+  // contains every agent whose deps are already in a terminal state.
+  const remaining = new Set(agents);
+  const settled = new Set<StageId>();
+
+  while (remaining.size > 0) {
+    const ready = [...remaining].filter((a) =>
+      (a.dependsOn ?? []).every((d) => settled.has(d) || isTerminalInOtherPhase(d, agents)),
+    );
+    if (ready.length === 0) {
+      // Cycle or unmeetable dep — force-run whatever is left so we don't deadlock.
+      const stuck = [...remaining];
+      await Promise.all(stuck.map((a) => runAgent(jobId, a)));
+      stuck.forEach((a) => settled.add(a.stage));
+      break;
+    }
+    await Promise.all(ready.map((a) => runAgent(jobId, a)));
+    for (const a of ready) {
+      remaining.delete(a);
+      settled.add(a.stage);
+    }
+  }
+}
+
+/** Treat any stage outside this phase's agent list as "already settled" — we
+ *  only enforce dependencies within the current phase here. */
+function isTerminalInOtherPhase(dep: StageId, phaseAgents: Agent[]): boolean {
+  return !phaseAgents.some((a) => a.stage === dep);
 }
 
 async function runAgent(jobId: string, agent: Agent): Promise<void> {
@@ -115,6 +141,7 @@ async function runAgent(jobId: string, agent: Agent): Promise<void> {
   try {
     const job = await readJobOrThrow(jobId);
     const result = await agent.run({
+      jobId,
       input: {
         sourceUrl: job.source_url ?? null,
         businessName: job.business_name ?? null,

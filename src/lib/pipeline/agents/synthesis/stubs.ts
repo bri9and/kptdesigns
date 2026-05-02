@@ -27,9 +27,3 @@ export const contentNormalizeStubAgent = stub(
   "synthesis",
   "Normalizing content",
 );
-
-export const assetCurateStubAgent = stub(
-  "asset-curate",
-  "synthesis",
-  "Curating assets",
-);

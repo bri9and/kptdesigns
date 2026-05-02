@@ -15,8 +15,13 @@ export type ShowcaseRowProps = {
   title: string;
   body: string;
   cta: ShowcaseCta;
-  visualUrl: string;
-  visual: ReactNode;
+  /** When set, the right column shows this image instead of the procedural visual.
+   *  Used for AI-generated customer previews where we have real photos. */
+  imageSrc?: string;
+  imageAlt?: string;
+  /** Fallback visual props (used when imageSrc is empty — KPT marketing). */
+  visualUrl?: string;
+  visual?: ReactNode;
   reverse?: boolean;
 };
 
@@ -25,6 +30,8 @@ export function ShowcaseRow({
   title,
   body,
   cta,
+  imageSrc,
+  imageAlt,
   visualUrl,
   visual,
   reverse,
@@ -43,7 +50,16 @@ export function ShowcaseRow({
         <Btn href={cta.href}>{cta.label}</Btn>
       </div>
       <div className={cn(reverse && "md:order-1")}>
-        <BrowserFrame url={visualUrl}>{visual}</BrowserFrame>
+        {imageSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageSrc}
+            alt={imageAlt ?? ""}
+            className="aspect-[4/3] w-full rounded-2xl border border-brand-divider object-cover shadow-[var(--brand-shadow-lg)]"
+          />
+        ) : visual ? (
+          <BrowserFrame url={visualUrl ?? ""}>{visual}</BrowserFrame>
+        ) : null}
       </div>
     </div>
   );

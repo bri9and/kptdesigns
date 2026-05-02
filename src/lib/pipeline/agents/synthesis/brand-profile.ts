@@ -108,10 +108,15 @@ export const brandProfileAgent: Agent = {
       throw new Error("Brand profile assembler returned unparseable JSON");
     }
 
+    // If discovery's vision-based palette agent already extracted real
+    // colors from the customer's images, those override Gemini's text-
+    // based guess. Same for detectedFonts (logo OCR / vision could feed
+    // this in the future; for now stays empty).
+    const finalPalette = findings.detectedPalette ?? profile.palette;
+    const finalFonts = findings.detectedFonts ?? profile.fonts;
+
     return {
-      brandProfile: profile,
-      detectedPalette: profile.palette,
-      detectedFonts: profile.fonts,
+      brandProfile: { ...profile, palette: finalPalette, fonts: finalFonts },
     };
   },
 };

@@ -41,6 +41,7 @@ export const voiceAgent: Agent = {
   stage: "voice",
   phase: "discovery",
   label: "Listening to their voice",
+  dependsOn: ["crawl"],
 
   async run({ findings, input, report }) {
     const pages = findings.pages ?? [];
@@ -87,7 +88,10 @@ Now produce the JSON voice profile.`;
 
     const parsed = parseVoice(text);
     if (!parsed) {
-      throw new Error("Voice analyzer returned unparseable JSON");
+      // Don't kill the pipeline. The brand-profile agent will fall back to
+      // inferring voice from raw text if detectedVoice is missing.
+      await report("Couldn't parse voice JSON — synthesis will infer instead");
+      return {};
     }
     return { detectedVoice: parsed };
   },

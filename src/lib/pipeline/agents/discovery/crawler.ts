@@ -142,11 +142,44 @@ async function fetchOne(url: string, origin: string): Promise<CrawledPage> {
     if (href && text) links.push({ href, text });
   });
 
+  // Collect image URLs from <img> AND <source> tags. Modern WP / Shortpixel /
+  // lazy-load plugins put the real URL in data-lazy-src, data-src,
+  // data-original, srcset, or data-lazy-srcset — and stuff a tiny SVG
+  // placeholder into the visible `src`. We prefer the real URL.
   const images: string[] = [];
-  $("img[src]").each((_, el) => {
-    if (images.length >= MAX_IMAGES_PER_PAGE) return;
-    const src = absolutize($(el).attr("src") ?? "", origin);
-    if (src) images.push(src);
+  const seenImg = new Set<string>();
+  const pushImg = (raw: string | undefined) => {
+    if (!raw || images.length >= MAX_IMAGES_PER_PAGE) return;
+    if (raw.startsWith("data:")) return;
+    const abs = absolutize(raw, origin);
+    if (!abs) return;
+    // De-duplicate; lazy-load often duplicates URL across attrs.
+    const norm = abs.split("?")[0];
+    if (seenImg.has(norm)) return;
+    seenImg.add(norm);
+    images.push(abs);
+  };
+
+  $("img").each((_, el) => {
+    const $el = $(el);
+    pushImg($el.attr("data-lazy-src"));
+    pushImg($el.attr("data-src"));
+    pushImg($el.attr("data-original"));
+    pushImg($el.attr("src"));
+    // First URL of any srcset attribute
+    for (const attr of ["data-lazy-srcset", "srcset"]) {
+      const v = $el.attr(attr);
+      if (!v) continue;
+      const first = v.split(",")[0]?.trim().split(/\s+/)[0];
+      pushImg(first);
+    }
+  });
+
+  $("source").each((_, el) => {
+    const v = $(el).attr("srcset") ?? $(el).attr("data-srcset");
+    if (!v) return;
+    const first = v.split(",")[0]?.trim().split(/\s+/)[0];
+    pushImg(first);
   });
 
   const chunks: string[] = [];

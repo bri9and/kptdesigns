@@ -10,6 +10,8 @@ export type FeatureCardProps = {
   title: string;
   body: string;
   cta?: { href: string; label: string };
+  /** Optional thumbnail (Linode-hosted customer photo). When set, replaces the icon tile. */
+  imageSrc?: string;
 };
 
 const ACCENT_BG: Record<FeatureCardColor, string> = {
@@ -40,6 +42,7 @@ export function FeatureCard({
   title,
   body,
   cta,
+  imageSrc,
 }: FeatureCardProps) {
   return (
     <div
@@ -55,16 +58,26 @@ export function FeatureCard({
           ACCENT_BG[color]
         )}
       />
-      <div
-        className={cn(
-          "mb-5 flex h-12 w-12 items-center justify-center rounded-lg",
-          ICON_TILE_BG[color],
-          ICON_COLOR_CLASS[color]
-        )}
-        style={color === "amber" ? { color: "#9A6B0F" } : undefined}
-      >
-        <Icon size={24} strokeWidth={2} />
-      </div>
+      {imageSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageSrc}
+          alt=""
+          aria-hidden
+          className="mb-5 h-32 w-full rounded-lg object-cover"
+        />
+      ) : (
+        <div
+          className={cn(
+            "mb-5 flex h-12 w-12 items-center justify-center rounded-lg",
+            ICON_TILE_BG[color],
+            ICON_COLOR_CLASS[color]
+          )}
+          style={color === "amber" ? { color: "#9A6B0F" } : undefined}
+        >
+          <Icon size={24} strokeWidth={2} />
+        </div>
+      )}
       <h3 className="mb-2.5 font-[family-name:var(--brand-display-font)] text-[1.35rem] font-semibold text-brand-ink">
         {title}
       </h3>

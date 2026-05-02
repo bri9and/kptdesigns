@@ -24,20 +24,6 @@ const stub = (
   },
 });
 
-export const assetsStubAgent = stub(
-  "assets",
-  "discovery",
-  "Collecting images",
-  "Image collection — placeholder; full Linode upload comes later",
-);
-
-export const paletteStubAgent = stub(
-  "palette",
-  "discovery",
-  "Reading the color story",
-  "Vision-based palette extraction — needs Playwright screenshot first",
-);
-
 export const stackStubAgent = stub(
   "stack",
   "discovery",

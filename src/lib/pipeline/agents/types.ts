@@ -13,6 +13,9 @@ export type AgentInput = {
 };
 
 export type AgentContext = {
+  /** Stable id of the intake job — agents that persist assets to per-customer
+   *  storage scope by this. */
+  jobId: string;
   input: AgentInput;
   /** A snapshot of findings so far. Already-finished agents in earlier phases
    *  have populated this; concurrent peers in the same phase have NOT (the
@@ -28,6 +31,12 @@ export type Agent = {
   phase: Phase;
   /** Short human label for the UI: "Crawling site" */
   label: string;
+  /** Other stages that must reach a terminal state (done|failed|skipped)
+   *  before this agent runs. Used to express intra-phase ordering — e.g.
+   *  the asset collector depends on the crawler having produced
+   *  findings.pages. Cross-phase ordering is implicit: synthesis waits
+   *  for all of discovery, building waits for all of synthesis. */
+  dependsOn?: StageId[];
   /** Returns a partial Findings patch. Throw to mark the stage failed. */
   run: (ctx: AgentContext) => Promise<Partial<Findings>>;
 };

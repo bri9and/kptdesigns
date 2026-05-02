@@ -39,6 +39,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { EarthyHero } from "@/components/earthy/hero";
+import { CustomerHero } from "@/components/earthy/customer-hero";
 import { EarthyRibbon } from "@/components/earthy/ribbon";
 import { FeatureGrid } from "@/components/earthy/feature-grid";
 import type { FeatureCardProps } from "@/components/earthy/feature-card";
@@ -105,6 +106,17 @@ export type HeroBlockProps = {
   secondaryCtaHref: string;
 };
 
+export type CustomerHeroBlockProps = {
+  businessName?: string;
+  tagline?: string;
+  logoSrc?: string;
+  heroImageSrc?: string;
+  primaryCtaLabel?: string;
+  primaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+};
+
 export type RibbonItemProps = {
   label: string;
   href: string;
@@ -123,6 +135,7 @@ export type FeaturesBlockProps = {
     body: string;
     ctaLabel?: string;
     ctaHref?: string;
+    imageSrc?: string;
   }>;
 };
 
@@ -133,8 +146,10 @@ export type ShowcaseBlockProps = {
   ctaLabel: string;
   ctaHref: string;
   ctaVariant: "primary" | "secondary";
-  visualUrl: string;
-  visualKind: "barChart" | "circleRing";
+  imageSrc?: string;        // customer photo, takes priority over the procedural visual
+  imageAlt?: string;
+  visualUrl?: string;
+  visualKind?: "barChart" | "circleRing";
   visualCenterText?: string;
   reverse?: boolean;
 };
@@ -157,6 +172,7 @@ export type QuoteBlockProps = {
   author: string;
   meta: string;
   initials: string;
+  avatarSrc?: string;
 };
 
 export type CtaBlockProps = {
@@ -195,6 +211,31 @@ export const earthyConfig: Config = {
         secondaryCtaHref: "/start",
       },
       render: (props) => <EarthyHero {...(props as unknown as HeroBlockProps)} />,
+    },
+
+    CustomerHero: {
+      label: "Customer hero (image-first)",
+      fields: {
+        businessName: { type: "text" },
+        tagline: { type: "textarea" },
+        logoSrc: { type: "text" },
+        heroImageSrc: { type: "text" },
+        primaryCtaLabel: { type: "text" },
+        primaryCtaHref: { type: "text" },
+        secondaryCtaLabel: { type: "text" },
+        secondaryCtaHref: { type: "text" },
+      },
+      defaultProps: {
+        businessName: "",
+        tagline: "",
+        logoSrc: "",
+        heroImageSrc: "",
+        primaryCtaLabel: "",
+        primaryCtaHref: "",
+        secondaryCtaLabel: "",
+        secondaryCtaHref: "",
+      },
+      render: (props) => <CustomerHero {...(props as unknown as CustomerHeroBlockProps)} />,
     },
 
     Ribbon: {
@@ -244,6 +285,7 @@ export const earthyConfig: Config = {
             body: { type: "textarea" },
             ctaLabel: { type: "text" },
             ctaHref: { type: "text" },
+            imageSrc: { type: "text" },
           },
         },
       },
@@ -264,6 +306,7 @@ export const earthyConfig: Config = {
             f.ctaLabel && f.ctaHref
               ? { label: f.ctaLabel, href: f.ctaHref }
               : undefined,
+          imageSrc: f.imageSrc || undefined,
         }));
         return (
           <section className="bg-brand-surface py-25" id="features">
@@ -299,6 +342,8 @@ export const earthyConfig: Config = {
             { label: "Secondary", value: "secondary" },
           ],
         },
+        imageSrc: { type: "text" },
+        imageAlt: { type: "text" },
         visualUrl: { type: "text" },
         visualKind: {
           type: "select",
@@ -327,6 +372,7 @@ export const earthyConfig: Config = {
       },
       render: (props) => {
         const p = props as unknown as ShowcaseBlockProps;
+        const useImage = !!p.imageSrc;
         const visual =
           p.visualKind === "circleRing" ? (
             <CircleRingVisual centerText={p.visualCenterText ?? "KPT"} />
@@ -346,8 +392,10 @@ export const earthyConfig: Config = {
                     href: p.ctaHref,
                     variant: p.ctaVariant,
                   }}
-                  visualUrl={p.visualUrl}
-                  visual={visual}
+                  imageSrc={p.imageSrc}
+                  imageAlt={p.imageAlt}
+                  visualUrl={p.visualUrl ?? ""}
+                  visual={useImage ? undefined : visual}
                   reverse={p.reverse}
                 />
               </Reveal>
@@ -415,12 +463,14 @@ export const earthyConfig: Config = {
         author: { type: "text" },
         meta: { type: "text" },
         initials: { type: "text" },
+        avatarSrc: { type: "text" },
       },
       defaultProps: {
         quote: "They listened. That alone was worth it.",
         author: "—",
         meta: "—",
         initials: "—",
+        avatarSrc: "",
       },
       render: (props) => <QuoteCard {...(props as unknown as QuoteBlockProps)} />,
     },
@@ -478,26 +528,40 @@ export const earthyConfig: Config = {
  * Keep this in sync with the components above. The AI uses this to
  * know what blocks exist and what props to fill in.
  */
-export const BLOCK_SCHEMA_FOR_AI = `Available blocks (compose any sequence; usually 5–8 blocks per page):
+export const BLOCK_SCHEMA_FOR_AI = `Available blocks (compose any sequence that fits THIS customer; usually 4–7 blocks per page):
 
-1. Hero — top of page, has a headline + tagline + search + CTAs.
-   Props: { tagline (string, the one-line value prop, ~120 chars max),
-           searchPlaceholder (string, ~50 chars),
-           primaryCtaLabel, primaryCtaHref, secondaryCtaLabel, secondaryCtaHref }
+CRITICAL — when generating a CUSTOMER PREVIEW:
+- ALWAYS use "CustomerHero", NEVER "Hero". Hero is for the KPT marketing site only.
+- Populate "imageSrc" / "logoSrc" / "heroImageSrc" / "avatarSrc" with URLs from the customer's own images. The URLs you can use will be provided in the user prompt under "Available customer assets". DO NOT invent URLs or use placeholder URLs.
+- Don't force every block. If the customer's source has no testimonials, omit Quote. If they have no clear stats, omit Stats. Match the new site's structure to what they ACTUALLY offer.
+
+BLOCKS:
+
+1. Hero — KPT marketing site only. DO NOT EMIT for customer previews.
+   Props: { tagline, searchPlaceholder, primaryCtaLabel, primaryCtaHref, secondaryCtaLabel, secondaryCtaHref }
+
+1a. CustomerHero — image-first hero for AI-generated customer previews. USE THIS for customer sites.
+    Props: { businessName (their actual name),
+             tagline (one sentence — what they do, who for),
+             logoSrc (Linode URL if available, empty string otherwise),
+             heroImageSrc (Linode URL of best hero photo, empty string otherwise),
+             primaryCtaLabel, primaryCtaHref, secondaryCtaLabel, secondaryCtaHref }
 
 2. Ribbon — horizontal row of 5–6 colored icon tiles for navigating to key services.
    Props: { items: [{ label, href, color: orange|blue|amber|sage, icon: <icon name> }] }
+   USE WHEN: business has 4+ distinct service categories. SKIP for single-service businesses.
 
 3. Features — grid of 3 or 6 cards explaining what the business offers.
    Props: { label, title, body,
             features: [{ icon, color: orange|blue|amber|sage, title, body,
-                         ctaLabel?, ctaHref? }] }
+                         ctaLabel?, ctaHref?, imageSrc? }] }
+   imageSrc — Linode URL of a service-specific photo. Populate when assets are available.
 
 4. Showcase — alternating image+text row demonstrating a specific service or capability.
    Props: { label, title, body, ctaLabel, ctaHref, ctaVariant: primary|secondary,
-            visualUrl (faux URL shown in browser-frame chrome),
-            visualKind: barChart|circleRing,
-            visualCenterText? (used when visualKind=circleRing, 3-4 chars),
+            imageSrc? (Linode URL of customer photo — PREFER this over the procedural visual),
+            imageAlt?,
+            visualUrl?, visualKind?: barChart|circleRing, visualCenterText? (only used when no imageSrc),
             reverse? (boolean — true puts visual on the right) }
 
 5. Stats — dark stats band with 4 large gradient numbers.
@@ -507,7 +571,8 @@ export const BLOCK_SCHEMA_FOR_AI = `Available blocks (compose any sequence; usua
    Props: { label, title, body, logos: [{ value: <string> }] }
 
 7. Quote — testimonial card with quote + author + meta + initials.
-   Props: { quote, author, meta, initials (2-3 chars) }
+   Props: { quote, author, meta, initials (2-3 chars), avatarSrc? (Linode URL if available) }
+   ONLY emit when a real testimonial exists in the source. NEVER invent testimonials.
 
 8. Cta — final call-to-action with primary + optional secondary button.
    Props: { label, title, body, primaryLabel, primaryHref, secondaryLabel?, secondaryHref? }
