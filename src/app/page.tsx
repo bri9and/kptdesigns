@@ -15,6 +15,7 @@ import { StatsSection } from "@/components/earthy/stats-section";
 import { LogoCloud } from "@/components/earthy/logo-cloud";
 import { QuoteCard } from "@/components/earthy/quote-card";
 import { CtaSection } from "@/components/earthy/cta-section";
+import { Scrollytelling3D } from "@/components/earthy/scrollytelling/section";
 
 const FEATURES: FeatureCardProps[] = [
   {
@@ -133,6 +134,8 @@ export default function Home() {
           </Reveal>
         </div>
       </section>
+
+      <Scrollytelling3D />
 
       <StatsSection
         label="By the numbers"
