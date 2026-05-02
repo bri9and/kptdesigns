@@ -12,14 +12,14 @@ import { cn } from "@/lib/utils";
 
 type RibbonColor = "orange" | "blue" | "amber" | "sage";
 
-type RibbonItem = {
+export type RibbonItem = {
   href: string;
   label: string;
   color: RibbonColor;
   Icon: LucideIcon;
 };
 
-const ITEMS: RibbonItem[] = [
+const DEFAULT_ITEMS: RibbonItem[] = [
   { href: "/#features", label: "Site Rebuild", color: "orange", Icon: RefreshCcw },
   { href: "/pricing", label: "Hosting", color: "blue", Icon: Cloud },
   { href: "/pricing", label: "Domains", color: "amber", Icon: Globe2 },
@@ -35,12 +35,16 @@ const COLOR_BG: Record<RibbonColor, string> = {
   sage: "bg-earthy-sage",
 };
 
-export function EarthyRibbon() {
+export type EarthyRibbonProps = {
+  items?: RibbonItem[];
+};
+
+export function EarthyRibbon({ items = DEFAULT_ITEMS }: EarthyRibbonProps = {}) {
   return (
     <section className="border-y border-earthy-stone-200 bg-earthy-cream py-16">
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-wrap items-center justify-center gap-12">
-          {ITEMS.map((item) => (
+          {items.map((item) => (
             <Link
               key={`${item.label}-${item.href}`}
               href={item.href}

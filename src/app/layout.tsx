@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono, Inter, Roboto, Roboto_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono, Inter, Roboto, Roboto_Mono, Fraunces } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { LayoutShell } from "@/components/layout-shell";
@@ -30,6 +30,16 @@ const earthyMono = Roboto_Mono({
   variable: "--font-earthy-mono",
   subsets: ["latin"],
   weight: ["400", "500"],
+});
+
+// Fraunces — characterful serif for boutique editorial headlines.
+// Variable axis enables the soft "soft" optical setting via @theme variants.
+const earthySerif = Fraunces({
+  variable: "--font-earthy-serif",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  axes: ["SOFT", "opsz"],
 });
 
 export const metadata: Metadata = {
@@ -121,7 +131,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${earthyDisplay.variable} ${earthyBody.variable} ${earthyMono.variable} antialiased`}>
+      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${earthyDisplay.variable} ${earthyBody.variable} ${earthyMono.variable} ${earthySerif.variable} antialiased`}>
         <ClerkProvider
             appearance={{
               variables: {

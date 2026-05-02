@@ -13,7 +13,33 @@ const SUGGESTIONS = [
   "Rebuild my Facebook-only business as a real site",
 ];
 
-export function EarthyHero() {
+const DEFAULTS = {
+  tagline:
+    "Boutique websites for businesses that care about details. Hand-built, hosted with care, owned by you. From $500.",
+  searchPlaceholder: "Search for anything...",
+  primaryCtaLabel: "See what we build",
+  primaryCtaHref: "/#features",
+  secondaryCtaLabel: "Start your project",
+  secondaryCtaHref: "/start",
+} as const;
+
+export type EarthyHeroProps = {
+  tagline?: string;
+  searchPlaceholder?: string;
+  primaryCtaLabel?: string;
+  primaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+};
+
+export function EarthyHero(props: EarthyHeroProps = {}) {
+  const tagline = props.tagline ?? DEFAULTS.tagline;
+  const searchPlaceholder = props.searchPlaceholder ?? DEFAULTS.searchPlaceholder;
+  const primaryCtaLabel = props.primaryCtaLabel ?? DEFAULTS.primaryCtaLabel;
+  const primaryCtaHref = props.primaryCtaHref ?? DEFAULTS.primaryCtaHref;
+  const secondaryCtaLabel = props.secondaryCtaLabel ?? DEFAULTS.secondaryCtaLabel;
+  const secondaryCtaHref = props.secondaryCtaHref ?? DEFAULTS.secondaryCtaHref;
+
   const inputRef = useTypingCycle(SUGGESTIONS);
 
   return (
@@ -70,17 +96,17 @@ export function EarthyHero() {
           Designs
         </p>
         <p
-          className="mx-auto mb-10 max-w-[600px] font-[family-name:var(--font-earthy-display)] text-[clamp(1.15rem,2.5vw,1.5rem)] leading-[1.5] text-earthy-stone-600"
+          className="mx-auto mb-10 max-w-[640px] font-[family-name:var(--font-earthy-serif)] text-[clamp(1.25rem,2.6vw,1.65rem)] leading-[1.5] text-earthy-stone-700"
           style={{
+            fontStyle: "italic",
             animation: "earthyFadeUp 0.8s var(--earthy-ease) 0.6s both",
           }}
         >
-          Custom-coded websites, starting at $500. We rebuild your old site or
-          build new — and you own every line.
+          {tagline}
         </p>
 
         <form
-          action="/contact"
+          action="/start"
           method="get"
           className="mx-auto mb-12 max-w-[580px]"
           style={{
@@ -91,9 +117,9 @@ export function EarthyHero() {
             <Search className="mr-3.5 h-5 w-5 flex-shrink-0 text-earthy-stone-500" />
             <input
               ref={inputRef}
-              name="q"
+              name="url"
               type="text"
-              placeholder="Search for anything..."
+              placeholder={searchPlaceholder}
               className="flex-1 border-none bg-transparent py-2.5 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink outline-none placeholder:text-earthy-stone-400"
             />
             <button
@@ -141,8 +167,8 @@ export function EarthyHero() {
             animation: "earthyFadeUp 0.8s var(--earthy-ease) 1.1s both",
           }}
         >
-          <BtnPrimary href="/#features">See what we build</BtnPrimary>
-          <BtnSecondary href="/contact">Start your project</BtnSecondary>
+          <BtnPrimary href={primaryCtaHref}>{primaryCtaLabel}</BtnPrimary>
+          <BtnSecondary href={secondaryCtaHref}>{secondaryCtaLabel}</BtnSecondary>
         </div>
       </div>
     </section>
