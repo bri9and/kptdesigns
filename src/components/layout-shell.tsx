@@ -26,8 +26,11 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   // /preview/* is the customer's bespoke generated site — render it bare,
   // no KPT chrome, so it reads as a standalone preview of THEIR site.
   const isCustomerPreview = pathname.startsWith("/preview/");
+  // /studio/* is the backoffice editor — owns its own full-screen layout
+  // (sidebar + iframe canvas), no KPT chrome.
+  const isStudio = pathname.startsWith("/studio/");
 
-  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isCosmosMockup || isTouchDesign || isCustomerPreview) {
+  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isCosmosMockup || isTouchDesign || isCustomerPreview || isStudio) {
     return <>{children}</>;
   }
 
