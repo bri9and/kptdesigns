@@ -1,27 +1,36 @@
 /**
  * Anonymous intake-job persistence.
  *
- * Two backends, transparently chosen:
- *   1. Supabase Storage when NEXT_PUBLIC_SUPABASE_URL is reachable.
- *      Bucket "intake-jobs" is created lazily on first write.
- *      Each job is one JSON blob keyed by id; public-read so preview
- *      links are shareable.
- *   2. Local filesystem fallback at /tmp/kpt-intake/<id>.json when
- *      Supabase is missing or unreachable. Lets the spike run offline
- *      and on dev machines without infra. Logs a one-time warning.
+ * Storage layout (Linode Object Storage, S3-compatible — same bucket as
+ * kptagents, namespaced under `kptdesigns/` so the two products' data
+ * does not collide):
  *
- * When we later promote intake jobs to a real Postgres row (during the
- * checkout/payment step), the canonical record moves to a `sites_drafts`
- * table and Storage is used only for raw scraped HTML and uploaded
- * customer assets.
+ *   kptdesigns/intake-jobs/<id>.json    — one JSON blob per job
+ *
+ * Two backends, transparently chosen:
+ *   1. Linode S3 when the LINODE_STORAGE_* env vars are present and
+ *      reachable. Default in production.
+ *   2. Local filesystem fallback at /tmp/kpt-intake/<id>.json when
+ *      Linode env is missing or the endpoint is unreachable. Lets the
+ *      spike run offline and on dev machines without infra.
+ *
+ * When we promote intake jobs to a real DB row (post-payment customer
+ * record), the canonical record moves to Postgres / MySQL with a
+ * `project='kptdesigns'` discriminator and storage is used only for
+ * raw scraped HTML and uploaded customer assets.
  */
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import type { Data as PuckData } from "@measured/puck";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { Readable } from "node:stream";
 
-const BUCKET = "intake-jobs";
+const PROJECT_PREFIX = "kptdesigns/intake-jobs";
 const FALLBACK_DIR = path.join(os.tmpdir(), "kpt-intake");
 
 export type IntakeJobStatus =
@@ -67,50 +76,55 @@ export type IntakeJob = {
 /* Backend selection                                                   */
 /* ------------------------------------------------------------------ */
 
-type Backend = "supabase" | "fs";
+type Backend = "linode" | "fs";
 let _backend: Backend | null = null;
-let _client: SupabaseClient | null = null;
-let _bucketReady = false;
+let _client: S3Client | null = null;
+let _bucket: string | null = null;
 let _warnedFallback = false;
+
+function unquote(s?: string): string | undefined {
+  if (s === undefined) return undefined;
+  return s.replace(/^"|"$/g, "");
+}
 
 async function pickBackend(): Promise<Backend> {
   if (_backend) return _backend;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/^"|"$/g, "");
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.replace(/^"|"$/g, "");
+  const accessKeyId = unquote(process.env.LINODE_STORAGE_ACCESS_KEY);
+  const secretAccessKey = unquote(process.env.LINODE_STORAGE_SECRET_KEY);
+  const endpoint = unquote(process.env.LINODE_STORAGE_ENDPOINT);
+  const region = unquote(process.env.LINODE_STORAGE_REGION) || "us-east-1";
+  const bucket = unquote(process.env.LINODE_STORAGE_BUCKET_NAME);
 
-  if (!url || !key) {
+  if (!accessKeyId || !secretAccessKey || !endpoint || !bucket) {
     _backend = "fs";
     if (!_warnedFallback) {
       _warnedFallback = true;
       console.warn(
-        "[intake-store] Supabase env missing — using local filesystem fallback at",
+        "[intake-store] Linode env missing — using local filesystem fallback at",
         FALLBACK_DIR,
       );
     }
     return _backend;
   }
 
-  // Probe DNS quickly via a HEAD request with a tight timeout — if the
-  // host doesn't resolve we don't want every storage call to wait 30s.
   try {
-    const probe = new AbortController();
-    const t = setTimeout(() => probe.abort(), 1500);
-    await fetch(url, { method: "HEAD", signal: probe.signal }).catch(() => {
-      throw new Error("unreachable");
+    _client = new S3Client({
+      region,
+      endpoint,
+      credentials: { accessKeyId, secretAccessKey },
+      forcePathStyle: true,
     });
-    clearTimeout(t);
-    _client = createClient(url, key, { auth: { persistSession: false } });
-    _backend = "supabase";
-  } catch {
+    _bucket = bucket;
+    _backend = "linode";
+  } catch (err) {
     _backend = "fs";
     if (!_warnedFallback) {
       _warnedFallback = true;
+      const msg = err instanceof Error ? err.message : String(err);
       console.warn(
-        "[intake-store] Supabase unreachable at",
-        url,
-        "— using local filesystem fallback at",
-        FALLBACK_DIR,
+        "[intake-store] Linode client init failed — falling back to FS:",
+        msg,
       );
     }
   }
@@ -145,55 +159,52 @@ async function fsReadJob(id: string): Promise<IntakeJob | null> {
 }
 
 /* ------------------------------------------------------------------ */
-/* Supabase backend                                                    */
+/* Linode S3 backend                                                   */
 /* ------------------------------------------------------------------ */
 
-async function supabaseEnsureBucket(): Promise<void> {
-  if (_bucketReady || !_client) return;
-  const { data: list } = await _client.storage.listBuckets();
-  const exists = list?.some((b) => b.name === BUCKET);
-  if (!exists) {
-    const { error } = await _client.storage.createBucket(BUCKET, {
-      public: true,
-      fileSizeLimit: 5 * 1024 * 1024,
-    });
-    if (error && !/already exists/i.test(error.message)) {
-      throw new Error(`Failed to create bucket: ${error.message}`);
-    }
-  }
-  _bucketReady = true;
+function linodeKey(id: string): string {
+  return `${PROJECT_PREFIX}/${id}.json`;
 }
 
-function supabasePath(id: string): string {
-  return `${id}.json`;
+async function linodeWriteJob(job: IntakeJob): Promise<void> {
+  if (!_client || !_bucket) throw new Error("Linode client not initialized");
+  await _client.send(
+    new PutObjectCommand({
+      Bucket: _bucket,
+      Key: linodeKey(job.id),
+      Body: JSON.stringify(job),
+      ContentType: "application/json",
+      // Short cache so we can read-after-write for status polling.
+      CacheControl: "no-store",
+    }),
+  );
 }
 
-async function supabaseWriteJob(job: IntakeJob): Promise<void> {
-  if (!_client) throw new Error("Supabase client not initialized");
-  await supabaseEnsureBucket();
-  const blob = new Blob([JSON.stringify(job)], { type: "application/json" });
-  const { error } = await _client.storage
-    .from(BUCKET)
-    .upload(supabasePath(job.id), blob, {
-      upsert: true,
-      contentType: "application/json",
-    });
-  if (error) {
-    throw new Error(`Failed to persist intake job: ${error.message}`);
-  }
-}
-
-async function supabaseReadJob(id: string): Promise<IntakeJob | null> {
-  if (!_client) return null;
-  await supabaseEnsureBucket();
-  const { data } = await _client.storage.from(BUCKET).download(supabasePath(id));
-  if (!data) return null;
-  const text = await data.text();
+async function linodeReadJob(id: string): Promise<IntakeJob | null> {
+  if (!_client || !_bucket) return null;
   try {
+    const out = await _client.send(
+      new GetObjectCommand({ Bucket: _bucket, Key: linodeKey(id) }),
+    );
+    if (!out.Body) return null;
+    const text = await streamToString(out.Body as Readable);
     return JSON.parse(text) as IntakeJob;
-  } catch {
-    return null;
+  } catch (err: unknown) {
+    const e = err as {
+      name?: string;
+      $metadata?: { httpStatusCode?: number };
+    };
+    if (e?.name === "NoSuchKey" || e?.$metadata?.httpStatusCode === 404) {
+      return null;
+    }
+    throw err;
   }
+}
+
+async function streamToString(stream: Readable): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 /* ------------------------------------------------------------------ */
@@ -217,14 +228,14 @@ export async function createIntakeJob(input: {
     created_at: now,
     updated_at: now,
   };
-  if (backend === "supabase") await supabaseWriteJob(job);
+  if (backend === "linode") await linodeWriteJob(job);
   else await fsWriteJob(job);
   return job;
 }
 
 export async function readIntakeJob(id: string): Promise<IntakeJob | null> {
   const backend = await pickBackend();
-  if (backend === "supabase") return supabaseReadJob(id);
+  if (backend === "linode") return linodeReadJob(id);
   return fsReadJob(id);
 }
 
@@ -244,12 +255,12 @@ export async function updateIntakeJob(
     updated_at: new Date().toISOString(),
   };
   const backend = await pickBackend();
-  if (backend === "supabase") await supabaseWriteJob(next);
+  if (backend === "linode") await linodeWriteJob(next);
   else await fsWriteJob(next);
   return next;
 }
 
-/** For diagnostics. Returns the active backend ('supabase' | 'fs'). */
+/** For diagnostics. Returns the active backend ('linode' | 'fs'). */
 export async function intakeStoreBackend(): Promise<Backend> {
   return pickBackend();
 }

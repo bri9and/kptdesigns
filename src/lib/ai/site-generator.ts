@@ -1,32 +1,32 @@
 /**
  * AI site generator — turns a scraped snapshot into a Puck content tree.
  *
- * Uses Claude with prompt-engineered structured output.  The system
- * prompt teaches Claude the block schema (from src/lib/puck-config.ts),
- * gives it the scraped page content, and asks for a JSON tree it could
+ * Uses Google Gemini (the same provider kptagents uses, sharing the
+ * GOOGLE_API_KEY env var). The system instruction teaches Gemini the
+ * earthy block schema (from src/lib/puck-config.tsx), the user message
+ * carries the scraped page content, and we ask for a JSON tree it could
  * legally drop into Puck's <Render>.
  *
- * If Claude returns invalid JSON or a tree we can't render, we fall
- * back to a deterministic shell tree built from the raw scraped data —
+ * If Gemini returns invalid JSON or the call fails entirely, we fall
+ * back to a deterministic templated tree built from the scraped data —
  * the customer still sees a real-looking preview, just less polished.
  */
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Data as PuckData } from "@measured/puck";
 
 import { BLOCK_SCHEMA_FOR_AI, ICON_NAMES } from "@/lib/puck-config";
 import type { ScrapedSnapshot } from "@/lib/intake-store";
 
-const MODEL = "claude-opus-4-7";
-const MAX_TOKENS = 8000;
+const MODEL = "gemini-3-flash-preview";
 
-let _client: Anthropic | null = null;
-function client(): Anthropic {
+let _client: GoogleGenerativeAI | null = null;
+function client(): GoogleGenerativeAI {
   if (_client) return _client;
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GOOGLE_API_KEY?.replace(/^"|"$/g, "");
   if (!key) {
-    throw new Error("ANTHROPIC_API_KEY not set in env");
+    throw new Error("GOOGLE_API_KEY not set in env");
   }
-  _client = new Anthropic({ apiKey: key });
+  _client = new GoogleGenerativeAI(key);
   return _client;
 }
 
@@ -41,29 +41,27 @@ export async function generateSite(
   opts: { businessName?: string; notes?: string } = {},
 ): Promise<GenerationResult> {
   const userPrompt = buildUserPrompt(scraped, opts);
-  const systemPrompt = SYSTEM_PROMPT;
 
-  let response;
+  let text: string;
   try {
-    response = await client().messages.create({
+    const model = client().getGenerativeModel({
       model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: [
-        {
-          type: "text",
-          text: systemPrompt,
-          // Cache the system prompt — it's the same for every job.
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [{ role: "user", content: userPrompt }],
+      systemInstruction: SYSTEM_PROMPT,
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.7,
+        maxOutputTokens: 8000,
+      },
     });
+    const result = await model.generateContent(userPrompt);
+    text = result.response.text();
   } catch (err) {
-    // Auth failure, rate-limit, network — anything. Surface a templated
-    // preview built from the scraped snapshot so the customer still sees
-    // *something* and our spike demo isn't blocked by API key issues.
+    // Auth, rate-limit, network, model unavailable — anything. Surface
+    // a templated preview built from the scraped snapshot so the
+    // customer still sees something believable and the spike isn't
+    // blocked.
     const msg = err instanceof Error ? err.message : String(err);
-    console.warn("[site-generator] Claude call failed, using templated preview:", msg);
+    console.warn("[site-generator] Gemini call failed, using templated preview:", msg);
     return {
       puckData: templatedTree(scraped, opts),
       businessSummary:
@@ -72,27 +70,21 @@ export async function generateSite(
     };
   }
 
-  // Find the text block in the response
-  const textBlock = response.content.find((b) => b.type === "text");
-  if (!textBlock || textBlock.type !== "text") {
-    throw new Error("Claude returned no text content");
-  }
-
-  const parsed = parseJsonFromClaudeText(textBlock.text);
+  const parsed = parseJsonFromGeminiText(text);
   if (!parsed) {
     return {
-      puckData: fallbackTree(scraped),
+      puckData: templatedTree(scraped, opts),
       businessSummary:
-        scraped.description ?? scraped.title ?? "A small business that needs a real website.",
-      raw: textBlock.text,
+        scraped.description ?? scraped.title ?? "A business that needs a great website.",
+      raw: text,
     };
   }
 
-  // Validate shape
   if (!parsed.content || !Array.isArray(parsed.content)) {
     return {
-      puckData: fallbackTree(scraped),
-      businessSummary: parsed.businessSummary ?? "",
+      puckData: templatedTree(scraped, opts),
+      businessSummary:
+        typeof parsed.businessSummary === "string" ? parsed.businessSummary : "",
       raw: parsed,
     };
   }
@@ -110,6 +102,15 @@ export async function generateSite(
       props: { ...b.props, id: `${b.type}-${cryptoRandomId()}` },
     }));
 
+  if (content.length === 0) {
+    return {
+      puckData: templatedTree(scraped, opts),
+      businessSummary:
+        typeof parsed.businessSummary === "string" ? parsed.businessSummary : "",
+      raw: parsed,
+    };
+  }
+
   const puckData: PuckData = {
     content,
     root: { props: {} },
@@ -117,7 +118,8 @@ export async function generateSite(
 
   return {
     puckData,
-    businessSummary: typeof parsed.businessSummary === "string" ? parsed.businessSummary : "",
+    businessSummary:
+      typeof parsed.businessSummary === "string" ? parsed.businessSummary : "",
     raw: parsed,
   };
 }
@@ -206,16 +208,15 @@ function buildUserPrompt(
 /* Helpers                                                              */
 /* ------------------------------------------------------------------ */
 
-function parseJsonFromClaudeText(text: string): {
+function parseJsonFromGeminiText(text: string): {
   businessSummary?: string;
   content?: unknown[];
 } | null {
   const trimmed = text.trim();
-  // Try direct parse first
   try {
     return JSON.parse(trimmed);
   } catch {
-    // Try to find a JSON object inside the text (in case Claude added ```json fences)
+    // Try to find a JSON object inside the text (in case Gemini added ```json fences)
     const match = trimmed.match(/\{[\s\S]*\}/);
     if (!match) return null;
     try {
@@ -231,50 +232,10 @@ function cryptoRandomId(): string {
 }
 
 /**
- * Last-resort: if Claude failed, build something the customer can still
- * see. Uses scraped headings + description in a basic Hero + Cta.
- */
-function fallbackTree(scraped: ScrapedSnapshot): PuckData {
-  const tagline =
-    scraped.description ??
-    scraped.headings[0] ??
-    "Your business, made beautiful on the web.";
-
-  return {
-    content: [
-      {
-        type: "Hero",
-        props: {
-          id: `Hero-${cryptoRandomId()}`,
-          tagline,
-          searchPlaceholder: "What do you want to build?",
-          primaryCtaLabel: "Talk to us",
-          primaryCtaHref: "/contact",
-          secondaryCtaLabel: "Pricing",
-          secondaryCtaHref: "/pricing",
-        },
-      },
-      {
-        type: "Cta",
-        props: {
-          id: `Cta-${cryptoRandomId()}`,
-          label: "Get started",
-          title: "We'll quote you in a day",
-          body: "Five-minute conversation. We'll come back with a real price and a real timeline.",
-          primaryLabel: "Start your project",
-          primaryHref: "/contact",
-        },
-      },
-    ],
-    root: { props: {} },
-  };
-}
-
-/**
- * Smarter fallback used when the Claude call fails entirely (auth,
+ * Smarter fallback used when the Gemini call fails entirely (auth,
  * rate-limit, network). Composes a real-feeling multi-section preview
  * from the scraped snapshot alone — uses the page title/description as
- * the hero, headings as feature titles, and links as ribbon items.
+ * the hero, headings as feature titles.
  *
  * This is intentionally generic but cohesive — the customer sees a
  * believable preview even when the AI engine is down.
@@ -289,7 +250,6 @@ function templatedTree(
     scraped.headings[0] ??
     `${businessName} — made beautiful, made yours.`;
 
-  // Build features from the first 6 unique-ish headings.
   const seen = new Set<string>();
   const featureHeadings = scraped.headings
     .map((h) => h.replace(/\s+/g, " ").trim())
