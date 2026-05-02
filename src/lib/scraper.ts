@@ -10,7 +10,7 @@ import * as cheerio from "cheerio";
 import type { ScrapedSnapshot } from "./intake-store";
 
 const USER_AGENT =
-  "KPTDesignsBot/0.1 (+https://kptdesigns.com/bot — site rebuild preview)";
+  "KPTDesignsBot/0.1 (+https://kptdesigns.com/bot - site rebuild preview)";
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_TEXT_CHARS = 8_000; // cap so we don't pay Claude to read 40-page sites
