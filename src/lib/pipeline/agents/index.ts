@@ -24,10 +24,14 @@ import {
   contentNormalizeStubAgent,
 } from "./synthesis/stubs";
 
-import { themeAgent } from "./building/theme";
-import { composeAgent } from "./building/compose";
-import { bindAgent } from "./building/bind";
-import { criticStubAgent } from "./building/stubs";
+import { freeformAgent } from "./building/freeform";
+// Legacy templated agents — code retained but not registered. The
+// freeform agent is the active building path; these may come back if/
+// when we reintroduce a structured-block editor.
+// import { themeAgent } from "./building/theme";
+// import { composeAgent } from "./building/compose";
+// import { bindAgent } from "./building/bind";
+// import { criticStubAgent } from "./building/stubs";
 
 export const allAgents: Agent[] = [
   // discovery
@@ -44,11 +48,8 @@ export const allAgents: Agent[] = [
   assetCurateAgent,
   sitePlanStubAgent,
   contentNormalizeStubAgent,
-  // building
-  themeAgent,
-  composeAgent,
-  bindAgent,
-  criticStubAgent,
+  // building (freeform — one agent, one bespoke HTML page per customer)
+  freeformAgent,
 ];
 
 export const AGENTS_BY_PHASE: Record<Phase, Agent[]> = {

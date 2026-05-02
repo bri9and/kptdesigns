@@ -35,7 +35,9 @@ export type StageId =
   | "site-plan"
   | "content-normalize"
   | "asset-curate"
-  // building
+  // building (current path: free-form HTML generation)
+  | "freeform"
+  // building (legacy templated Puck path — components retained but not registered)
   | "theme"
   | "compose"
   | "critic"
@@ -133,6 +135,8 @@ export type Findings = {
 
   /* building */
   themeCss?: string;           // CSS-variable block to inject as <style> on the site
-  puckData?: PuckData;
-  criticNotes?: string[];      // anything the critic flagged
+  puckData?: PuckData;         // legacy templated path — kept for any future block-based editor flow
+  generatedHtml?: string;      // freeform building path: full bespoke HTML for the preview body
+  generatedSummary?: string;   // one-paragraph "what was built" summary
+  criticNotes?: string[];
 };

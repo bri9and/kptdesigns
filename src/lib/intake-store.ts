@@ -82,6 +82,7 @@ export type IntakeJob = {
   /** Final outputs, mirrored at the top level for the UI. */
   scraped?: ScrapedSnapshot | null;
   puck_data?: PuckData | null;
+  generated_html?: string | null;   // freeform building output — full bespoke HTML
   business_summary?: string | null;
   brand_palette?: { primary?: string; accent?: string } | null;
   raw_ai?: unknown;

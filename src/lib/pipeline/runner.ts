@@ -75,20 +75,31 @@ async function runPhases(jobId: string): Promise<void> {
   await runPhase(jobId, "building");
 
   const final = await readJobOrThrow(jobId);
-  // Pipeline succeeds even if some non-critical stages failed — as long
-  // as we have a puckData to render, the customer sees a preview.
-  if (final.findings?.puckData) {
+  // Pipeline succeeds when the building phase produced either a
+  // freeform HTML page (current default) or a Puck content tree
+  // (legacy templated path). Mirror whichever we have to top-level
+  // so the preview page can read it without digging into findings.
+  const f = final.findings ?? {};
+  if (f.generatedHtml) {
     await updateIntakeJob(jobId, {
       status: "ready",
       phase: "ready",
-      puck_data: final.findings.puckData,
-      business_summary: final.findings.brandProfile?.oneLiner ?? null,
+      generated_html: f.generatedHtml,
+      business_summary:
+        f.generatedSummary ?? f.brandProfile?.oneLiner ?? null,
+    });
+  } else if (f.puckData) {
+    await updateIntakeJob(jobId, {
+      status: "ready",
+      phase: "ready",
+      puck_data: f.puckData,
+      business_summary: f.brandProfile?.oneLiner ?? null,
     });
   } else {
     await updateIntakeJob(jobId, {
       status: "failed",
       phase: "failed",
-      error: "Building phase produced no puckData",
+      error: "Building phase produced no preview output",
     });
   }
 }
