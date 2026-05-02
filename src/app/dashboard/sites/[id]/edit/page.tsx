@@ -203,7 +203,7 @@ export default function AIBuilderPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/dashboard/sites")}
-            className="flex items-center gap-2 text-sm transition-colors hover:text-white"
+            className="flex items-center gap-2 text-sm transition-colors hover:text-earthy-ink"
             style={{ color: "rgba(255,255,255,0.5)" }}
           >
             <ArrowLeft className="w-4 h-4" />

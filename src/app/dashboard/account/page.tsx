@@ -28,7 +28,7 @@ export default function AccountPage() {
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-white/50" />
+        <Loader2 className="h-6 w-6 animate-spin text-earthy-stone-600" />
       </div>
     );
   }
@@ -78,17 +78,17 @@ export default function AccountPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Account</h1>
-        <p className="text-sm text-white/50 mt-1">
+        <h1 className="text-2xl font-bold text-earthy-ink">Account</h1>
+        <p className="text-sm text-earthy-stone-600 mt-1">
           Manage your profile, email, and security settings.
         </p>
       </div>
 
       {/* Profile Section */}
-      <div className="rounded-xl bg-qblack-light border border-white/10 p-6">
+      <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-6">
         <div className="flex items-center gap-3 mb-6">
-          <User className="h-5 w-5 text-white/50" />
-          <h2 className="text-lg font-semibold text-white">Profile</h2>
+          <User className="h-5 w-5 text-earthy-stone-600" />
+          <h2 className="text-lg font-semibold text-earthy-ink">Profile</h2>
         </div>
 
         <div className="flex items-center gap-4 mb-6">
@@ -104,17 +104,17 @@ export default function AccountPage() {
             </div>
           )}
           <div>
-            <p className="text-white font-medium">
+            <p className="text-earthy-ink font-medium">
               {user.fullName || "No name set"}
             </p>
-            <p className="text-sm text-white/50">{primaryEmail}</p>
+            <p className="text-sm text-earthy-stone-600">{primaryEmail}</p>
           </div>
         </div>
 
         <form onSubmit={handleUpdateName} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/50 mb-1.5">
+              <label className="block text-sm text-earthy-stone-600 mb-1.5">
                 First Name
               </label>
               <input
@@ -122,11 +122,11 @@ export default function AccountPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="First name"
-                className="w-full px-4 py-3 rounded-lg bg-qblack border border-white/10 text-white placeholder:text-white/25 focus:outline-none focus:border-qyellow focus:ring-1 focus:ring-qyellow/30"
+                className="w-full px-4 py-3 rounded-lg bg-qblack border border-earthy-stone-200 text-earthy-ink placeholder:text-earthy-stone-500 focus:outline-none focus:border-qyellow focus:ring-1 focus:ring-qyellow/30"
               />
             </div>
             <div>
-              <label className="block text-sm text-white/50 mb-1.5">
+              <label className="block text-sm text-earthy-stone-600 mb-1.5">
                 Last Name
               </label>
               <input
@@ -134,7 +134,7 @@ export default function AccountPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Last name"
-                className="w-full px-4 py-3 rounded-lg bg-qblack border border-white/10 text-white placeholder:text-white/25 focus:outline-none focus:border-qyellow focus:ring-1 focus:ring-qyellow/30"
+                className="w-full px-4 py-3 rounded-lg bg-qblack border border-earthy-stone-200 text-earthy-ink placeholder:text-earthy-stone-500 focus:outline-none focus:border-qyellow focus:ring-1 focus:ring-qyellow/30"
               />
             </div>
           </div>
@@ -162,19 +162,19 @@ export default function AccountPage() {
       </div>
 
       {/* Email Section */}
-      <div className="rounded-xl bg-qblack-light border border-white/10 p-6">
+      <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-6">
         <div className="flex items-center gap-3 mb-6">
-          <Mail className="h-5 w-5 text-white/50" />
-          <h2 className="text-lg font-semibold text-white">Email Addresses</h2>
+          <Mail className="h-5 w-5 text-earthy-stone-600" />
+          <h2 className="text-lg font-semibold text-earthy-ink">Email Addresses</h2>
         </div>
 
         <div className="space-y-3">
           {user.emailAddresses.map((email) => (
             <div
               key={email.id}
-              className="flex items-center justify-between px-4 py-3 rounded-lg bg-qblack border border-white/10"
+              className="flex items-center justify-between px-4 py-3 rounded-lg bg-qblack border border-earthy-stone-200"
             >
-              <span className="text-white text-sm">{email.emailAddress}</span>
+              <span className="text-earthy-ink text-sm">{email.emailAddress}</span>
               {email.id === user.primaryEmailAddressId && (
                 <span className="text-xs font-medium bg-qyellow/10 text-qyellow px-2.5 py-1 rounded-full">
                   Primary
@@ -186,19 +186,19 @@ export default function AccountPage() {
       </div>
 
       {/* Security Section */}
-      <div className="rounded-xl bg-qblack-light border border-white/10 p-6">
+      <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-6">
         <div className="flex items-center gap-3 mb-6">
-          <Shield className="h-5 w-5 text-white/50" />
-          <h2 className="text-lg font-semibold text-white">Security</h2>
+          <Shield className="h-5 w-5 text-earthy-stone-600" />
+          <h2 className="text-lg font-semibold text-earthy-ink">Security</h2>
         </div>
 
-        <div className="px-4 py-3 rounded-lg bg-qblack border border-white/10">
+        <div className="px-4 py-3 rounded-lg bg-qblack border border-earthy-stone-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white font-medium">
+              <p className="text-sm text-earthy-ink font-medium">
                 Two-Factor Authentication
               </p>
-              <p className="text-xs text-white/50 mt-0.5">
+              <p className="text-xs text-earthy-stone-600 mt-0.5">
                 Add an extra layer of security to your account
               </p>
             </div>
@@ -218,13 +218,13 @@ export default function AccountPage() {
       </div>
 
       {/* Sign Out Section */}
-      <div className="rounded-xl bg-qblack-light border border-white/10 p-6">
+      <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-6">
         <div className="flex items-center gap-3 mb-6">
-          <LogOut className="h-5 w-5 text-white/50" />
-          <h2 className="text-lg font-semibold text-white">Sign Out</h2>
+          <LogOut className="h-5 w-5 text-earthy-stone-600" />
+          <h2 className="text-lg font-semibold text-earthy-ink">Sign Out</h2>
         </div>
 
-        <p className="text-sm text-white/50 mb-4">
+        <p className="text-sm text-earthy-stone-600 mb-4">
           Sign out of your account on this device.
         </p>
 
