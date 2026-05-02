@@ -23,15 +23,17 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
   const isCosmosMockup = pathname.startsWith("/mockup/v2-cosmos");
   // touchdesign is a 100vh canvas (operator network) with its own toolbar.
   const isTouchDesign = pathname.startsWith("/projects/touchdesign");
+  // /preview/* is the customer's bespoke generated site — render it bare,
+  // no KPT chrome, so it reads as a standalone preview of THEIR site.
+  const isCustomerPreview = pathname.startsWith("/preview/");
 
-  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isCosmosMockup || isTouchDesign) {
+  if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isCosmosMockup || isTouchDesign || isCustomerPreview) {
     return <>{children}</>;
   }
 
   const isEarthyMarketingRoute =
     pathname === "/" ||
-    pathname === "/start" ||
-    pathname.startsWith("/preview/");
+    pathname === "/start";
 
   if (isEarthyMarketingRoute) {
     return (

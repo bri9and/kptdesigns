@@ -75,8 +75,8 @@ export default async function PreviewPage({ params }: PageProps) {
   }
 
   // ----- C) Ready: render the preview -----------------------------------
-  const headerLabel = job.source_url || job.business_name || "Your preview";
-  const claimHref = `/contact?from=preview&id=${id}`;
+  // Standalone — no KPT chrome, no preview banner, no bottom CTA. Just the
+  // customer's bespoke generated site, full bleed.
   const profile = job.findings?.brandProfile;
   const fontsHref = profile ? buildGoogleFontsHref(profile.fonts) : null;
 
@@ -87,39 +87,10 @@ export default async function PreviewPage({ params }: PageProps) {
         <link rel="stylesheet" href={fontsHref} key={fontsHref} />
       ) : null}
 
-      {/* Sticky preview banner — KPT chrome, NOT the customer's brand. */}
-      <div className="sticky top-16 z-40 border-b border-brand-primary-strong bg-brand-primary/95 text-brand-canvas backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="font-[family-name:var(--brand-mono-font)] text-[11px] uppercase tracking-[0.18em] text-brand-canvas/85">
-              Preview
-            </span>
-            <span className="truncate font-[family-name:var(--brand-display-font)] text-[14px] text-brand-canvas">
-              {headerLabel}
-            </span>
-          </div>
-          <BtnPrimary
-            href={claimHref}
-            className="bg-brand-ink text-brand-canvas hover:bg-brand-text-strong hover:shadow-none"
-          >
-            Make this mine — $500
-          </BtnPrimary>
-        </div>
-      </div>
-
-      {/* Two render paths:
-            1. job.generated_html → freeform agent output (current default).
-               Inject directly via dangerouslySetInnerHTML.
-            2. job.puck_data → legacy templated path. Render via Puck +
-               brand-themed wrapper. */}
       {job.generated_html ? (
-        <main
-          className="customer-bespoke-preview"
-          // We trust the freeform agent's HTML output for the spike. For
-          // production this should be DOMPurify-sanitized (and certainly
-          // before it's served to the public after payment).
-          dangerouslySetInnerHTML={{ __html: job.generated_html }}
-        />
+        // We trust the freeform agent's HTML output for the spike. For
+        // production this should be DOMPurify-sanitized.
+        <main dangerouslySetInnerHTML={{ __html: job.generated_html }} />
       ) : job.puck_data ? (
         <main
           className="customer-brand-themed"
@@ -132,21 +103,6 @@ export default async function PreviewPage({ params }: PageProps) {
           <PreviewRenderer data={job.puck_data} />
         </main>
       ) : null}
-
-      {/* Final big CTA — back to KPT brand */}
-      <CtaSection
-        label="Like what you see?"
-        title="Make this site yours, today."
-        body="$500 to claim this preview, unlock the editor, register your domain, and ship to production. No subscription required — host with us or take the code anywhere."
-        primary={{ href: claimHref, label: "Claim this preview" }}
-        secondary={{ href: "/start", label: "Try a different URL" }}
-      />
-
-      {/* Quiet disclosure */}
-      <p className="mx-auto max-w-[720px] px-6 py-12 text-center font-[family-name:var(--brand-body-font)] text-sm leading-relaxed text-brand-text-strong">
-        Preview designed by our discovery + synthesis + building agents — every site is
-        composed from scratch for your business, not stamped from a template.
-      </p>
     </>
   );
 }
