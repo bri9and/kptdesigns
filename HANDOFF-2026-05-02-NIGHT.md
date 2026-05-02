@@ -13,27 +13,22 @@ You can now **paste a URL on `http://localhost:3002/start` and 30 seconds later 
 2. http://localhost:3002/start → paste `ciriglianoplumbingllc.com`, hit Build my preview
 3. ~30s later you land at `/preview/<id>` with a real, themed, scrollable site
 
-A pre-built demo preview exists at: **http://localhost:3002/preview/806ebbd6-f81d-4b7a-9f20-fdc9ad740c96**
+A real Gemini-generated preview lives at: **http://localhost:3002/preview/4e269daf-7139-4587-9536-e28b135fe5f2**
+
+Gemini wrote actual boutique copy specific to Cirigliano Plumbing — "Comprehensive Plumbing for Pittsburgh Homes", "Trusted Across the South Hills", "Trenchless Sewer Repair Innovations". Geographic specificity preserved from the source, which is exactly what the system prompt asks for. (Earlier demo at `806ebbd6-f81d-4b7a-9f20-fdc9ad740c96` was the templated fallback before we swapped to Gemini — still viewable on FS but the new one is the live demo.)
 
 ---
 
-## Two unblockers you'll want to fix tomorrow
+## Storage + AI now share kptagents' production credentials
 
-Both are infra issues, not code issues. The spike works around both for now.
+After your direction to "use our API keys and Storage we use for kptagents," the spike was rewired to the working infra. **No more Anthropic, no more Supabase Storage** in the spike's hot path.
 
-### 1. `ANTHROPIC_API_KEY` is rejected
+- **Storage** = Linode Object Storage (S3-compatible). Bucket is shared with kptagents — KPT Designs data is namespaced under `kptdesigns/intake-jobs/<id>.json` so the two projects' trees never collide. Mirrors how kptagents uses `recordings/`, `uploads/`, `invoices/`, `voice-previews/`.
+- **AI** = Google Gemini (`gemini-3-flash-preview`), same model kptagents uses in `src/lib/email.ts`.
+- `.env.local` appended `GOOGLE_API_KEY` + the five `LINODE_STORAGE_*` vars under a "Shared with kptagents" banner documenting why.
+- The legacy Anthropic + Supabase env vars are still in `.env.local` (untouched, in case other parts of the codebase still want them) but the intake/preview pipeline no longer uses them.
 
-Calling Claude returns `401 invalid x-api-key`. The code currently catches that and falls back to a **templated preview** built from the scraped snapshot alone — the customer still sees a believable 4-section site, but the copy is generic ("A modern home for X" / "Modernized version of <heading>") instead of bespoke AI-generated copy that matches the customer's voice.
-
-**Fix:** generate a fresh Anthropic API key at https://console.anthropic.com/settings/keys and replace in `.env.local`. Once valid, the same `/start` flow will produce dramatically better copy.
-
-### 2. Supabase project `xtggjydxnvvpgsmjxjxr.supabase.co` is NXDOMAIN
-
-The project is gone (or the URL is stale). Code now **transparently falls back** to local filesystem at `/tmp/kpt-intake/<id>.json` for intake jobs. Works on this machine, won't work on Vercel until Supabase is restored.
-
-**Fix:** create a new Supabase project at https://supabase.com/dashboard, update the three Supabase env vars in `.env.local` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`), and the store auto-switches back from FS to Supabase. No code change needed — `intakeStoreBackend()` will report `"supabase"` instead of `"fs"`.
-
-(There's also a checked-in migration `supabase/migrations/002_intake_jobs.sql` for promoting intake jobs from Storage to a real Postgres table when you're ready. Not applied tonight.)
+**The FS fallback still exists** — if you blow away the Linode env vars on a dev box, the store transparently writes to `/tmp/kpt-intake/<id>.json` so the spike still demos offline.
 
 ---
 
