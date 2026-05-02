@@ -1,26 +1,26 @@
 /**
- * POST /api/start
+ * POST /api/start — kicks off the multi-agent preview pipeline.
  *
- * Drives the self-serve preview pipeline:
- *   1. Create an anonymous intake job
- *   2. Scrape the URL (or skip if from-scratch)
- *   3. Generate a Puck content tree with Claude
- *   4. Persist + return the job id
+ *   1. Validates input (URL or notes required).
+ *   2. Creates an anonymous intake job.
+ *   3. Kicks off the pipeline runner. The runner orchestrates the
+ *      three phases (discovery → synthesis → building) across the
+ *      registered agents and updates the job's `phase` + `stages`
+ *      fields as it goes.
+ *   4. Returns the job id immediately. Client polls /api/start/[id]
+ *      (or just reads /preview/[id]) to watch progress and pick up
+ *      the final puck_data.
  *
- * Synchronous because Vercel function timeout is 300s by default,
- * which gives Claude plenty of room.
+ * Pipeline runs synchronously inside the function for now — Vercel's
+ * 300s default ceiling is enough for the current path. When we add
+ * Playwright + image processing the wall-clock will exceed that and
+ * we'll move the runner to a Vercel Sandbox or Queue worker.
  */
 import { NextResponse } from "next/server";
 
-import { scrape, ScrapeError } from "@/lib/scraper";
-import { generateSite } from "@/lib/ai/site-generator";
-import {
-  createIntakeJob,
-  updateIntakeJob,
-  type ScrapedSnapshot,
-} from "@/lib/intake-store";
+import { createIntakeJob, updateIntakeJob } from "@/lib/intake-store";
+import { runPipeline } from "@/lib/pipeline/runner";
 
-// Give the function the full headroom — Claude can take 30-60s per call.
 export const maxDuration = 300;
 export const runtime = "nodejs";
 
@@ -35,10 +35,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as StartRequestBody;
   } catch {
-    return NextResponse.json(
-      { error: "Invalid JSON body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   const url = typeof body.url === "string" ? body.url.trim() : "";
@@ -56,9 +53,6 @@ export async function POST(req: Request) {
     );
   }
 
-  // Create the job first so we have an id to attach errors to.
-  // If even this fails (e.g. Supabase unreachable), there's no job id yet —
-  // surface a clean JSON error instead of letting Next.js 500 with no body.
   let job: Awaited<ReturnType<typeof createIntakeJob>>;
   try {
     job = await createIntakeJob({
@@ -67,8 +61,7 @@ export async function POST(req: Request) {
       notes: notes || undefined,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Could not create intake job.";
+    const message = err instanceof Error ? err.message : "Could not create intake job.";
     return NextResponse.json(
       { status: "failed", error: message },
       { status: 500 },
@@ -76,61 +69,17 @@ export async function POST(req: Request) {
   }
 
   try {
-    let scraped: ScrapedSnapshot;
-
-    if (url) {
-      await updateIntakeJob(job.id, { status: "scraping" });
-      scraped = await scrape(url);
-      await updateIntakeJob(job.id, { scraped, status: "generating" });
-    } else {
-      // From-scratch path — no source site to scrape, just feed the AI
-      // the customer's free-text description as the "page content".
-      scraped = {
-        url: "",
-        finalUrl: "",
-        status: 0,
-        title: businessName || undefined,
-        description: undefined,
-        ogImage: undefined,
-        textSummary: notes,
-        headings: [],
-        links: [],
-        images: [],
-      };
-      await updateIntakeJob(job.id, {
-        scraped,
-        status: "generating",
-      });
-    }
-
-    const result = await generateSite(scraped, {
-      businessName: businessName || undefined,
-      notes: notes || undefined,
-    });
-
-    await updateIntakeJob(job.id, {
-      puck_data: result.puckData,
-      business_summary: result.businessSummary,
-      raw_ai: result.raw,
-      status: "ready",
-    });
-
+    // Synchronous run for now — see header doc.
+    await runPipeline(job.id, { awaitCompletion: true });
     return NextResponse.json({ id: job.id, status: "ready" }, { status: 200 });
   } catch (err) {
     const message =
-      err instanceof ScrapeError
-        ? err.message
-        : err instanceof Error
-          ? err.message
-          : "Something went wrong generating your preview.";
-
-    // Best-effort persist the failure — don't let a write error mask the original.
+      err instanceof Error ? err.message : "Pipeline failed before producing a preview.";
     try {
       await updateIntakeJob(job.id, { status: "failed", error: message });
     } catch {
-      // swallow — we still want to surface the original error to the client
+      /* swallow */
     }
-
     return NextResponse.json(
       { id: job.id, status: "failed", error: message },
       { status: 500 },

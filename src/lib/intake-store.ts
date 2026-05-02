@@ -28,13 +28,24 @@ import type { Data as PuckData } from "@measured/puck";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import os from "node:os";
+
+import type { Findings, Phase, StageMap } from "./pipeline/types";
 import { Readable } from "node:stream";
 
 const PROJECT_PREFIX = "kptdesigns/intake-jobs";
 const FALLBACK_DIR = path.join(os.tmpdir(), "kpt-intake");
 
+/**
+ * Job-level status (rolled up from the underlying stage map). The
+ * detailed phase + per-stage progress is in the `phase` and `stages`
+ * fields, which the UI uses for its multi-stage progress display.
+ *
+ * Legacy values "scraping" and "generating" are retained so historical
+ * jobs in storage still parse, but new pipeline runs use just "running".
+ */
 export type IntakeJobStatus =
   | "pending"
+  | "running"
   | "scraping"
   | "generating"
   | "ready"
@@ -58,10 +69,17 @@ export type IntakeJob = {
   status: IntakeJobStatus;
   error?: string | null;
 
+  /** User input */
   source_url?: string | null;
   business_name?: string | null;
   notes?: string | null;
 
+  /** Pipeline state (set by src/lib/pipeline/runner.ts). */
+  phase?: Phase;
+  stages?: StageMap;
+  findings?: Findings;
+
+  /** Final outputs, mirrored at the top level for the UI. */
   scraped?: ScrapedSnapshot | null;
   puck_data?: PuckData | null;
   business_summary?: string | null;
