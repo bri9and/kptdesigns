@@ -44,11 +44,11 @@ const earthySerif = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "KPT Designs | Modern Websites That Convert",
+    default: "KPT Designs | Boutique websites for businesses that care",
     template: "%s | KPT Designs",
   },
   description:
-    "We modernize outdated websites into fast, beautiful, high-converting experiences. Custom-coded, no templates, you own everything.",
+    "Boutique websites for small businesses. Hand-coded, hosted with care, owned by you. Paste your URL and watch your site get rebuilt — from $500.",
   keywords: [
     "web design",
     "website modernization",
@@ -72,15 +72,15 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "KPT Designs",
-    title: "KPT Designs | Modern Websites That Convert",
+    title: "KPT Designs | Boutique websites for businesses that care",
     description:
-      "We modernize outdated websites into fast, beautiful, high-converting experiences. Custom-coded, no templates, you own everything.",
+      "Hand-coded boutique websites for small businesses. Paste your URL, see your site rebuilt in under a minute. From $500.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "KPT Designs | Modern Websites That Convert",
+    title: "KPT Designs | Boutique websites for businesses that care",
     description:
-      "We modernize outdated websites into fast, beautiful, high-converting experiences. Custom-coded, no templates, you own everything.",
+      "Hand-coded boutique websites for small businesses. Paste your URL, see your site rebuilt in under a minute. From $500.",
   },
   robots: {
     index: true,

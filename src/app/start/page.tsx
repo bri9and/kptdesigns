@@ -8,7 +8,7 @@
  * when the AI is done.
  */
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Link2 } from "lucide-react";
 
 import { SectionLabel } from "@/components/earthy/section-label";
@@ -43,13 +43,27 @@ const STEPS = [
 
 export default function StartPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
   const [showExtract, setShowExtract] = useState(false);
   const [progressIdx, setProgressIdx] = useState(0);
+
+  // Prefill from ?url= when arriving from the homepage hero search.
+  // If a URL is present, auto-submit so the customer doesn't have to
+  // press the button a second time.
+  useEffect(() => {
+    const initial = searchParams.get("url")?.trim();
+    if (!initial || !inputRef.current || !formRef.current) return;
+    inputRef.current.value = initial;
+    formRef.current.requestSubmit();
+    // We only want this on initial mount; deps array intentionally narrow.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Cycle the flavor progress lines while the request is in flight.
   useEffect(() => {
@@ -143,6 +157,7 @@ export default function StartPage() {
             <GeneratingState line={PROGRESS_LINES[progressIdx]} />
           ) : (
             <form
+              ref={formRef}
               onSubmit={handleSubmit}
               className="mx-auto mt-10 w-full max-w-[720px]"
             >

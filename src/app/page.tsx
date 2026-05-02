@@ -22,14 +22,14 @@ const FEATURES: FeatureCardProps[] = [
     color: "orange",
     title: "Site Rebuild",
     body: "Got a tired site you can't update? We scrape it, study it, and rebuild it modern — same content, ten times faster.",
-    cta: { href: "/contact", label: "Rebuild my site" },
+    cta: { href: "/start", label: "Rebuild my site" },
   },
   {
     Icon: Sparkles,
     color: "blue",
     title: "From Scratch",
     body: "No site yet? Send us your docs, photos, even your Facebook page. We turn it into a clean, fast, custom-coded site.",
-    cta: { href: "/contact", label: "Start fresh" },
+    cta: { href: "/start", label: "Start fresh" },
   },
   {
     Icon: Globe2,
@@ -97,11 +97,11 @@ export default function Home() {
         <div className="mx-auto max-w-[1200px] px-6">
           <Reveal className="mx-auto mb-16 max-w-[640px] text-center">
             <SectionLabel>What we build</SectionLabel>
-            <h2 className="font-[family-name:var(--font-earthy-display)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-bold leading-tight tracking-[-0.5px] text-earthy-ink">
-              Modern websites for businesses that don&apos;t have one yet — or wish theirs was better
+            <h2 className="font-[family-name:var(--font-earthy-serif)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-normal italic leading-tight tracking-[-0.5px] text-earthy-ink">
+              Considered websites for considered businesses
             </h2>
             <p className="mt-4 text-[1.1rem] leading-relaxed text-earthy-stone-600">
-              From a one-page menu for a restaurant to a multi-page site with online booking — we start at $500 and price up from there based on what you need.
+              A one-page restaurant menu, a multi-page firm with online booking, an e-commerce build that respects its inventory — every site is hand-coded around how you actually serve your customers. From $500.
             </p>
           </Reveal>
           <FeatureGrid features={FEATURES} />
@@ -115,7 +115,7 @@ export default function Home() {
               label="Site Rebuild"
               title="We take your old site and rebuild it better"
               body="Send us your URL — even if it's a Wix, GoDaddy, or 'my nephew built it in 2014' situation. Our process scrapes the real content, studies what's worth keeping, and ships a modern, fast version you actually own. Same business, dramatically better website."
-              cta={{ href: "/contact", label: "Send us your URL" }}
+              cta={{ href: "/start", label: "Send us your URL" }}
               visualUrl="kptdesigns.com/rebuild"
               visual={<BarChartVisual />}
             />
@@ -126,7 +126,7 @@ export default function Home() {
               label="Build From Scratch"
               title="Got no site? We can work from anything"
               body="Documents, PDFs, photos from your phone, the menu printed on your wall, your Facebook page, a hand-drawn sketch on a napkin — we'll take whatever you have, fill in the rest with a quick conversation, and turn it into a clean, fast website."
-              cta={{ href: "/contact", label: "Start with what you have", variant: "secondary" }}
+              cta={{ href: "/start", label: "Start with what you have", variant: "secondary" }}
               visualUrl="kptdesigns.com/intake"
               visual={<CircleRingVisual centerText="KPT" />}
             />
@@ -136,7 +136,7 @@ export default function Home() {
 
       <StatsSection
         label="By the numbers"
-        title="Small businesses, big results"
+        title="Numbers we work to keep"
         stats={STATS}
       />
 
@@ -156,9 +156,9 @@ export default function Home() {
 
       <CtaSection
         label="Get started"
-        title="Tell us about your business"
-        body="Five-minute conversation. We'll quote you in a day, ship in two weeks, and you'll own every line."
-        primary={{ href: "/contact", label: "Start your project" }}
+        title="Show us where you are. We'll show you where you could be."
+        body="Paste your URL and watch your site get rebuilt in under a minute. No signup. No credit card. Keep it if you love it — $500 to ship."
+        primary={{ href: "/start", label: "Build my preview" }}
         secondary={{ href: "/pricing", label: "See pricing" }}
       />
     </>
