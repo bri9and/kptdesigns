@@ -33,11 +33,11 @@ const earthyMono = Roboto_Mono({
 });
 
 // Fraunces — characterful serif for boutique editorial headlines.
-// Variable axis enables the soft "soft" optical setting via @theme variants.
+// Variable axis enables the "soft" optical setting via @theme variants.
+// Note: when `axes` is set, Next.js requires weight be variable (omit weight).
 const earthySerif = Fraunces({
   variable: "--font-earthy-serif",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
   axes: ["SOFT", "opsz"],
 });

@@ -28,7 +28,12 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  if (pathname === "/") {
+  const isEarthyMarketingRoute =
+    pathname === "/" ||
+    pathname === "/start" ||
+    pathname.startsWith("/preview/");
+
+  if (isEarthyMarketingRoute) {
     return (
       <>
         <EarthyNav />
