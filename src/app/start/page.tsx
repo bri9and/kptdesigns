@@ -171,7 +171,7 @@ export default function StartPage() {
                   autoComplete="off"
                   spellCheck={false}
                   placeholder="ciriglianoplumbingllc.com"
-                  className="flex-1 border-none bg-transparent py-2.5 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink outline-none placeholder:text-earthy-stone-400"
+                  className="flex-1 border-none bg-transparent py-2.5 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink outline-none placeholder:text-earthy-stone-600"
                 />
                 <button
                   type="submit"
@@ -186,11 +186,11 @@ export default function StartPage() {
                   name="notes"
                   rows={4}
                   placeholder="Tell us what your business does, who you serve, and what makes you you."
-                  className="mt-4 w-full resize-none rounded-2xl border border-earthy-stone-300 bg-earthy-cream px-5 py-4 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink shadow-[var(--earthy-shadow-sm)] outline-none transition-all duration-200 placeholder:text-earthy-stone-400 focus:border-transparent focus:shadow-[var(--earthy-shadow-md)]"
+                  className="mt-4 w-full resize-none rounded-2xl border border-earthy-stone-300 bg-earthy-cream px-5 py-4 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink shadow-[var(--earthy-shadow-sm)] outline-none transition-all duration-200 placeholder:text-earthy-stone-600 focus:border-transparent focus:shadow-[var(--earthy-shadow-md)]"
                 />
               ) : null}
 
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-[family-name:var(--font-earthy-serif)] text-sm italic text-earthy-stone-500">
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-[family-name:var(--font-earthy-body)] text-sm text-earthy-stone-700">
                 <button
                   type="button"
                   onClick={() => setShowNotes((s) => !s)}
@@ -221,7 +221,7 @@ export default function StartPage() {
                   <p className="mb-2 font-[family-name:var(--font-earthy-display)] font-medium text-earthy-ink">
                     From your existing site we read:
                   </p>
-                  <ul className="list-inside list-disc space-y-1 text-earthy-stone-500">
+                  <ul className="list-inside list-disc space-y-1 text-earthy-stone-700">
                     <li>Headlines, services, and your written voice</li>
                     <li>Contact info, hours, and service area</li>
                     <li>Photos, logos, and testimonials</li>
@@ -244,20 +244,20 @@ export default function StartPage() {
         <div className="mx-auto mt-20 grid max-w-5xl grid-cols-1 gap-10 px-6 text-left md:grid-cols-3 md:gap-8">
           {STEPS.map((step) => (
             <div key={step.n}>
-              <p className="font-[family-name:var(--font-earthy-mono)] text-xs tracking-[0.2em] text-earthy-stone-500">
+              <p className="font-[family-name:var(--font-earthy-mono)] text-xs tracking-[0.2em] text-earthy-orange">
                 {step.n}
               </p>
-              <h3 className="mt-3 font-[family-name:var(--font-earthy-serif)] text-[1.25rem] italic text-earthy-ink">
+              <h3 className="mt-3 font-[family-name:var(--font-earthy-display)] text-[1.35rem] font-semibold text-earthy-ink">
                 {step.title}
               </h3>
-              <p className="mt-2 font-[family-name:var(--font-earthy-body)] text-[0.95rem] leading-relaxed text-earthy-stone-600">
+              <p className="mt-2 font-[family-name:var(--font-earthy-body)] text-base leading-relaxed text-earthy-stone-700">
                 {step.body}
               </p>
             </div>
           ))}
         </div>
 
-        <p className="mx-auto mt-24 max-w-xl px-6 text-center font-[family-name:var(--font-earthy-body)] text-xs text-earthy-stone-500">
+        <p className="mx-auto mt-24 max-w-xl px-6 text-center font-[family-name:var(--font-earthy-body)] text-sm text-earthy-stone-700">
           Generation costs us ~$0.20 per preview. We rate-limit at 3 per IP per
           day.
         </p>

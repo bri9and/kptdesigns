@@ -97,7 +97,7 @@ export default function Home() {
         <div className="mx-auto max-w-[1200px] px-6">
           <Reveal className="mx-auto mb-16 max-w-[640px] text-center">
             <SectionLabel>What we build</SectionLabel>
-            <h2 className="font-[family-name:var(--font-earthy-serif)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-normal italic leading-tight tracking-[-0.5px] text-earthy-ink">
+            <h2 className="font-[family-name:var(--font-earthy-serif)] text-[clamp(1.8rem,3.5vw,2.75rem)] font-medium leading-tight tracking-[-0.5px] text-earthy-ink">
               Considered websites for considered businesses
             </h2>
             <p className="mt-4 text-[1.1rem] leading-relaxed text-earthy-stone-600">

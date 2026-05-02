@@ -29,7 +29,7 @@ export function QuoteCard({ quote, author, meta, initials }: QuoteCardProps) {
               <strong className="block font-[family-name:var(--font-earthy-display)] text-sm text-earthy-ink">
                 {author}
               </strong>
-              <span className="text-xs text-earthy-stone-500">{meta}</span>
+              <span className="text-xs text-earthy-stone-700">{meta}</span>
             </div>
           </div>
         </div>

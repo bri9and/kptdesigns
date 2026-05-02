@@ -55,7 +55,7 @@ function FooterCol({
           <li key={`${heading}-${item.label}`}>
             <Link
               href={item.href}
-              className="text-[0.9rem] text-earthy-stone-500 hover:text-earthy-orange transition-colors duration-200"
+              className="text-[0.9rem] text-earthy-stone-700 hover:text-earthy-orange transition-colors duration-200"
             >
               {item.label}
             </Link>
@@ -76,10 +76,10 @@ export function EarthyFooter() {
           <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr] gap-12 mb-12">
             <div>
               <FooterLogo />
-              <p className="mt-4 text-[0.9rem] leading-[1.6] text-earthy-stone-500 max-w-[320px]">
+              <p className="mt-4 text-[0.9rem] leading-[1.6] text-earthy-stone-700 max-w-[320px]">
                 Custom websites for small businesses.
               </p>
-              <p className="mt-3 text-[0.9rem] leading-[1.6] text-earthy-stone-500 max-w-[320px]">
+              <p className="mt-3 text-[0.9rem] leading-[1.6] text-earthy-stone-700 max-w-[320px]">
                 Modern websites. Built to convert. Custom-coded, no templates &mdash; you own everything.
               </p>
             </div>
@@ -88,10 +88,10 @@ export function EarthyFooter() {
             <FooterCol heading="Get help" items={help} />
           </div>
           <div className="pt-7 border-t border-earthy-stone-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-            <p className="text-[0.8rem] text-earthy-stone-500">
+            <p className="text-[0.8rem] text-earthy-stone-700">
               &copy; {year} KPT Designs. All rights reserved.
             </p>
-            <p className="text-[0.8rem] text-earthy-stone-500 font-[family-name:var(--font-earthy-display)]">
+            <p className="text-[0.8rem] text-earthy-stone-700 font-[family-name:var(--font-earthy-display)]">
               Modern websites. Built to convert.
             </p>
           </div>

@@ -107,7 +107,7 @@ export default async function PreviewPage({ params }: PageProps) {
       />
 
       {/* Quiet disclosure */}
-      <p className="mx-auto max-w-[720px] px-6 py-12 text-center font-[family-name:var(--font-earthy-serif)] text-sm italic text-earthy-stone-500">
+      <p className="mx-auto max-w-[720px] px-6 py-12 text-center font-[family-name:var(--font-earthy-body)] text-sm leading-relaxed text-earthy-stone-700">
         This preview was AI-generated from your existing site in about 30 seconds. The real version
         we ship is hand-finished, custom-coded, and built around what your customers actually do.
       </p>

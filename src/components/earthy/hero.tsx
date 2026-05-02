@@ -96,9 +96,8 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
           Designs
         </p>
         <p
-          className="mx-auto mb-10 max-w-[640px] font-[family-name:var(--font-earthy-serif)] text-[clamp(1.25rem,2.6vw,1.65rem)] leading-[1.5] text-earthy-stone-700"
+          className="mx-auto mb-10 max-w-[640px] font-[family-name:var(--font-earthy-body)] text-[clamp(1.15rem,2.4vw,1.45rem)] leading-[1.55] text-earthy-stone-700"
           style={{
-            fontStyle: "italic",
             animation: "earthyFadeUp 0.8s var(--earthy-ease) 0.6s both",
           }}
         >
@@ -120,7 +119,7 @@ export function EarthyHero(props: EarthyHeroProps = {}) {
               name="url"
               type="text"
               placeholder={searchPlaceholder}
-              className="flex-1 border-none bg-transparent py-2.5 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink outline-none placeholder:text-earthy-stone-400"
+              className="flex-1 border-none bg-transparent py-2.5 font-[family-name:var(--font-earthy-body)] text-base text-earthy-ink outline-none placeholder:text-earthy-stone-600"
             />
             <button
               type="submit"

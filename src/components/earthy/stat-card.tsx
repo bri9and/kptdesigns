@@ -41,7 +41,7 @@ export function StatCard({ target, suffix, label, index }: StatCardProps) {
       >
         0
       </span>
-      <p className="text-[0.95rem] text-earthy-stone-400">{label}</p>
+      <p className="text-[0.95rem] text-earthy-stone-600">{label}</p>
     </div>
   );
 }
