@@ -6,8 +6,13 @@
  * Paste a URL (or describe your business), POST to /api/start,
  * watch a flavor loading state, and get pushed to /preview/[id]
  * when the AI is done.
+ *
+ * Note: this page reads ?url= via useSearchParams, which makes it
+ * client-only (no static prerender). The default export wraps the
+ * actual page in a Suspense boundary as Next.js requires when
+ * useSearchParams is used in a Client Component.
  */
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Link2 } from "lucide-react";
 
@@ -42,6 +47,14 @@ const STEPS = [
 ];
 
 export default function StartPage() {
+  return (
+    <Suspense fallback={null}>
+      <StartPageInner />
+    </Suspense>
+  );
+}
+
+function StartPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
