@@ -5,6 +5,8 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { BackToTop } from "@/components/back-to-top";
 import { PageTransition } from "@/components/page-transition";
+import { EarthyNav } from "@/components/earthy/nav";
+import { EarthyFooter } from "@/components/earthy/footer";
 
 export function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,6 +26,16 @@ export function LayoutShell({ children }: { children: React.ReactNode }) {
 
   if (isSitePage || isAuthPage || isDashboard || isNeo || isLandman || isTunnelMockup || isCosmosMockup || isTouchDesign) {
     return <>{children}</>;
+  }
+
+  if (pathname === "/") {
+    return (
+      <>
+        <EarthyNav />
+        <main className="pt-16">{children}</main>
+        <EarthyFooter />
+      </>
+    );
   }
 
   return (

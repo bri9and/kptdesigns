@@ -708,3 +708,89 @@ textarea:focus-visible {
     animation: none;
   }
 }
+
+/* ──────────────────────────────────────────────────────────
+   Earthy theme — marketing surface
+   Reference: public/concepts/earthy.html
+   Prefixed `earthy-*` so utilities don't clash with existing
+   `qblack`/`qyellow` aliases or the landman `cream`/`ink` tokens.
+   ────────────────────────────────────────────────────────── */
+@theme {
+  --color-earthy-cream: #FBF8F1;
+  --color-earthy-sand: #F2EBDB;
+  --color-earthy-ink: #2D241B;
+  --color-earthy-orange: #C56738;
+  --color-earthy-orange-dark: #9A4824;
+  --color-earthy-orange-light: #EFD8C0;
+  --color-earthy-blue: #5B8FB9;
+  --color-earthy-blue-light: #D7E5EF;
+  --color-earthy-amber: #E8A547;
+  --color-earthy-amber-light: #FAEAC4;
+  --color-earthy-sage: #7BA15A;
+  --color-earthy-sage-light: #DBEACB;
+  --color-earthy-stone-100: #EDE5D3;
+  --color-earthy-stone-200: #DDD2BB;
+  --color-earthy-stone-300: #C9BFA8;
+  --color-earthy-stone-400: #A89A7E;
+  --color-earthy-stone-500: #8B7E64;
+  --color-earthy-stone-600: #5D5340;
+  --color-earthy-stone-700: #3F3729;
+}
+
+:root {
+  --earthy-shadow-sm: 0 1px 2px rgba(45,36,27,0.3), 0 1px 3px 1px rgba(45,36,27,0.15);
+  --earthy-shadow-md: 0 1px 3px rgba(45,36,27,0.3), 0 4px 8px 3px rgba(45,36,27,0.15);
+  --earthy-shadow-lg: 0 4px 8px rgba(45,36,27,0.3), 0 8px 20px 6px rgba(45,36,27,0.15);
+  --earthy-shadow-hover: 0 2px 6px rgba(45,36,27,0.3), 0 8px 24px 6px rgba(45,36,27,0.18);
+  --earthy-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --earthy-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.earthy-section-label {
+  font-family: var(--font-earthy-mono), 'Roboto Mono', ui-monospace, monospace;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--color-earthy-orange);
+  margin-bottom: 12px;
+}
+
+@keyframes earthyLetterPop {
+  0%   { opacity: 0; transform: translateY(40px) scale(0.8); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);   }
+}
+@keyframes earthyFadeUp {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0);    }
+}
+@keyframes earthyBounce {
+  0%, 80%, 100% { transform: translateY(0);     }
+  40%           { transform: translateY(-18px); }
+}
+@keyframes earthyGrowBar {
+  0%   { transform: scaleY(0); }
+  100% { transform: scaleY(1); }
+}
+@keyframes earthySpinIn {
+  0%   { transform: rotate(-90deg) scale(0.6); opacity: 0; }
+  100% { transform: rotate(0deg)   scale(1);   opacity: 1; }
+}
+@keyframes earthyLoadPulse {
+  0%, 100% { transform: scale(1);   opacity: 0.5; }
+  50%      { transform: scale(1.4); opacity: 1;   }
+}
+
+.earthy-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.7s var(--earthy-ease), transform 0.7s var(--earthy-ease);
+}
+.earthy-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.earthy-reveal-stagger-1 { transition-delay: 0.1s; }
+.earthy-reveal-stagger-2 { transition-delay: 0.2s; }
+.earthy-reveal-stagger-3 { transition-delay: 0.3s; }
+.earthy-reveal-stagger-4 { transition-delay: 0.4s; }

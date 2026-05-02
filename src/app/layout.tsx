@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono, Inter, Roboto, Roboto_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { LayoutShell } from "@/components/layout-shell";
@@ -12,6 +12,24 @@ const spaceGrotesk = Space_Grotesk({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
+});
+
+const earthyDisplay = Inter({
+  variable: "--font-earthy-display",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const earthyBody = Roboto({
+  variable: "--font-earthy-body",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
+});
+
+const earthyMono = Roboto_Mono({
+  variable: "--font-earthy-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -103,7 +121,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} antialiased`}>
+      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} ${earthyDisplay.variable} ${earthyBody.variable} ${earthyMono.variable} antialiased`}>
         <ClerkProvider
             appearance={{
               variables: {
