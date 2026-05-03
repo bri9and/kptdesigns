@@ -46,9 +46,20 @@ type StudioProps = {
 };
 
 type ImagePicker = {
-  editId: string;        // per-img id assigned by the bridge so we can find it again
+  editId: string;        // per-element id assigned by the bridge so we can find it again
   currentSrc: string;
+  kind: "img" | "background";
 } | null;
+
+type SizePopoverState = {
+  editId: string;
+  rect: { left: number; top: number; width: number; height: number };
+  width: string;          // e.g. "1200" / "100" / ""
+  widthUnit: "px" | "%" | "vw" | "auto";
+  height: string;
+  heightUnit: "px" | "vh" | "%" | "auto";
+};
+type SizePopover = SizePopoverState | null;
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -67,6 +78,7 @@ export function Studio({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [picker, setPicker] = useState<ImagePicker>(null);
+  const [sizePopover, setSizePopover] = useState<SizePopover>(null);
 
   // Brand state — live overrides on top of the brand profile's defaults.
   // Everything but Source URL is editable.
@@ -110,7 +122,28 @@ export function Studio({
         setDirty(true);
         setSaveState("idle");
       } else if (msg.type === "pick-image" && msg.editId) {
-        setPicker({ editId: msg.editId, currentSrc: msg.currentSrc ?? "" });
+        setPicker({
+          editId: msg.editId,
+          currentSrc: msg.currentSrc ?? "",
+          kind: "img",
+        });
+      } else if (msg.type === "pick-background" && msg.editId) {
+        setPicker({
+          editId: msg.editId,
+          currentSrc: msg.currentSrc ?? "",
+          kind: "background",
+        });
+      } else if (msg.type === "open-size" && msg.editId) {
+        const rect = (msg as unknown as { rect?: SizePopoverState["rect"] }).rect;
+        const sz = (msg as unknown as { size?: { width: string; widthUnit: SizePopoverState["widthUnit"]; height: string; heightUnit: SizePopoverState["heightUnit"] } }).size;
+        setSizePopover({
+          editId: msg.editId,
+          rect: rect ?? { left: 0, top: 0, width: 0, height: 0 },
+          width: sz?.width ?? "",
+          widthUnit: sz?.widthUnit ?? "auto",
+          height: sz?.height ?? "",
+          heightUnit: sz?.heightUnit ?? "auto",
+        });
       }
     }
     window.addEventListener("message", onMessage);
@@ -163,20 +196,50 @@ export function Studio({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [displayFont, bodyFont]);
 
-  // Apply a chosen image src into the iframe.
+  // Apply a chosen image src into the iframe — either swap an <img> src
+  // or replace a CSS background-image, depending on which affordance opened
+  // the picker.
   const applyImageSrc = useCallback(
     (newSrc: string) => {
       if (!picker) return;
       const win = iframeRef.current?.contentWindow;
       if (!win) return;
       win.postMessage(
-        { type: "set-image-src", editId: picker.editId, src: newSrc },
+        picker.kind === "background"
+          ? { type: "set-background", editId: picker.editId, src: newSrc }
+          : { type: "set-image-src", editId: picker.editId, src: newSrc },
         "*",
       );
       setDirty(true);
       setPicker(null);
     },
     [picker],
+  );
+
+  // Push a width/height change into the iframe.
+  const applySize = useCallback(
+    (
+      width: string,
+      widthUnit: SizePopoverState["widthUnit"],
+      height: string,
+      heightUnit: SizePopoverState["heightUnit"],
+    ) => {
+      if (!sizePopover) return;
+      const win = iframeRef.current?.contentWindow;
+      if (!win) return;
+      win.postMessage(
+        {
+          type: "set-size",
+          editId: sizePopover.editId,
+          width: widthUnit === "auto" ? "auto" : `${width}${widthUnit}`,
+          height: heightUnit === "auto" ? "auto" : `${height}${heightUnit}`,
+        },
+        "*",
+      );
+      setDirty(true);
+      setSizePopover(null);
+    },
+    [sizePopover],
   );
 
   // Push brand-var overrides into the iframe whenever the customer
@@ -420,6 +483,132 @@ export function Studio({
           onClose={() => setPicker(null)}
         />
       ) : null}
+
+      {sizePopover ? (
+        <SizePopoverPanel
+          initial={sizePopover}
+          onApply={applySize}
+          onClose={() => setSizePopover(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+/* ─────────────────── Size popover ─────────────────── */
+
+function SizePopoverPanel({
+  initial,
+  onApply,
+  onClose,
+}: {
+  initial: SizePopoverState;
+  onApply: (
+    width: string,
+    widthUnit: SizePopoverState["widthUnit"],
+    height: string,
+    heightUnit: SizePopoverState["heightUnit"],
+  ) => void;
+  onClose: () => void;
+}) {
+  const [w, setW] = useState(initial.width);
+  const [wu, setWu] = useState(initial.widthUnit);
+  const [h, setH] = useState(initial.height);
+  const [hu, setHu] = useState(initial.heightUnit);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-brand-ink/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-[min(420px,92vw)] rounded-2xl border border-brand-divider bg-brand-canvas p-5 shadow-[var(--brand-shadow-lg)]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="mb-1 font-[family-name:var(--brand-display-font)] text-base font-medium text-brand-ink">
+          Resize section
+        </h2>
+        <p className="mb-4 text-[12px] text-brand-text-muted">
+          Currently {Math.round(initial.rect.width)}×{Math.round(initial.rect.height)}px.
+          Set <em>auto</em> on either dimension to release back to the layout flow.
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-[11px] text-brand-text-muted">Width</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={w}
+                onChange={(e) => setW(e.target.value)}
+                disabled={wu === "auto"}
+                placeholder="—"
+                className="flex-1 rounded-md border border-brand-divider bg-brand-canvas px-2.5 py-1.5 text-[13px] text-brand-ink outline-none focus:border-brand-primary disabled:opacity-50"
+              />
+              <select
+                value={wu}
+                onChange={(e) => setWu(e.target.value as typeof wu)}
+                className="rounded-md border border-brand-divider bg-brand-canvas px-2 py-1.5 text-[12px] text-brand-ink outline-none focus:border-brand-primary"
+              >
+                <option value="auto">auto</option>
+                <option value="px">px</option>
+                <option value="%">%</option>
+                <option value="vw">vw</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-[11px] text-brand-text-muted">Height</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={h}
+                onChange={(e) => setH(e.target.value)}
+                disabled={hu === "auto"}
+                placeholder="—"
+                className="flex-1 rounded-md border border-brand-divider bg-brand-canvas px-2.5 py-1.5 text-[13px] text-brand-ink outline-none focus:border-brand-primary disabled:opacity-50"
+              />
+              <select
+                value={hu}
+                onChange={(e) => setHu(e.target.value as typeof hu)}
+                className="rounded-md border border-brand-divider bg-brand-canvas px-2 py-1.5 text-[12px] text-brand-ink outline-none focus:border-brand-primary"
+              >
+                <option value="auto">auto</option>
+                <option value="px">px</option>
+                <option value="vh">vh</option>
+                <option value="%">%</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => onApply("", "auto", "", "auto")}
+            className="text-[12px] text-brand-text hover:text-brand-ink"
+          >
+            Reset to layout default
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-brand-divider px-3 py-1.5 text-[13px] text-brand-ink hover:bg-brand-surface-2"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => onApply(w, wu, h, hu)}
+              className="rounded-md bg-brand-primary px-3 py-1.5 text-[13px] font-medium text-brand-canvas hover:bg-brand-primary-strong"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -906,9 +1095,11 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
     });
 
     /* ---------- 2. IMAGE SWAP — click any <img> ---------- */
-    let imgIdCounter = 0;
+    let editIdCounter = 0;
+    function nextEditId(prefix) { return prefix + '-' + (++editIdCounter); }
+
     document.querySelectorAll('img').forEach((img) => {
-      const id = 'edit-img-' + (++imgIdCounter);
+      const id = nextEditId('edit-img');
       img.setAttribute('data-edit-id', id);
       img.style.cursor = 'pointer';
       img.addEventListener('click', (ev) => {
@@ -921,52 +1112,124 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       });
     });
 
-    /* ---------- 3. SECTION REORDER — ↑ / ↓ on top-level children ---------- */
-    function makeReorderHandle(target, direction, label) {
+    /* ---------- 2b. BACKGROUND IMAGE SWAP — for sections with CSS bg ---------- */
+    function extractBgUrl(bg) {
+      // Returns a URL if backgroundImage is "url(...)", null for none/gradients
+      if (!bg || bg === 'none') return null;
+      const m = bg.match(/url\\(\\s*["']?([^"')]+)["']?\\s*\\)/);
+      return m ? m[1] : null;
+    }
+    function makeBgBadge(target) {
+      const id = nextEditId('edit-bg');
+      target.setAttribute('data-edit-bg-id', id);
+      const cs = getComputedStyle(target);
+      if (cs.position === 'static') target.style.position = 'relative';
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.setAttribute('data-studio-overlay', 'true');
-      btn.title = label;
-      btn.textContent = direction === 'up' ? '↑' : '↓';
+      btn.title = 'Replace background image';
+      btn.textContent = '🖼  Background';
+      btn.style.cssText = [
+        'position:absolute','top:8px','left:8px','z-index:99999',
+        'padding:4px 8px','border:none','border-radius:6px',
+        'background:rgba(91,143,185,0.92)','color:#fff','font:600 11px/1 system-ui,sans-serif',
+        'cursor:pointer','box-shadow:0 1px 4px rgba(0,0,0,0.25)',
+        'opacity:0','transition:opacity 0.15s','letter-spacing:0.04em',
+      ].join(';');
+      btn.addEventListener('mouseenter', () => { btn.style.opacity = '1'; });
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const cur = extractBgUrl(getComputedStyle(target).backgroundImage) || '';
+        parent.postMessage({ type: 'pick-background', editId: id, currentSrc: cur }, '*');
+      });
+      target.appendChild(btn);
+      target.addEventListener('mouseenter', () => { btn.style.opacity = '0.85'; });
+      target.addEventListener('mouseleave', () => { btn.style.opacity = '0'; });
+    }
+    document.querySelectorAll('*').forEach((el) => {
+      if (el === document.body || el.tagName === 'IMG' || el.hasAttribute('data-studio-overlay')) return;
+      const url = extractBgUrl(getComputedStyle(el).backgroundImage);
+      if (url) makeBgBadge(el);
+    });
+
+    /* ---------- 3. SECTION REORDER — ↑ / ↓ on top-level children ---------- */
+    function makeOverlayBtn(target, opts) {
+      // opts: { top, label, content, onClick }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.setAttribute('data-studio-overlay', 'true');
+      btn.title = opts.label;
+      btn.textContent = opts.content;
       btn.style.cssText = [
         'position:absolute',
-        direction === 'up' ? 'top:8px' : 'top:36px',
+        'top:' + opts.top + 'px',
         'right:8px',
         'z-index:99999',
-        'width:24px','height:24px','padding:0',
+        'min-width:24px','height:24px','padding:0 6px',
         'border:none','border-radius:6px',
         'background:rgba(91,143,185,0.92)',
-        'color:#fff','font-size:14px','font-weight:600',
+        'color:#fff','font:600 13px/1 system-ui,sans-serif',
         'cursor:pointer','box-shadow:0 1px 4px rgba(0,0,0,0.25)',
         'opacity:0','transition:opacity 0.15s',
       ].join(';');
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const parent = target.parentElement;
-        if (!parent) return;
-        if (direction === 'up' && target.previousElementSibling) {
-          parent.insertBefore(target, target.previousElementSibling);
-        } else if (direction === 'down' && target.nextElementSibling && target.nextElementSibling.nextElementSibling) {
-          parent.insertBefore(target.nextElementSibling, target);
-        } else if (direction === 'down' && target.nextElementSibling) {
-          parent.appendChild(target);
-        }
-        document.dispatchEvent(new Event('input', { bubbles: true }));
-      });
+      btn.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); opts.onClick(); });
       return btn;
     }
 
     function attachOverlay(target) {
-      // Make sure the host can position children absolutely.
       const cs = getComputedStyle(target);
       if (cs.position === 'static') target.style.position = 'relative';
-      const up = makeReorderHandle(target, 'up', 'Move section up');
-      const down = makeReorderHandle(target, 'down', 'Move section down');
-      target.appendChild(up);
-      target.appendChild(down);
-      target.addEventListener('mouseenter', () => { up.style.opacity = '1'; down.style.opacity = '1'; });
-      target.addEventListener('mouseleave', () => { up.style.opacity = '0'; down.style.opacity = '0'; });
+      const sizeId = nextEditId('edit-size');
+      target.setAttribute('data-edit-size-id', sizeId);
+
+      const up = makeOverlayBtn(target, { top: 8, label: 'Move section up', content: '↑', onClick: () => {
+        const parent = target.parentElement; if (!parent) return;
+        if (target.previousElementSibling) parent.insertBefore(target, target.previousElementSibling);
+        document.dispatchEvent(new Event('input', { bubbles: true }));
+      } });
+      const down = makeOverlayBtn(target, { top: 36, label: 'Move section down', content: '↓', onClick: () => {
+        const parent = target.parentElement; if (!parent) return;
+        if (target.nextElementSibling && target.nextElementSibling.nextElementSibling) {
+          parent.insertBefore(target.nextElementSibling, target);
+        } else if (target.nextElementSibling) {
+          parent.appendChild(target);
+        }
+        document.dispatchEvent(new Event('input', { bubbles: true }));
+      } });
+      const size = makeOverlayBtn(target, { top: 64, label: 'Resize section', content: '⇲', onClick: () => {
+        // Surface current size + position to the studio so it can render
+        // a popover next to the section.
+        const r = target.getBoundingClientRect();
+        const inlineW = target.style.width;
+        const inlineH = target.style.height;
+        function parse(val) {
+          if (!val) return { num: '', unit: 'auto' };
+          const m = val.match(/^([0-9.]+)(px|%|vw|vh)?$/);
+          if (!m) return { num: '', unit: 'auto' };
+          return { num: m[1], unit: m[2] || 'px' };
+        }
+        const wParsed = parse(inlineW);
+        const hParsed = parse(inlineH);
+        parent.postMessage({
+          type: 'open-size',
+          editId: sizeId,
+          rect: { left: r.left, top: r.top, width: r.width, height: r.height },
+          size: {
+            width: wParsed.num,
+            widthUnit: wParsed.unit === 'vh' ? 'auto' : wParsed.unit,
+            height: hParsed.num,
+            heightUnit: hParsed.unit === 'vw' ? 'auto' : hParsed.unit,
+          },
+        }, '*');
+      } });
+
+      target.appendChild(up); target.appendChild(down); target.appendChild(size);
+      target.addEventListener('mouseenter', () => {
+        up.style.opacity = '1'; down.style.opacity = '1'; size.style.opacity = '1';
+      });
+      target.addEventListener('mouseleave', () => {
+        up.style.opacity = '0'; down.style.opacity = '0'; size.style.opacity = '0';
+      });
     }
 
     // Tag every real "page section" — semantic sectioning elements
@@ -1102,16 +1365,13 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         const img = document.querySelector('img[data-edit-id="' + m.editId + '"]');
         if (img) {
           // Capture the slot's CURRENT rendered size BEFORE swapping so we
-          // can lock the replacement to the same footprint. Without this,
-          // dropping a 1200x800 photo into a 114x84 logo slot leaves the
-          // browser to layout-shift and either stretch or shrink awkwardly.
+          // can lock the replacement to the same footprint.
           const rect = img.getBoundingClientRect();
           const slotW = Math.round(rect.width);
           const slotH = Math.round(rect.height);
           if (slotW > 0 && slotH > 0) {
             img.setAttribute('width', String(slotW));
             img.setAttribute('height', String(slotH));
-            // Compose object-fit on top of any existing inline style.
             const existing = img.getAttribute('style') || '';
             const cleaned = existing.replace(/object-fit:[^;]*;?/gi, '').replace(/object-position:[^;]*;?/gi, '');
             img.setAttribute(
@@ -1120,12 +1380,33 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
             );
           }
           img.setAttribute('src', m.src);
-          // Strip srcset / lazy-load attrs so the new src actually wins.
           img.removeAttribute('srcset');
           img.removeAttribute('data-lazy-src');
           img.removeAttribute('data-lazy-srcset');
           img.removeAttribute('sizes');
-          // Trigger save tracking
+          document.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      } else if (m.type === 'set-background' && m.editId && typeof m.src === 'string') {
+        const target = document.querySelector('[data-edit-bg-id="' + m.editId + '"]');
+        if (target) {
+          const existing = target.getAttribute('style') || '';
+          const cleaned = existing.replace(/background-image:[^;]*;?/gi, '');
+          // Use !important to defeat the AI's CSS class background-image.
+          target.setAttribute(
+            'style',
+            cleaned + ';background-image:url("' + m.src + '") !important;background-size:cover;background-position:center;'
+          );
+          document.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      } else if (m.type === 'set-size' && m.editId) {
+        const target = document.querySelector('[data-edit-size-id="' + m.editId + '"]');
+        if (target) {
+          const existing = target.getAttribute('style') || '';
+          let cleaned = existing.replace(/(^|;)\\s*width\\s*:[^;]*/gi, '').replace(/(^|;)\\s*height\\s*:[^;]*/gi, '');
+          if (typeof m.width === 'string' && m.width !== 'auto') cleaned += ';width:' + m.width;
+          if (typeof m.height === 'string' && m.height !== 'auto') cleaned += ';height:' + m.height;
+          // Make sure absolute-position-relative stays on so reorder/bg buttons remain anchored.
+          target.setAttribute('style', cleaned);
           document.dispatchEvent(new Event('input', { bubbles: true }));
         }
       }
