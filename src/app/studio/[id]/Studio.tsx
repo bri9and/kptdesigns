@@ -1460,22 +1460,24 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       }
     }
 
-    let mmScheduled = false;
+    // Use setTimeout, not requestAnimationFrame: srcdoc iframes can have rAF
+    // throttled when no real user input is happening, which would leave the
+    // floating handle stuck at -9999px.
+    let mmTimer = null;
     let lastMM = null;
     document.addEventListener('mousemove', (ev) => {
       if (dragInProgress) return;
       if (ev.target === itemHandle) return;
       lastMM = ev;
-      if (mmScheduled) return;
-      mmScheduled = true;
-      requestAnimationFrame(() => {
-        mmScheduled = false;
+      if (mmTimer) return;
+      mmTimer = setTimeout(() => {
+        mmTimer = null;
         if (!lastMM) return;
         const t = document.elementFromPoint(lastMM.clientX, lastMM.clientY);
         if (!t || t === itemHandle) return;
         const candidate = findMovableItem(t);
         if (candidate !== hoverTarget) showItemHandle(candidate);
-      });
+      }, 30);
     });
 
     itemHandle.addEventListener('pointerdown', (ev) => {
