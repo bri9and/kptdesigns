@@ -803,7 +803,23 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         clone.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
         clone.querySelectorAll('[contenteditable]').forEach((n) => n.removeAttribute('contenteditable'));
         clone.querySelectorAll('[data-edit-id]').forEach((n) => n.removeAttribute('data-edit-id'));
-        parent.postMessage({ type: 'html', html: clone.innerHTML }, '*');
+        // Capture any --brand-* CSS variable overrides the customer set
+        // via the sidebar color picker. Those live on documentElement.style;
+        // the body snapshot wouldn't include them. Inject a tiny <style>
+        // block so saved HTML reproduces the customer's chosen palette.
+        const overrides = [];
+        for (let i = 0; i < root.style.length; i++) {
+          const prop = root.style.item(i);
+          if (prop && prop.startsWith('--brand-')) {
+            overrides.push(prop + ':' + root.style.getPropertyValue(prop) + ';');
+          }
+        }
+        let html = clone.innerHTML;
+        if (overrides.length > 0) {
+          const styleEl = '<style data-studio-brand-overrides>:root{' + overrides.join('') + '}</style>';
+          html = styleEl + html;
+        }
+        parent.postMessage({ type: 'html', html }, '*');
       } else if (m.type === 'set-image-src' && m.editId && typeof m.src === 'string') {
         const img = document.querySelector('img[data-edit-id="' + m.editId + '"]');
         if (img) {
