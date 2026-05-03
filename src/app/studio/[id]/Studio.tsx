@@ -1248,25 +1248,40 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       });
     }
 
-    /* ---------- Section drag-and-drop with snap zones ---------- */
+    /* ---------- Drag-and-drop with snap zones (sections OR sub-elements) ---------- */
+    let dragInProgress = false;
     function startSectionDrag(target, downEv, onEnd) {
       const parent = target.parentElement;
       if (!parent) { onEnd(); return; }
-      const sectionSiblings = Array.from(parent.children).filter((c) => seenSections.has(c));
-      if (sectionSiblings.length < 2) { onEnd(); return; }
-
-      // Snap zones — one above each section sibling, plus one below the last.
-      // The 'before' field is the element to insertBefore (null = appendChild).
-      const zones = [];
-      sectionSiblings.forEach((s) => {
-        const r = s.getBoundingClientRect();
-        zones.push({ y: r.top + window.scrollY, before: s });
+      // Siblings = any visible, non-overlay, non-script element under the parent.
+      const siblings = Array.from(parent.children).filter((c) => {
+        if (c.hasAttribute && c.hasAttribute('data-studio-overlay')) return false;
+        if (c.tagName === 'SCRIPT' || c.tagName === 'STYLE') return false;
+        const cr = c.getBoundingClientRect();
+        return cr.width > 0 && cr.height > 0;
       });
-      const lastSib = sectionSiblings[sectionSiblings.length - 1];
-      const lastR = lastSib.getBoundingClientRect();
-      zones.push({ y: lastR.bottom + window.scrollY, before: null });
+      if (siblings.length < 2) { onEnd(); return; }
 
-      // Ghost — clone of section that follows the cursor (capped height).
+      // Detect layout axis: horizontal if the first two siblings sit side-by-side
+      // and overlap vertically, otherwise vertical.
+      const a = siblings[0].getBoundingClientRect();
+      const b = siblings[1].getBoundingClientRect();
+      const horizontal =
+        b.left >= a.left + a.width / 2 && b.top < a.bottom && b.bottom > a.top;
+
+      // Snap zones — one before each sibling, plus one after the last.
+      const zones = [];
+      siblings.forEach((s) => {
+        const sr = s.getBoundingClientRect();
+        if (horizontal) zones.push({ x: sr.left + window.scrollX, before: s });
+        else zones.push({ y: sr.top + window.scrollY, before: s });
+      });
+      const lastSib = siblings[siblings.length - 1];
+      const lastR = lastSib.getBoundingClientRect();
+      if (horizontal) zones.push({ x: lastR.right + window.scrollX, before: null });
+      else zones.push({ y: lastR.bottom + window.scrollY, before: null });
+
+      // Ghost — clone of target that follows the cursor.
       const r = target.getBoundingClientRect();
       const ghost = target.cloneNode(true);
       ghost.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
@@ -1289,18 +1304,29 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       target.style.outline = '2px dashed rgba(91,143,185,0.85)';
       document.body.style.userSelect = 'none';
       document.body.style.cursor = 'grabbing';
+      dragInProgress = true;
 
-      // Snap line — single bar that jumps to the active zone.
+      // Snap line — vertical bar (horizontal layout) or horizontal bar (vertical layout).
       const indicator = document.createElement('div');
       indicator.setAttribute('data-studio-overlay', 'true');
-      indicator.style.cssText = [
-        'position:absolute','left:' + (r.left + window.scrollX) + 'px',
-        'width:' + r.width + 'px','height:4px',
+      const baseStyle = horizontal
+        ? [
+            'position:absolute',
+            'top:' + (r.top + window.scrollY) + 'px',
+            'height:' + r.height + 'px','width:4px',
+            'transition:left 80ms ease-out','left:-9999px',
+          ]
+        : [
+            'position:absolute',
+            'left:' + (r.left + window.scrollX) + 'px',
+            'width:' + r.width + 'px','height:4px',
+            'transition:top 80ms ease-out','top:-9999px',
+          ];
+      indicator.style.cssText = baseStyle.concat([
         'background:#5b8fb9','border-radius:2px',
         'box-shadow:0 0 12px rgba(91,143,185,0.9)',
         'z-index:99997','pointer-events:none',
-        'transition:top 80ms ease-out','top:-9999px',
-      ].join(';');
+      ]).join(';');
       document.body.appendChild(indicator);
 
       const offsetX = downEv.clientX - r.left;
@@ -1310,14 +1336,23 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       function onMove(ev) {
         ghost.style.left = (ev.clientX - offsetX) + 'px';
         ghost.style.top = (ev.clientY - offsetY) + 'px';
-        const pY = ev.clientY + window.scrollY;
         let best = null, bestDist = Infinity;
-        for (const z of zones) {
-          const d = Math.abs(z.y - pY);
-          if (d < bestDist) { bestDist = d; best = z; }
+        if (horizontal) {
+          const pX = ev.clientX + window.scrollX;
+          for (const z of zones) {
+            const d = Math.abs(z.x - pX);
+            if (d < bestDist) { bestDist = d; best = z; }
+          }
+          if (best) indicator.style.left = (best.x - 2) + 'px';
+        } else {
+          const pY = ev.clientY + window.scrollY;
+          for (const z of zones) {
+            const d = Math.abs(z.y - pY);
+            if (d < bestDist) { bestDist = d; best = z; }
+          }
+          if (best) indicator.style.top = (best.y - 2) + 'px';
         }
         activeZone = best;
-        if (best) indicator.style.top = (best.y - 2) + 'px';
       }
 
       function cleanup() {
@@ -1330,6 +1365,7 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         target.style.outline = origOutline;
         document.body.style.userSelect = '';
         document.body.style.cursor = '';
+        dragInProgress = false;
         onEnd();
       }
 
@@ -1345,9 +1381,118 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       document.addEventListener('pointermove', onMove);
       document.addEventListener('pointerup', onUp);
       document.addEventListener('pointercancel', onUp);
-      // Prime the indicator so user sees something immediately.
       onMove(downEv);
     }
+
+    /* ---------- Floating ⠿ handle for sub-element drag ----------
+     * A single button that hovers over whichever in-section element the
+     * cursor is on (paragraphs, buttons, list items, anything with a
+     * sibling). Click + drag the handle to reorder that element among
+     * its siblings — re-uses startSectionDrag for snap behavior.
+     */
+    const itemHandle = document.createElement('button');
+    itemHandle.type = 'button';
+    itemHandle.setAttribute('data-studio-overlay', 'true');
+    itemHandle.setAttribute('data-studio-item-handle', 'true');
+    itemHandle.title = 'Drag to reorder';
+    itemHandle.textContent = '⠿';
+    itemHandle.style.cssText = [
+      'position:absolute','z-index:99996',
+      'width:22px','height:22px','padding:0',
+      'border:none','border-radius:4px',
+      'background:rgba(91,143,185,0.95)','color:#fff',
+      'font:600 14px/1 system-ui,sans-serif',
+      'cursor:grab','box-shadow:0 1px 4px rgba(0,0,0,0.35)',
+      'display:none','align-items:center','justify-content:center',
+      'pointer-events:auto','opacity:0.92',
+      'top:-9999px','left:-9999px',
+    ].join(';');
+    document.body.appendChild(itemHandle);
+
+    let hoverTarget = null;
+    let hoverOutlineEl = null;
+
+    function findMovableItem(el) {
+      let cur = el;
+      while (cur && cur !== document.body && cur !== document.documentElement) {
+        if (cur.hasAttribute && cur.hasAttribute('data-studio-overlay')) {
+          cur = cur.parentElement; continue;
+        }
+        if (seenSections.has(cur)) return null; // sections have their own handle
+        const p = cur.parentElement;
+        if (p && p !== document.body) {
+          const sibs = Array.from(p.children).filter((s) => {
+            if (s === cur) return false;
+            if (s.hasAttribute && s.hasAttribute('data-studio-overlay')) return false;
+            if (s.tagName === 'SCRIPT' || s.tagName === 'STYLE') return false;
+            const sr = s.getBoundingClientRect();
+            return sr.width > 0 && sr.height > 0;
+          });
+          if (sibs.length >= 1) {
+            const r = cur.getBoundingClientRect();
+            if (r.width >= 24 && r.height >= 16) return cur;
+          }
+        }
+        cur = cur.parentElement;
+      }
+      return null;
+    }
+
+    function showItemHandle(t) {
+      if (hoverOutlineEl && hoverOutlineEl !== t) {
+        hoverOutlineEl.style.outline = hoverOutlineEl._studioOrigOutline || '';
+      }
+      hoverTarget = t;
+      if (!t) {
+        itemHandle.style.display = 'none';
+        hoverOutlineEl = null;
+        return;
+      }
+      const r = t.getBoundingClientRect();
+      itemHandle.style.display = 'flex';
+      itemHandle.style.left = (r.right - 24 + window.scrollX) + 'px';
+      itemHandle.style.top = (r.top + 4 + window.scrollY) + 'px';
+      if (hoverOutlineEl !== t) {
+        t._studioOrigOutline = t.style.outline;
+        t.style.outline = '1px dashed rgba(91,143,185,0.7)';
+        t.style.outlineOffset = '2px';
+        hoverOutlineEl = t;
+      }
+    }
+
+    let mmScheduled = false;
+    let lastMM = null;
+    document.addEventListener('mousemove', (ev) => {
+      if (dragInProgress) return;
+      if (ev.target === itemHandle) return;
+      lastMM = ev;
+      if (mmScheduled) return;
+      mmScheduled = true;
+      requestAnimationFrame(() => {
+        mmScheduled = false;
+        if (!lastMM) return;
+        const t = document.elementFromPoint(lastMM.clientX, lastMM.clientY);
+        if (!t || t === itemHandle) return;
+        const candidate = findMovableItem(t);
+        if (candidate !== hoverTarget) showItemHandle(candidate);
+      });
+    });
+
+    itemHandle.addEventListener('pointerdown', (ev) => {
+      if (!hoverTarget) return;
+      ev.preventDefault(); ev.stopPropagation();
+      const t = hoverTarget;
+      itemHandle.style.display = 'none';
+      itemHandle.style.cursor = 'grabbing';
+      if (hoverOutlineEl) {
+        hoverOutlineEl.style.outline = hoverOutlineEl._studioOrigOutline || '';
+        hoverOutlineEl = null;
+      }
+      startSectionDrag(t, ev, () => {
+        itemHandle.style.cursor = 'grab';
+        hoverTarget = null;
+      });
+    });
 
     // Tag every real "page section" — semantic sectioning elements
     // (header, main > *, footer, aside, section). The freeform agent
