@@ -74,6 +74,7 @@ export default async function StudioPage({ params }: PageProps) {
 
   const profile = job.findings?.brandProfile;
   const fontsHref = profile ? buildGoogleFontsHref(profile.fonts) : null;
+  const curatedAssets = job.findings?.curatedAssets ?? [];
 
   return (
     <Studio
@@ -83,6 +84,8 @@ export default async function StudioPage({ params }: PageProps) {
       sourceUrl={job.source_url ?? null}
       businessName={job.business_name ?? null}
       fontsHref={fontsHref ?? null}
+      curatedAssets={curatedAssets}
+      logoKey={job.findings?.logoKey ?? null}
     />
   );
 }
