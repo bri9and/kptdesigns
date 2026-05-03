@@ -1199,23 +1199,17 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       const sizeId = nextEditId('edit-size');
       target.setAttribute('data-edit-size-id', sizeId);
 
-      const up = makeOverlayBtn(target, { top: 12, label: 'Move section up', content: '↑ Up', onClick: () => {
-        const parent = target.parentElement; if (!parent) return;
-        if (target.previousElementSibling) parent.insertBefore(target, target.previousElementSibling);
-        document.dispatchEvent(new Event('input', { bubbles: true }));
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } });
-      const down = makeOverlayBtn(target, { top: 46, label: 'Move section down', content: '↓ Down', onClick: () => {
-        const parent = target.parentElement; if (!parent) return;
-        if (target.nextElementSibling && target.nextElementSibling.nextElementSibling) {
-          parent.insertBefore(target.nextElementSibling, target);
-        } else if (target.nextElementSibling) {
-          parent.appendChild(target);
-        }
-        document.dispatchEvent(new Event('input', { bubbles: true }));
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      } });
-      const size = makeOverlayBtn(target, { top: 80, label: 'Resize section', content: '⇲ Size', onClick: () => {
+      const drag = makeOverlayBtn(target, { top: 12, label: 'Drag to reorder section', content: '⠿ Drag', onClick: () => {} });
+      drag.style.cursor = 'grab';
+      drag.setAttribute('data-studio-drag-handle', 'true');
+      drag.addEventListener('pointerdown', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        drag.style.cursor = 'grabbing';
+        startSectionDrag(target, ev, () => { drag.style.cursor = 'grab'; });
+      });
+
+      const size = makeOverlayBtn(target, { top: 46, label: 'Resize section', content: '⇲ Size', onClick: () => {
         // Surface current size + position to the studio so it can render
         // a popover next to the section.
         const r = target.getBoundingClientRect();
@@ -1242,18 +1236,117 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         }, '*');
       } });
 
-      target.appendChild(up); target.appendChild(down); target.appendChild(size);
-      // Always-on subtle dashed outline so customers see WHERE the
-      // section boundaries are. Brightens on hover.
+      target.appendChild(drag); target.appendChild(size);
       target.addEventListener('mouseenter', () => {
-        up.style.opacity = '1'; down.style.opacity = '1'; size.style.opacity = '1';
+        drag.style.opacity = '1'; size.style.opacity = '1';
         target.style.outline = '2px dashed rgba(91,143,185,0.5)';
         target.style.outlineOffset = '-2px';
       });
       target.addEventListener('mouseleave', () => {
-        up.style.opacity = '0.55'; down.style.opacity = '0.55'; size.style.opacity = '0.55';
+        drag.style.opacity = '0.55'; size.style.opacity = '0.55';
         target.style.outline = '';
       });
+    }
+
+    /* ---------- Section drag-and-drop with snap zones ---------- */
+    function startSectionDrag(target, downEv, onEnd) {
+      const parent = target.parentElement;
+      if (!parent) { onEnd(); return; }
+      const sectionSiblings = Array.from(parent.children).filter((c) => seenSections.has(c));
+      if (sectionSiblings.length < 2) { onEnd(); return; }
+
+      // Snap zones — one above each section sibling, plus one below the last.
+      // The 'before' field is the element to insertBefore (null = appendChild).
+      const zones = [];
+      sectionSiblings.forEach((s) => {
+        const r = s.getBoundingClientRect();
+        zones.push({ y: r.top + window.scrollY, before: s });
+      });
+      const lastSib = sectionSiblings[sectionSiblings.length - 1];
+      const lastR = lastSib.getBoundingClientRect();
+      zones.push({ y: lastR.bottom + window.scrollY, before: null });
+
+      // Ghost — clone of section that follows the cursor (capped height).
+      const r = target.getBoundingClientRect();
+      const ghost = target.cloneNode(true);
+      ghost.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
+      ghost.querySelectorAll('[contenteditable]').forEach((n) => n.removeAttribute('contenteditable'));
+      ghost.setAttribute('data-studio-overlay', 'true');
+      ghost.style.cssText = [
+        'position:fixed','left:' + r.left + 'px','top:' + r.top + 'px',
+        'width:' + r.width + 'px','max-height:220px','overflow:hidden',
+        'pointer-events:none','z-index:99998','opacity:0.85',
+        'transform:scale(0.95)','transform-origin:top left',
+        'box-shadow:0 16px 40px rgba(0,0,0,0.4)',
+        'border:2px solid rgba(91,143,185,1)','border-radius:8px',
+        'background:#fff',
+      ].join(';');
+      document.body.appendChild(ghost);
+
+      const origOpacity = target.style.opacity;
+      const origOutline = target.style.outline;
+      target.style.opacity = '0.25';
+      target.style.outline = '2px dashed rgba(91,143,185,0.85)';
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'grabbing';
+
+      // Snap line — single bar that jumps to the active zone.
+      const indicator = document.createElement('div');
+      indicator.setAttribute('data-studio-overlay', 'true');
+      indicator.style.cssText = [
+        'position:absolute','left:' + (r.left + window.scrollX) + 'px',
+        'width:' + r.width + 'px','height:4px',
+        'background:#5b8fb9','border-radius:2px',
+        'box-shadow:0 0 12px rgba(91,143,185,0.9)',
+        'z-index:99997','pointer-events:none',
+        'transition:top 80ms ease-out','top:-9999px',
+      ].join(';');
+      document.body.appendChild(indicator);
+
+      const offsetX = downEv.clientX - r.left;
+      const offsetY = downEv.clientY - r.top;
+      let activeZone = null;
+
+      function onMove(ev) {
+        ghost.style.left = (ev.clientX - offsetX) + 'px';
+        ghost.style.top = (ev.clientY - offsetY) + 'px';
+        const pY = ev.clientY + window.scrollY;
+        let best = null, bestDist = Infinity;
+        for (const z of zones) {
+          const d = Math.abs(z.y - pY);
+          if (d < bestDist) { bestDist = d; best = z; }
+        }
+        activeZone = best;
+        if (best) indicator.style.top = (best.y - 2) + 'px';
+      }
+
+      function cleanup() {
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        document.removeEventListener('pointercancel', onUp);
+        ghost.remove();
+        indicator.remove();
+        target.style.opacity = origOpacity;
+        target.style.outline = origOutline;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        onEnd();
+      }
+
+      function onUp() {
+        if (activeZone && activeZone.before !== target && activeZone.before !== target.nextSibling) {
+          parent.insertBefore(target, activeZone.before);
+          document.dispatchEvent(new Event('input', { bubbles: true }));
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        cleanup();
+      }
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+      // Prime the indicator so user sees something immediately.
+      onMove(downEv);
     }
 
     // Tag every real "page section" — semantic sectioning elements
