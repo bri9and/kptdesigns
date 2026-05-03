@@ -22,7 +22,6 @@ import Link from "next/link";
 import {
   Save,
   Eye,
-  RefreshCcw,
   Globe,
   ArrowLeft,
   Loader2,
@@ -243,20 +242,30 @@ export function Studio({
   );
 
   // Push brand-var overrides into the iframe whenever the customer
-  // changes a swatch. Also flips the dirty flag so Save lights up.
-  // Skip on the very first run (initial state == brand profile defaults).
+  // changes a swatch or picks a palette. Auto-derives primary-strong
+  // (darker) and primary-soft (lighter) so big buttons + soft backgrounds
+  // also update — the AI templates use those variants for hover/active
+  // states and section backgrounds.
   const initialColorRef = useRef({ primary, accent, ink, canvas });
   useEffect(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
+    const primaryStrong = shade(primary, -25);
+    const primarySoft = shade(primary, 80);
+    const accentStrong = shade(accent, -25);
+    const surface = shade(canvas, -3);
     win.postMessage(
       {
         type: "set-vars",
         vars: {
           "--brand-primary": primary,
+          "--brand-primary-strong": primaryStrong,
+          "--brand-primary-soft": primarySoft,
           "--brand-accent-1": accent,
+          "--brand-accent-2": accentStrong,
           "--brand-ink": ink,
           "--brand-canvas": canvas,
+          "--brand-surface": surface,
         },
       },
       "*",
@@ -272,6 +281,15 @@ export function Studio({
       setSaveState("idle");
     }
   }, [primary, accent, ink, canvas]);
+
+  // Apply a curated palette atomically — sets all 4 primary swatches at once.
+  const applyPalette = useCallback((p: Palette) => {
+    setPrimary(p.primary);
+    setAccent(p.accent);
+    setInk(p.ink);
+    setCanvas(p.canvas);
+    markDirty();
+  }, []);
 
   const handleSave = useCallback(async () => {
     setSaveState("saving");
@@ -392,16 +410,45 @@ export function Studio({
         </Section>
 
         <Section title="Brand colors">
-          <Swatch
-            label="Primary"
-            value={primary}
-            onChange={(v) => { setPrimary(v); }}
-          />
+          <div className="mb-4">
+            <p className="mb-2 font-[family-name:var(--brand-mono-font)] text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">
+              Pick a theme
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {PALETTES.map((p) => {
+                const isActive = p.primary === primary && p.accent === accent;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    title={p.name}
+                    onClick={() => applyPalette(p)}
+                    className={`group flex h-12 flex-col overflow-hidden rounded-md border ${
+                      isActive ? "border-brand-ink ring-2 ring-brand-ink ring-offset-1 ring-offset-brand-canvas" : "border-brand-divider hover:border-brand-text-muted"
+                    } transition`}
+                  >
+                    <div className="flex h-7 w-full">
+                      <div className="flex-1" style={{ background: p.primary }} />
+                      <div className="flex-1" style={{ background: p.accent }} />
+                      <div className="flex-1" style={{ background: p.canvas }} />
+                    </div>
+                    <div className="flex flex-1 items-center justify-center bg-brand-canvas px-1 text-[9px] leading-none text-brand-text-muted group-hover:text-brand-ink">
+                      {p.name}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <p className="mb-2 font-[family-name:var(--brand-mono-font)] text-[10px] uppercase tracking-[0.18em] text-brand-text-muted">
+            Tweak individual colors
+          </p>
+          <Swatch label="Primary" value={primary} onChange={(v) => setPrimary(v)} />
           <Swatch label="Accent" value={accent} onChange={(v) => setAccent(v)} />
           <Swatch label="Ink (text)" value={ink} onChange={(v) => setInk(v)} />
           <Swatch label="Canvas" value={canvas} onChange={(v) => setCanvas(v)} />
           <p className="mt-3 text-[11px] leading-snug text-brand-text-muted">
-            Click a swatch or type the hex directly. Changes apply live.
+            Buttons + soft backgrounds derive from Primary automatically.
           </p>
         </Section>
 
@@ -437,19 +484,21 @@ export function Studio({
           ) : null}
         </Section>
 
-        <Section title="Regenerate">
+        <Section title="Save">
           <button
             type="button"
-            disabled
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-brand-divider bg-brand-canvas px-3 py-2.5 text-sm text-brand-text-muted cursor-not-allowed opacity-60"
-            title="Coming next iteration"
+            onClick={handleSave}
+            disabled={!dirty || saveState === "saving"}
+            className={`flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm transition ${
+              !dirty || saveState === "saving"
+                ? "cursor-not-allowed border-brand-divider bg-brand-canvas text-brand-text-muted opacity-60"
+                : "border-brand-ink bg-brand-ink text-brand-canvas hover:bg-brand-primary-strong hover:border-brand-primary-strong"
+            }`}
           >
-            <RefreshCcw className="h-3.5 w-3.5" />
-            Regenerate from scratch
+            {saveState === "saving" ? "Saving…" : saveState === "saved" && !dirty ? "Saved ✓" : "Commit changes"}
           </button>
           <p className="mt-2 text-[11px] leading-snug text-brand-text-muted">
-            Send the discovery snapshot back through the freeform agent.
-            Shape, copy, and layout will all change. Coming next.
+            Persists every text edit, image swap, palette change, font pick, and resize.
           </p>
         </Section>
 
@@ -886,9 +935,15 @@ function Swatch({
   value: string;
   onChange: (v: string) => void;
 }) {
-  // Accept either picker change or typed hex (#rrggbb).
+  // Accept either picker change or typed hex (#rrggbb). Sync to external
+  // `value` (e.g. when a palette is picked) using React's recommended
+  // "store-prev-prop in state" derived-state pattern.
   const [text, setText] = useState(value);
-  useEffect(() => setText(value), [value]);
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setText(value);
+  }
 
   function commit(raw: string) {
     let v = raw.trim();
@@ -1022,20 +1077,100 @@ function urlSafeFont(family: string): string {
   return family.trim().replace(/\s+/g, "+");
 }
 
+// Comprehensive Google Fonts list — all free, sorted to surface the most
+// production-grade choices first. Display fonts lean editorial / display;
+// body fonts prioritize readability at smaller sizes.
 const GOOGLE_FONTS_DISPLAY = [
-  "Inter","Oswald","Playfair Display","Fraunces","Plus Jakarta Sans","DM Serif Display",
-  "Bebas Neue","Anton","Archivo Black","Lora","Cormorant Garamond","Manrope","Geist",
-  "Space Grotesk","Marcellus","Bodoni Moda","Cinzel","Spectral","Tenor Sans","Karla",
-  "Sora","Outfit","Familjen Grotesk","Bricolage Grotesque","Newsreader","Crimson Pro",
-  "Libre Baskerville","Inter Tight","Roboto","Roboto Slab","Merriweather","Public Sans",
+  // Editorial serifs
+  "Playfair Display","Fraunces","DM Serif Display","DM Serif Text","Cormorant Garamond",
+  "Cormorant","Bodoni Moda","Cinzel","Marcellus","Tenor Sans","Spectral","Lora",
+  "Newsreader","Crimson Pro","Crimson Text","Libre Baskerville","Libre Caslon Text",
+  "Eczar","EB Garamond","Vollkorn","PT Serif","Source Serif 4","Roboto Slab","Merriweather",
+  "Noto Serif","Noto Serif Display","Yeseva One","Petrona","Lustria","Italiana",
+  // Display sans
+  "Bebas Neue","Anton","Oswald","Archivo Black","Big Shoulders Display","Unbounded",
+  "Bricolage Grotesque","Familjen Grotesk","Space Grotesk","Manrope","Geist",
+  "Plus Jakarta Sans","Outfit","Sora","Inter","Inter Tight","Karla","Public Sans",
+  "Roboto","Roboto Condensed","Barlow","Barlow Condensed","Work Sans","Rubik",
+  "DM Sans","Mulish","Montserrat","Raleway","Poppins","Quicksand","Comfortaa",
+  // Slab / Mono / Quirky
+  "Fira Sans","Fira Sans Condensed","IBM Plex Sans","IBM Plex Sans Condensed",
+  "Archivo","Archivo Narrow","Lexend","Lexend Deca","Syne","Sen","Saira",
+  "Saira Condensed","Cabin","Heebo","Hind","Josefin Sans","Bree Serif",
+  "Permanent Marker","Caveat","Pacifico","Lobster","Dancing Script","Sacramento",
+  "Great Vibes","Allura","Satisfy","Kalam",
+  // System fallbacks
+  "system-ui","Georgia","Helvetica Neue","Times New Roman",
 ] as const;
 
 const GOOGLE_FONTS_BODY = [
-  "Inter","Roboto","Plus Jakarta Sans","Manrope","DM Sans","Source Sans 3","Open Sans",
-  "Lato","Mulish","Nunito","Karla","Public Sans","Geist","Outfit","Spectral","Lora",
-  "Newsreader","Crimson Pro","Merriweather","Libre Franklin","Familjen Grotesk",
-  "Sora","Inter Tight","Work Sans","IBM Plex Sans","Atkinson Hyperlegible",
+  // Top-tier sans
+  "Inter","Inter Tight","Plus Jakarta Sans","Manrope","DM Sans","Source Sans 3",
+  "Open Sans","Lato","Mulish","Nunito","Nunito Sans","Karla","Public Sans","Geist",
+  "Outfit","Sora","Work Sans","IBM Plex Sans","Roboto","Roboto Flex","Atkinson Hyperlegible",
+  "Familjen Grotesk","Space Grotesk","Bricolage Grotesque","Archivo","Barlow",
+  "Heebo","Hind","Cabin","Lexend","Lexend Deca","Fira Sans","Mukta","Rubik",
+  "Saira","Sen","Yantramanav","Onest","Albert Sans","Be Vietnam Pro","Figtree",
+  // Readable serifs
+  "Spectral","Lora","Newsreader","Crimson Pro","Crimson Text","Merriweather",
+  "Libre Franklin","Libre Caslon Text","EB Garamond","Source Serif 4","PT Serif",
+  "Vollkorn","Eczar","Petrona","Noto Serif","Bitter","Lustria",
+  // Mono
+  "JetBrains Mono","Fira Code","Source Code Pro","IBM Plex Mono","Roboto Mono","Geist Mono",
+  // System fallbacks
+  "system-ui","Georgia","Helvetica Neue","Times New Roman",
 ] as const;
+
+/* ───────────────────────── Curated brand palettes ─────────────────────────
+ * Hand-picked combinations that work as cohesive themes. Each palette
+ * fully defines primary / accent / ink / canvas; primary-strong and
+ * primary-soft are derived programmatically from `primary` so a single
+ * tweak ripples through buttons + soft backgrounds correctly.
+ */
+type Palette = {
+  id: string;
+  name: string;
+  primary: string;
+  accent: string;
+  ink: string;
+  canvas: string;
+};
+
+const PALETTES: readonly Palette[] = [
+  { id: "earthy",      name: "Earthy",       primary: "#7b2d26", accent: "#d4a373", ink: "#2d241b", canvas: "#fefbf7" },
+  { id: "classic-blue",name: "Classic Blue", primary: "#1a4f8b", accent: "#d92d20", ink: "#0f172a", canvas: "#ffffff" },
+  { id: "forest",      name: "Forest Sage",  primary: "#2d5016", accent: "#c19a4d", ink: "#1a2510", canvas: "#fafaf5" },
+  { id: "midnight",    name: "Midnight",     primary: "#0f1e3d", accent: "#ff6b6b", ink: "#0a1224", canvas: "#ffffff" },
+  { id: "sunset",      name: "Sunset",       primary: "#c2410c", accent: "#fbbf24", ink: "#1a0f0a", canvas: "#fff8f1" },
+  { id: "ocean",       name: "Ocean",        primary: "#0d6e7a", accent: "#fb923c", ink: "#0a2025", canvas: "#f0fdfa" },
+  { id: "plum",        name: "Plum Luxe",    primary: "#581c5e", accent: "#fbbf24", ink: "#1a0a1f", canvas: "#fffaf7" },
+  { id: "mono",        name: "Modern Mono",  primary: "#1f1f1f", accent: "#fbbf24", ink: "#0a0a0a", canvas: "#fafafa" },
+  { id: "coastal",     name: "Coastal",      primary: "#1e3a5f", accent: "#e8a062", ink: "#1a2638", canvas: "#fbf7f0" },
+  { id: "studio",      name: "Studio Pink",  primary: "#9d2c4d", accent: "#f4a261", ink: "#1a0d12", canvas: "#fff5f7" },
+  { id: "industrial",  name: "Industrial",   primary: "#2c3e50", accent: "#e67e22", ink: "#1a252f", canvas: "#ecf0f1" },
+  { id: "garden",      name: "Garden",       primary: "#4a7c59", accent: "#d68c45", ink: "#1f3625", canvas: "#fdfbf3" },
+];
+
+/* ───────────────────────── Color shading helpers ───────────────────────── */
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
+}
+function rgbToHex(r: number, g: number, b: number): string {
+  const h = (n: number) => n.toString(16).padStart(2, "0");
+  return "#" + h(r) + h(g) + h(b);
+}
+/** percent in [-100, 100]: negative = darken toward black, positive = lighten toward white. */
+function shade(hex: string, percent: number): string {
+  const { r, g, b } = hexToRgb(hex);
+  const f = percent / 100;
+  const adj = (c: number) =>
+    Math.max(0, Math.min(255, Math.round(f > 0 ? c + (255 - c) * f : c + c * f)));
+  return rgbToHex(adj(r), adj(g), adj(b));
+}
 
 /* ───────────────────────── iframe document ───────────────────────── */
 
@@ -1199,17 +1334,7 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       const sizeId = nextEditId('edit-size');
       target.setAttribute('data-edit-size-id', sizeId);
 
-      const drag = makeOverlayBtn(target, { top: 12, label: 'Drag to reorder section', content: '⠿ Drag', onClick: () => {} });
-      drag.style.cursor = 'grab';
-      drag.setAttribute('data-studio-drag-handle', 'true');
-      drag.addEventListener('pointerdown', (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        drag.style.cursor = 'grabbing';
-        startSectionDrag(target, ev, () => { drag.style.cursor = 'grab'; });
-      });
-
-      const size = makeOverlayBtn(target, { top: 46, label: 'Resize section', content: '⇲ Size', onClick: () => {
+      const size = makeOverlayBtn(target, { top: 12, label: 'Resize section', content: '⇲ Size', onClick: () => {
         // Surface current size + position to the studio so it can render
         // a popover next to the section.
         const r = target.getBoundingClientRect();
@@ -1236,265 +1361,17 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         }, '*');
       } });
 
-      target.appendChild(drag); target.appendChild(size);
+      target.appendChild(size);
       target.addEventListener('mouseenter', () => {
-        drag.style.opacity = '1'; size.style.opacity = '1';
-        target.style.outline = '2px dashed rgba(91,143,185,0.5)';
+        size.style.opacity = '1';
+        target.style.outline = '2px dashed rgba(91,143,185,0.4)';
         target.style.outlineOffset = '-2px';
       });
       target.addEventListener('mouseleave', () => {
-        drag.style.opacity = '0.55'; size.style.opacity = '0.55';
+        size.style.opacity = '0.55';
         target.style.outline = '';
       });
     }
-
-    /* ---------- Drag-and-drop with snap zones (sections OR sub-elements) ---------- */
-    let dragInProgress = false;
-    function startSectionDrag(target, downEv, onEnd) {
-      const parent = target.parentElement;
-      if (!parent) { onEnd(); return; }
-      // Siblings = any visible, non-overlay, non-script element under the parent.
-      const siblings = Array.from(parent.children).filter((c) => {
-        if (c.hasAttribute && c.hasAttribute('data-studio-overlay')) return false;
-        if (c.tagName === 'SCRIPT' || c.tagName === 'STYLE') return false;
-        const cr = c.getBoundingClientRect();
-        return cr.width > 0 && cr.height > 0;
-      });
-      if (siblings.length < 2) { onEnd(); return; }
-
-      // Detect layout axis: horizontal if the first two siblings sit side-by-side
-      // and overlap vertically, otherwise vertical.
-      const a = siblings[0].getBoundingClientRect();
-      const b = siblings[1].getBoundingClientRect();
-      const horizontal =
-        b.left >= a.left + a.width / 2 && b.top < a.bottom && b.bottom > a.top;
-
-      // Snap zones — one before each sibling, plus one after the last.
-      const zones = [];
-      siblings.forEach((s) => {
-        const sr = s.getBoundingClientRect();
-        if (horizontal) zones.push({ x: sr.left + window.scrollX, before: s });
-        else zones.push({ y: sr.top + window.scrollY, before: s });
-      });
-      const lastSib = siblings[siblings.length - 1];
-      const lastR = lastSib.getBoundingClientRect();
-      if (horizontal) zones.push({ x: lastR.right + window.scrollX, before: null });
-      else zones.push({ y: lastR.bottom + window.scrollY, before: null });
-
-      // Ghost — clone of target that follows the cursor.
-      const r = target.getBoundingClientRect();
-      const ghost = target.cloneNode(true);
-      ghost.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
-      ghost.querySelectorAll('[contenteditable]').forEach((n) => n.removeAttribute('contenteditable'));
-      ghost.setAttribute('data-studio-overlay', 'true');
-      ghost.style.cssText = [
-        'position:fixed','left:' + r.left + 'px','top:' + r.top + 'px',
-        'width:' + r.width + 'px','max-height:220px','overflow:hidden',
-        'pointer-events:none','z-index:99998','opacity:0.85',
-        'transform:scale(0.95)','transform-origin:top left',
-        'box-shadow:0 16px 40px rgba(0,0,0,0.4)',
-        'border:2px solid rgba(91,143,185,1)','border-radius:8px',
-        'background:#fff',
-      ].join(';');
-      document.body.appendChild(ghost);
-
-      const origOpacity = target.style.opacity;
-      const origOutline = target.style.outline;
-      target.style.opacity = '0.25';
-      target.style.outline = '2px dashed rgba(91,143,185,0.85)';
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'grabbing';
-      dragInProgress = true;
-
-      // Snap line — vertical bar (horizontal layout) or horizontal bar (vertical layout).
-      const indicator = document.createElement('div');
-      indicator.setAttribute('data-studio-overlay', 'true');
-      const baseStyle = horizontal
-        ? [
-            'position:absolute',
-            'top:' + (r.top + window.scrollY) + 'px',
-            'height:' + r.height + 'px','width:4px',
-            'transition:left 80ms ease-out','left:-9999px',
-          ]
-        : [
-            'position:absolute',
-            'left:' + (r.left + window.scrollX) + 'px',
-            'width:' + r.width + 'px','height:4px',
-            'transition:top 80ms ease-out','top:-9999px',
-          ];
-      indicator.style.cssText = baseStyle.concat([
-        'background:#5b8fb9','border-radius:2px',
-        'box-shadow:0 0 12px rgba(91,143,185,0.9)',
-        'z-index:99997','pointer-events:none',
-      ]).join(';');
-      document.body.appendChild(indicator);
-
-      const offsetX = downEv.clientX - r.left;
-      const offsetY = downEv.clientY - r.top;
-      let activeZone = null;
-
-      function onMove(ev) {
-        ghost.style.left = (ev.clientX - offsetX) + 'px';
-        ghost.style.top = (ev.clientY - offsetY) + 'px';
-        let best = null, bestDist = Infinity;
-        if (horizontal) {
-          const pX = ev.clientX + window.scrollX;
-          for (const z of zones) {
-            const d = Math.abs(z.x - pX);
-            if (d < bestDist) { bestDist = d; best = z; }
-          }
-          if (best) indicator.style.left = (best.x - 2) + 'px';
-        } else {
-          const pY = ev.clientY + window.scrollY;
-          for (const z of zones) {
-            const d = Math.abs(z.y - pY);
-            if (d < bestDist) { bestDist = d; best = z; }
-          }
-          if (best) indicator.style.top = (best.y - 2) + 'px';
-        }
-        activeZone = best;
-      }
-
-      function cleanup() {
-        document.removeEventListener('pointermove', onMove);
-        document.removeEventListener('pointerup', onUp);
-        document.removeEventListener('pointercancel', onUp);
-        ghost.remove();
-        indicator.remove();
-        target.style.opacity = origOpacity;
-        target.style.outline = origOutline;
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
-        dragInProgress = false;
-        onEnd();
-      }
-
-      function onUp() {
-        if (activeZone && activeZone.before !== target && activeZone.before !== target.nextSibling) {
-          parent.insertBefore(target, activeZone.before);
-          document.dispatchEvent(new Event('input', { bubbles: true }));
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        cleanup();
-      }
-
-      document.addEventListener('pointermove', onMove);
-      document.addEventListener('pointerup', onUp);
-      document.addEventListener('pointercancel', onUp);
-      onMove(downEv);
-    }
-
-    /* ---------- Floating ⠿ handle for sub-element drag ----------
-     * A single button that hovers over whichever in-section element the
-     * cursor is on (paragraphs, buttons, list items, anything with a
-     * sibling). Click + drag the handle to reorder that element among
-     * its siblings — re-uses startSectionDrag for snap behavior.
-     */
-    const itemHandle = document.createElement('button');
-    itemHandle.type = 'button';
-    itemHandle.setAttribute('data-studio-overlay', 'true');
-    itemHandle.setAttribute('data-studio-item-handle', 'true');
-    itemHandle.title = 'Drag to reorder';
-    itemHandle.textContent = '⠿';
-    itemHandle.style.cssText = [
-      'position:absolute','z-index:99996',
-      'width:22px','height:22px','padding:0',
-      'border:none','border-radius:4px',
-      'background:rgba(91,143,185,0.95)','color:#fff',
-      'font:600 14px/1 system-ui,sans-serif',
-      'cursor:grab','box-shadow:0 1px 4px rgba(0,0,0,0.35)',
-      'display:none','align-items:center','justify-content:center',
-      'pointer-events:auto','opacity:0.92',
-      'top:-9999px','left:-9999px',
-    ].join(';');
-    document.body.appendChild(itemHandle);
-
-    let hoverTarget = null;
-    let hoverOutlineEl = null;
-
-    function findMovableItem(el) {
-      let cur = el;
-      while (cur && cur !== document.body && cur !== document.documentElement) {
-        if (cur.hasAttribute && cur.hasAttribute('data-studio-overlay')) {
-          cur = cur.parentElement; continue;
-        }
-        if (seenSections.has(cur)) return null; // sections have their own handle
-        const p = cur.parentElement;
-        if (p && p !== document.body) {
-          const sibs = Array.from(p.children).filter((s) => {
-            if (s === cur) return false;
-            if (s.hasAttribute && s.hasAttribute('data-studio-overlay')) return false;
-            if (s.tagName === 'SCRIPT' || s.tagName === 'STYLE') return false;
-            const sr = s.getBoundingClientRect();
-            return sr.width > 0 && sr.height > 0;
-          });
-          if (sibs.length >= 1) {
-            const r = cur.getBoundingClientRect();
-            if (r.width >= 24 && r.height >= 16) return cur;
-          }
-        }
-        cur = cur.parentElement;
-      }
-      return null;
-    }
-
-    function showItemHandle(t) {
-      if (hoverOutlineEl && hoverOutlineEl !== t) {
-        hoverOutlineEl.style.outline = hoverOutlineEl._studioOrigOutline || '';
-      }
-      hoverTarget = t;
-      if (!t) {
-        itemHandle.style.display = 'none';
-        hoverOutlineEl = null;
-        return;
-      }
-      const r = t.getBoundingClientRect();
-      itemHandle.style.display = 'flex';
-      itemHandle.style.left = (r.right - 24 + window.scrollX) + 'px';
-      itemHandle.style.top = (r.top + 4 + window.scrollY) + 'px';
-      if (hoverOutlineEl !== t) {
-        t._studioOrigOutline = t.style.outline;
-        t.style.outline = '1px dashed rgba(91,143,185,0.7)';
-        t.style.outlineOffset = '2px';
-        hoverOutlineEl = t;
-      }
-    }
-
-    // Use setTimeout, not requestAnimationFrame: srcdoc iframes can have rAF
-    // throttled when no real user input is happening, which would leave the
-    // floating handle stuck at -9999px.
-    let mmTimer = null;
-    let lastMM = null;
-    document.addEventListener('mousemove', (ev) => {
-      if (dragInProgress) return;
-      if (ev.target === itemHandle) return;
-      lastMM = ev;
-      if (mmTimer) return;
-      mmTimer = setTimeout(() => {
-        mmTimer = null;
-        if (!lastMM) return;
-        const t = document.elementFromPoint(lastMM.clientX, lastMM.clientY);
-        if (!t || t === itemHandle) return;
-        const candidate = findMovableItem(t);
-        if (candidate !== hoverTarget) showItemHandle(candidate);
-      }, 30);
-    });
-
-    itemHandle.addEventListener('pointerdown', (ev) => {
-      if (!hoverTarget) return;
-      ev.preventDefault(); ev.stopPropagation();
-      const t = hoverTarget;
-      itemHandle.style.display = 'none';
-      itemHandle.style.cursor = 'grabbing';
-      if (hoverOutlineEl) {
-        hoverOutlineEl.style.outline = hoverOutlineEl._studioOrigOutline || '';
-        hoverOutlineEl = null;
-      }
-      startSectionDrag(t, ev, () => {
-        itemHandle.style.cursor = 'grab';
-        hoverTarget = null;
-      });
-    });
 
     // Tag every real "page section" — semantic sectioning elements
     // (header, main > *, footer, aside, section). The freeform agent
