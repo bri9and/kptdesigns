@@ -68,12 +68,26 @@ export function Studio({
   const [dirty, setDirty] = useState(false);
   const [picker, setPicker] = useState<ImagePicker>(null);
 
-  // Brand state — live overrides on top of the brand profile's defaults
+  // Brand state — live overrides on top of the brand profile's defaults.
+  // Everything but Source URL is editable.
   const initialPalette = brandProfile?.palette;
+  const initialFonts = brandProfile?.fonts;
+  const initialVoice = brandProfile?.voice;
   const [primary, setPrimary] = useState(initialPalette?.primary ?? "#1a4f8b");
   const [accent, setAccent] = useState(initialPalette?.accent1 ?? "#d92d20");
   const [ink, setInk] = useState(initialPalette?.ink ?? "#1a1a1a");
   const [canvas, setCanvas] = useState(initialPalette?.canvas ?? "#ffffff");
+  const [editedBusinessName, setEditedBusinessName] = useState(
+    businessName ?? brandProfile?.businessName ?? "",
+  );
+  const [displayFont, setDisplayFont] = useState(initialFonts?.display ?? "Inter");
+  const [bodyFont, setBodyFont] = useState(initialFonts?.body ?? "Inter");
+  const [tone, setTone] = useState<string>(initialVoice?.tone ?? "warm");
+
+  function markDirty() {
+    setDirty(true);
+    setSaveState("idle");
+  }
 
   // Build the iframe srcDoc once. The body is contenteditable; we inject
   // a tiny script that postMessages out on edits and responds to vars.
@@ -102,6 +116,52 @@ export function Studio({
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, []);
+
+  // Live-load any font the customer types in the sidebar. We inject a
+  // <link rel="stylesheet"> into the iframe head pointing at Google
+  // Fonts for both display + body, then push --brand-display-font and
+  // --brand-body-font through set-vars so the fan-out updates the
+  // customer-scoped vars too.
+  useEffect(() => {
+    const win = iframeRef.current?.contentWindow;
+    const doc = iframeRef.current?.contentDocument;
+    if (!win || !doc) return;
+    const families = new Set<string>();
+    if (displayFont) families.add(`${urlSafeFont(displayFont)}:wght@400;500;600;700`);
+    if (bodyFont && bodyFont !== displayFont) {
+      families.add(`${urlSafeFont(bodyFont)}:wght@300;400;500;700`);
+    }
+    if (families.size > 0) {
+      const href = `https://fonts.googleapis.com/css2?family=${[...families].join("&family=")}&display=swap`;
+      const existing = doc.querySelector("link[data-studio-fonts]");
+      if (!existing || existing.getAttribute("href") !== href) {
+        const link = doc.createElement("link");
+        link.rel = "stylesheet";
+        link.href = href;
+        link.setAttribute("data-studio-fonts", "true");
+        doc.head.appendChild(link);
+        if (existing) existing.remove();
+      }
+    }
+    win.postMessage(
+      {
+        type: "set-vars",
+        vars: {
+          "--brand-display-font": `"${displayFont}", system-ui, sans-serif`,
+          "--brand-body-font": `"${bodyFont}", system-ui, sans-serif`,
+          "--brand-serif-font": `"${displayFont}", Georgia, serif`,
+        },
+      },
+      "*",
+    );
+    if (
+      displayFont !== (initialFonts?.display ?? "Inter") ||
+      bodyFont !== (initialFonts?.body ?? "Inter")
+    ) {
+      markDirty();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [displayFont, bodyFont]);
 
   // Apply a chosen image src into the iframe.
   const applyImageSrc = useCallback(
@@ -154,7 +214,6 @@ export function Studio({
     setSaveState("saving");
     setSaveError(null);
 
-    // Ask the iframe for its current body HTML.
     const win = iframeRef.current?.contentWindow;
     if (!win) {
       setSaveState("error");
@@ -171,7 +230,6 @@ export function Studio({
       };
       window.addEventListener("message", onMsg);
       win.postMessage({ type: "get-html" }, "*");
-      // Timeout safety — if the iframe doesn't respond, give up.
       setTimeout(() => {
         window.removeEventListener("message", onMsg);
         resolve(null);
@@ -184,11 +242,19 @@ export function Studio({
       return;
     }
 
+    // Brand-profile metadata edits ride alongside the HTML save.
+    const brandPatch = {
+      businessName: editedBusinessName,
+      palette: { primary, accent1: accent, ink, canvas },
+      fonts: { display: displayFont, body: bodyFont, mono: initialFonts?.mono },
+      voice: { tone, formality: initialVoice?.formality, voiceSample: initialVoice?.voiceSample, notes: initialVoice?.notes },
+    };
+
     try {
       const res = await fetch(`/api/edit/${jobId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html }),
+        body: JSON.stringify({ html, brandProfile: brandPatch }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -201,7 +267,7 @@ export function Studio({
       setSaveState("error");
       setSaveError(err instanceof Error ? err.message : "Save failed");
     }
-  }, [jobId]);
+  }, [jobId, editedBusinessName, primary, accent, ink, canvas, displayFont, bodyFont, tone, initialFonts?.mono, initialVoice?.formality, initialVoice?.voiceSample, initialVoice?.notes]);
 
   return (
     <div className="grid h-screen grid-cols-[320px_1fr] grid-rows-[56px_1fr] bg-brand-surface text-brand-ink">
@@ -254,43 +320,52 @@ export function Studio({
       {/* ── Sidebar ──────────────────────────────────────────────────── */}
       <aside className="row-start-2 overflow-y-auto border-r border-brand-divider bg-brand-canvas">
         <Section title="Site">
-          <Field label="Business name" value={businessName ?? ""} />
+          <Input
+            label="Business name"
+            value={editedBusinessName}
+            onChange={(v) => { setEditedBusinessName(v); markDirty(); }}
+          />
           <Field label="Source URL" value={sourceUrl ?? "—"} mono />
         </Section>
 
         <Section title="Brand colors">
-          <Swatch label="Primary" value={primary} onChange={setPrimary} />
-          <Swatch label="Accent" value={accent} onChange={setAccent} />
-          <Swatch label="Ink (text)" value={ink} onChange={setInk} />
-          <Swatch label="Canvas" value={canvas} onChange={setCanvas} />
+          <Swatch
+            label="Primary"
+            value={primary}
+            onChange={(v) => { setPrimary(v); }}
+          />
+          <Swatch label="Accent" value={accent} onChange={(v) => setAccent(v)} />
+          <Swatch label="Ink (text)" value={ink} onChange={(v) => setInk(v)} />
+          <Swatch label="Canvas" value={canvas} onChange={(v) => setCanvas(v)} />
           <p className="mt-3 text-[11px] leading-snug text-brand-text-muted">
-            Live preview only — color changes apply to the canvas immediately.
-            Hit <strong>Save</strong> in the top bar to persist them.
+            Click a swatch or type the hex directly. Changes apply live.
           </p>
         </Section>
 
         <Section title="Typography">
-          <Field
+          <FontPicker
             label="Display font"
-            value={brandProfile?.fonts?.display ?? "—"}
-            mono
+            value={displayFont}
+            onChange={setDisplayFont}
+            options={GOOGLE_FONTS_DISPLAY}
           />
-          <Field
+          <FontPicker
             label="Body font"
-            value={brandProfile?.fonts?.body ?? "—"}
-            mono
+            value={bodyFont}
+            onChange={setBodyFont}
+            options={GOOGLE_FONTS_BODY}
           />
           <p className="mt-3 text-[11px] leading-snug text-brand-text-muted">
-            Font picker coming next iteration. Tonight: text edits + color
-            tweaks.
+            Picks any Google Font. Type a custom name or pick from the list.
           </p>
         </Section>
 
         <Section title="Voice">
-          <Field
+          <Select
             label="Tone"
-            value={brandProfile?.voice?.tone ?? "—"}
-            mono
+            value={tone}
+            options={["formal", "casual", "warm", "technical", "playful", "rugged"]}
+            onChange={(v) => { setTone(v); markDirty(); }}
           />
           {brandProfile?.voice?.voiceSample ? (
             <div className="mt-2 rounded-lg border border-brand-divider-soft bg-brand-surface px-3 py-2 font-[family-name:var(--brand-body-font)] text-[12px] italic leading-snug text-brand-text">
@@ -622,13 +697,34 @@ function Swatch({
   value: string;
   onChange: (v: string) => void;
 }) {
+  // Accept either picker change or typed hex (#rrggbb).
+  const [text, setText] = useState(value);
+  useEffect(() => setText(value), [value]);
+
+  function commit(raw: string) {
+    let v = raw.trim();
+    if (!v.startsWith("#")) v = `#${v}`;
+    if (/^#[0-9a-fA-F]{6}$/.test(v) || /^#[0-9a-fA-F]{3}$/.test(v)) {
+      onChange(v.toLowerCase());
+    }
+  }
+
   return (
-    <label className="flex items-center justify-between gap-3">
-      <span className="text-[12px] text-brand-text-strong">{label}</span>
-      <span className="flex items-center gap-2">
-        <span className="font-[family-name:var(--brand-mono-font)] text-[11px] text-brand-text-muted">
-          {value}
-        </span>
+    <div className="flex items-center justify-between gap-3">
+      <span className="shrink-0 text-[12px] text-brand-text-strong">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <input
+          type="text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onBlur={(e) => commit(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          }}
+          className="w-[78px] rounded-md border border-brand-divider bg-brand-canvas px-2 py-1 font-[family-name:var(--brand-mono-font)] text-[11px] text-brand-text-strong outline-none focus:border-brand-primary"
+          aria-label={`${label} hex`}
+          spellCheck={false}
+        />
         <input
           type="color"
           value={value}
@@ -637,9 +733,120 @@ function Swatch({
           aria-label={label}
         />
       </span>
-    </label>
+    </div>
   );
 }
+
+function Input({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] text-brand-text-muted">
+        {label}
+      </label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-md border border-brand-divider bg-brand-canvas px-2.5 py-1.5 text-[12px] text-brand-ink outline-none focus:border-brand-primary"
+        spellCheck={false}
+      />
+    </div>
+  );
+}
+
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: readonly string[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] text-brand-text-muted">
+        {label}
+      </label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-brand-divider bg-brand-canvas px-2.5 py-1.5 text-[12px] text-brand-ink outline-none focus:border-brand-primary"
+      >
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function FontPicker({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+}) {
+  // Datalist gives a free-text input + dropdown of common picks. The
+  // user can type any Google Font name; we'll inject the link on commit.
+  const id = `font-${label.replace(/\s+/g, "-").toLowerCase()}`;
+  return (
+    <div>
+      <label className="mb-1 block text-[11px] text-brand-text-muted">
+        {label}
+      </label>
+      <input
+        type="text"
+        list={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full rounded-md border border-brand-divider bg-brand-canvas px-2.5 py-1.5 font-[family-name:var(--brand-display-font)] text-[12px] text-brand-ink outline-none focus:border-brand-primary"
+        spellCheck={false}
+        style={{ fontFamily: `"${value}", system-ui, sans-serif` }}
+      />
+      <datalist id={id}>
+        {options.map((o) => <option key={o} value={o} />)}
+      </datalist>
+    </div>
+  );
+}
+
+function urlSafeFont(family: string): string {
+  return family.trim().replace(/\s+/g, "+");
+}
+
+const GOOGLE_FONTS_DISPLAY = [
+  "Inter","Oswald","Playfair Display","Fraunces","Plus Jakarta Sans","DM Serif Display",
+  "Bebas Neue","Anton","Archivo Black","Lora","Cormorant Garamond","Manrope","Geist",
+  "Space Grotesk","Marcellus","Bodoni Moda","Cinzel","Spectral","Tenor Sans","Karla",
+  "Sora","Outfit","Familjen Grotesk","Bricolage Grotesque","Newsreader","Crimson Pro",
+  "Libre Baskerville","Inter Tight","Roboto","Roboto Slab","Merriweather","Public Sans",
+] as const;
+
+const GOOGLE_FONTS_BODY = [
+  "Inter","Roboto","Plus Jakarta Sans","Manrope","DM Sans","Source Sans 3","Open Sans",
+  "Lato","Mulish","Nunito","Karla","Public Sans","Geist","Outfit","Spectral","Lora",
+  "Newsreader","Crimson Pro","Merriweather","Libre Franklin","Familjen Grotesk",
+  "Sora","Inter Tight","Work Sans","IBM Plex Sans","Atkinson Hyperlegible",
+] as const;
 
 /* ───────────────────────── iframe document ───────────────────────── */
 

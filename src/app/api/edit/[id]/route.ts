@@ -20,9 +20,9 @@ export async function PATCH(
 ) {
   const { id } = await ctx.params;
 
-  let body: { html?: string };
+  let body: { html?: string; brandProfile?: Record<string, unknown> };
   try {
-    body = (await req.json()) as { html?: string };
+    body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -48,10 +48,46 @@ export async function PATCH(
     );
   }
 
+  const findings = job.findings ?? {};
+  // Merge any brand profile edits (business name / palette / fonts / voice)
+  // alongside the HTML so a reload of the studio reflects the user's changes
+  // in the sidebar as well as the canvas.
+  const mergedProfile = body.brandProfile
+    ? deepMerge(findings.brandProfile ?? {}, body.brandProfile)
+    : findings.brandProfile;
+
   await updateIntakeJob(id, {
     generated_html: body.html,
-    findings: { ...(job.findings ?? {}), generatedHtml: body.html },
+    business_name:
+      typeof body.brandProfile?.businessName === "string"
+        ? (body.brandProfile.businessName as string)
+        : job.business_name,
+    findings: {
+      ...findings,
+      generatedHtml: body.html,
+      ...(mergedProfile ? { brandProfile: mergedProfile as typeof findings.brandProfile } : {}),
+    },
   });
 
   return NextResponse.json({ ok: true });
+}
+
+function deepMerge<T extends Record<string, unknown>>(base: T, patch: Record<string, unknown>): T {
+  const out: Record<string, unknown> = { ...base };
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    if (
+      v !== null &&
+      typeof v === "object" &&
+      !Array.isArray(v) &&
+      typeof out[k] === "object" &&
+      out[k] !== null &&
+      !Array.isArray(out[k])
+    ) {
+      out[k] = deepMerge(out[k] as Record<string, unknown>, v as Record<string, unknown>);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out as T;
 }
