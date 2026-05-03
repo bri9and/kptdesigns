@@ -1441,8 +1441,12 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         }
         let html = clone.innerHTML;
         if (overrides.length > 0) {
+          // APPEND, not prepend — the AI's :root rule lives somewhere
+          // earlier in the body's style blocks; an override that appears
+          // first in the cascade gets beaten by it. Putting our overrides
+          // last makes them win on equal specificity.
           const styleEl = '<style data-studio-brand-overrides>:root{' + overrides.join('') + '}</style>';
-          html = styleEl + html;
+          html = html + styleEl;
         }
         parent.postMessage({ type: 'html', html }, '*');
       } else if (m.type === 'set-image-src' && m.editId && typeof m.src === 'string') {
