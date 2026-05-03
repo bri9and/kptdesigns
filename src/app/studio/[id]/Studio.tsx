@@ -752,12 +752,34 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       target.addEventListener('mouseleave', () => { up.style.opacity = '0'; down.style.opacity = '0'; });
     }
 
-    // Tag every direct child of <body> that's a real section (skip <style>/<script>/our own overlays).
-    const SKIP_TAGS = new Set(['STYLE','SCRIPT','LINK','META','TEMPLATE']);
-    Array.from(document.body.children).forEach((el) => {
-      if (SKIP_TAGS.has(el.tagName)) return;
+    // Tag every real "page section" — semantic sectioning elements
+    // (header, main > *, footer, aside, section). The freeform agent
+    // commonly wraps the whole page in a single body-level <div>, so
+    // body.children is just one wrapper — looking for sectioning
+    // elements gets us the *actual* moveable units.
+    const seenSections = new Set();
+    function tagSection(el) {
+      if (seenSections.has(el)) return;
+      // Don't tag sections nested inside another tagged section — that
+      // creates handle clutter and confusing re-orderings.
+      let p = el.parentElement;
+      while (p) {
+        if (seenSections.has(p)) return;
+        p = p.parentElement;
+      }
+      seenSections.add(el);
       attachOverlay(el);
-    });
+    }
+    document.querySelectorAll('header, footer, aside, section').forEach(tagSection);
+    // Also pick up direct children of <main> that aren't already covered —
+    // some AIs use <article> or bare <div> for hero / services / etc.
+    const main = document.querySelector('main');
+    if (main) {
+      Array.from(main.children).forEach((c) => {
+        if (c.tagName === 'STYLE' || c.tagName === 'SCRIPT') return;
+        tagSection(c);
+      });
+    }
 
     /* ---------- Visual styles ---------- */
     const editStyle = document.createElement('style');
