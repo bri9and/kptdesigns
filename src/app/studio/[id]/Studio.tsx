@@ -1559,6 +1559,11 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         const clone = document.body.cloneNode(true);
         clone.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
         clone.querySelectorAll('[data-studio-injected]').forEach((n) => n.remove());
+        // Strip every existing brand-overrides block so saves replace rather
+        // than accumulate — each save would otherwise add another :root block
+        // to the persisted HTML, and stale copies in earlier source positions
+        // can mask later ones once a customer reverts a swatch.
+        clone.querySelectorAll('[data-studio-brand-overrides]').forEach((n) => n.remove());
         clone.querySelectorAll('[contenteditable]').forEach((n) => n.removeAttribute('contenteditable'));
         clone.querySelectorAll('[data-edit-id]').forEach((n) => n.removeAttribute('data-edit-id'));
         clone.querySelectorAll('[data-edit-bg-id]').forEach((n) => n.removeAttribute('data-edit-bg-id'));
