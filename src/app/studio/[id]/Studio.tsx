@@ -1167,15 +1167,28 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       btn.style.cssText = [
         'position:absolute',
         'top:' + opts.top + 'px',
-        'right:8px',
+        'right:12px',
         'z-index:99999',
-        'min-width:24px','height:24px','padding:0 6px',
+        'min-width:32px','height:28px','padding:0 10px',
         'border:none','border-radius:6px',
         'background:rgba(91,143,185,0.92)',
-        'color:#fff','font:600 13px/1 system-ui,sans-serif',
-        'cursor:pointer','box-shadow:0 1px 4px rgba(0,0,0,0.25)',
-        'opacity:0','transition:opacity 0.15s',
+        'color:#fff','font:600 12px/1 system-ui,sans-serif',
+        'cursor:pointer','box-shadow:0 2px 8px rgba(0,0,0,0.35)',
+        // Always visible at low opacity so customers can SEE the controls
+        // without having to hover-discover them; full opacity on hover.
+        'opacity:0.55','transition:opacity 0.15s,transform 0.15s,background 0.15s',
+        'display:inline-flex','align-items:center','justify-content:center','gap:5px',
+        'letter-spacing:0.02em',
       ].join(';');
+      btn.addEventListener('mouseenter', () => {
+        btn.style.opacity = '1';
+        btn.style.transform = 'scale(1.05)';
+        btn.style.background = 'rgba(67,118,160,1)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = 'scale(1)';
+        btn.style.background = 'rgba(91,143,185,0.92)';
+      });
       btn.addEventListener('click', (ev) => { ev.preventDefault(); ev.stopPropagation(); opts.onClick(); });
       return btn;
     }
@@ -1186,12 +1199,13 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       const sizeId = nextEditId('edit-size');
       target.setAttribute('data-edit-size-id', sizeId);
 
-      const up = makeOverlayBtn(target, { top: 8, label: 'Move section up', content: '↑', onClick: () => {
+      const up = makeOverlayBtn(target, { top: 12, label: 'Move section up', content: '↑ Up', onClick: () => {
         const parent = target.parentElement; if (!parent) return;
         if (target.previousElementSibling) parent.insertBefore(target, target.previousElementSibling);
         document.dispatchEvent(new Event('input', { bubbles: true }));
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } });
-      const down = makeOverlayBtn(target, { top: 36, label: 'Move section down', content: '↓', onClick: () => {
+      const down = makeOverlayBtn(target, { top: 46, label: 'Move section down', content: '↓ Down', onClick: () => {
         const parent = target.parentElement; if (!parent) return;
         if (target.nextElementSibling && target.nextElementSibling.nextElementSibling) {
           parent.insertBefore(target.nextElementSibling, target);
@@ -1199,8 +1213,9 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
           parent.appendChild(target);
         }
         document.dispatchEvent(new Event('input', { bubbles: true }));
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } });
-      const size = makeOverlayBtn(target, { top: 64, label: 'Resize section', content: '⇲', onClick: () => {
+      const size = makeOverlayBtn(target, { top: 80, label: 'Resize section', content: '⇲ Size', onClick: () => {
         // Surface current size + position to the studio so it can render
         // a popover next to the section.
         const r = target.getBoundingClientRect();
@@ -1228,11 +1243,16 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       } });
 
       target.appendChild(up); target.appendChild(down); target.appendChild(size);
+      // Always-on subtle dashed outline so customers see WHERE the
+      // section boundaries are. Brightens on hover.
       target.addEventListener('mouseenter', () => {
         up.style.opacity = '1'; down.style.opacity = '1'; size.style.opacity = '1';
+        target.style.outline = '2px dashed rgba(91,143,185,0.5)';
+        target.style.outlineOffset = '-2px';
       });
       target.addEventListener('mouseleave', () => {
-        up.style.opacity = '0'; down.style.opacity = '0'; size.style.opacity = '0';
+        up.style.opacity = '0.55'; down.style.opacity = '0.55'; size.style.opacity = '0.55';
+        target.style.outline = '';
       });
     }
 

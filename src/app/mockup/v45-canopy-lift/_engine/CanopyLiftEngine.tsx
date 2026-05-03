@@ -110,8 +110,15 @@ export default function CanopyLiftEngine() {
     return () => obs.disconnect();
   }, []);
 
-  // Parallax offsets
-  const offset = (rate: number) => `translateY(${-(scroll * rate)}px)`;
+  // Parallax offsets — written into CSS variables so the idle sway animation
+  // can compose with the scroll-driven translateY.
+  const parallaxVar = (rate: number) =>
+    ({ ["--cy"]: `${-(scroll * rate)}px` } as React.CSSProperties);
+  const lightVar = () =>
+    ({
+      ["--lx"]: `${scroll * 0.05}px`,
+      ["--ly"]: `${scroll * 0.04}px`,
+    } as React.CSSProperties);
 
   return (
     <>
@@ -126,7 +133,7 @@ export default function CanopyLiftEngine() {
             viewBox="0 0 1600 600"
             preserveAspectRatio="none"
             aria-hidden
-            style={{ transform: offset(0.08) }}
+            style={parallaxVar(0.08)}
           >
             <path
               d="M0 380 C 80 240 160 220 240 280 S 360 220 440 260 S 600 200 720 250 S 880 200 980 270 S 1140 220 1240 260 S 1420 220 1600 280 L 1600 600 L 0 600 Z"
@@ -138,7 +145,7 @@ export default function CanopyLiftEngine() {
             viewBox="0 0 1600 600"
             preserveAspectRatio="none"
             aria-hidden
-            style={{ transform: offset(0.18) }}
+            style={parallaxVar(0.18)}
           >
             <path
               d="M0 460 C 100 340 220 320 320 380 S 460 320 580 360 S 760 320 880 380 S 1080 320 1200 380 S 1420 340 1600 380 L 1600 600 L 0 600 Z"
@@ -150,7 +157,7 @@ export default function CanopyLiftEngine() {
             viewBox="0 0 1600 600"
             preserveAspectRatio="none"
             aria-hidden
-            style={{ transform: offset(0.32) }}
+            style={parallaxVar(0.32)}
           >
             <path
               d="M0 540 C 140 460 300 440 440 480 S 660 440 820 480 S 1080 460 1240 480 S 1460 460 1600 500 L 1600 600 L 0 600 Z"
@@ -158,7 +165,7 @@ export default function CanopyLiftEngine() {
             />
           </svg>
 
-          <div className="cl-light" aria-hidden style={{ transform: `translate(${scroll * 0.05}px, ${scroll * 0.04}px)` }} />
+          <div className="cl-light" aria-hidden style={lightVar()} />
 
           <div className="cl-hero-content">
             <div className="cl-hero-tag">
@@ -334,9 +341,33 @@ const css = `
     width: 100%; height: 600px;
     will-change: transform;
   }
-  .cl-canopy-back { top: -20px; opacity: 0.95; }
-  .cl-canopy-mid { top: 40px; }
-  .cl-canopy-front { top: 80px; }
+  .cl-canopy-back {
+    top: -20px; opacity: 0.95;
+    animation: cl-sway-back 11s ease-in-out infinite alternate;
+  }
+  .cl-canopy-mid {
+    top: 40px;
+    animation: cl-sway-mid 8s ease-in-out infinite alternate;
+  }
+  .cl-canopy-front {
+    top: 80px;
+    animation: cl-sway-front 6s ease-in-out infinite alternate;
+  }
+  @keyframes cl-sway-back {
+    0%   { transform: translate(-14px, calc(var(--cy, 0px) - 4px)); }
+    50%  { transform: translate(0px,   calc(var(--cy, 0px) + 4px)); }
+    100% { transform: translate(14px,  calc(var(--cy, 0px) - 4px)); }
+  }
+  @keyframes cl-sway-mid {
+    0%   { transform: translate(-22px, calc(var(--cy, 0px) - 7px)); }
+    50%  { transform: translate(0px,   calc(var(--cy, 0px) + 7px)); }
+    100% { transform: translate(22px,  calc(var(--cy, 0px) - 7px)); }
+  }
+  @keyframes cl-sway-front {
+    0%   { transform: translate(-32px, calc(var(--cy, 0px) - 10px)); }
+    50%  { transform: translate(0px,   calc(var(--cy, 0px) + 10px)); }
+    100% { transform: translate(32px,  calc(var(--cy, 0px) - 10px)); }
+  }
   .cl-light {
     position: absolute; inset: 0; pointer-events: none;
     background:
@@ -344,6 +375,11 @@ const css = `
       radial-gradient(circle at 76% 14%, rgba(216,210,166,0.32) 0%, transparent 22%);
     mix-blend-mode: screen;
     will-change: transform;
+    animation: cl-light-drift 14s ease-in-out infinite alternate;
+  }
+  @keyframes cl-light-drift {
+    from { transform: translate(calc(var(--lx, 0px) - 22px), calc(var(--ly, 0px) - 14px)); }
+    to   { transform: translate(calc(var(--lx, 0px) + 22px), calc(var(--ly, 0px) + 14px)); }
   }
   .cl-floor {
     position: absolute; bottom: 0; left: 0; right: 0; height: 100px;
@@ -599,7 +635,7 @@ const css = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .cl-canopy, .cl-light { transform: none !important; }
+    .cl-canopy, .cl-light { transform: none !important; animation: none !important; }
     .cl-climb { opacity: 1; transform: none; transition: none; }
     .cl-climb:hover, .cl-climb:focus-visible { background: rgba(216,210,166,0.05); }
     .cl-tip { opacity: 1; }
