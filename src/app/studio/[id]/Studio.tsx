@@ -415,6 +415,14 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
     ? `<link rel="stylesheet" href="${fontsHref}" crossorigin>`
     : "";
   // The bridge script handles two messages and emits 'edit-tick' on edits.
+  // CRITICAL: do NOT make <body> globally contenteditable. Whole-body
+  // contenteditable lets the browser destroy structural elements when
+  // you replace selected text — triple-clicking inside a flex header
+  // and typing can delete the entire header row. Instead, walk the
+  // generated DOM, find every leaf element that contains text and only
+  // inline children, and mark just those `contenteditable="plaintext-only"`.
+  // plaintext-only also blocks rich-text shenanigans (no <div> on Enter,
+  // no formatting). Saves us a class of bugs.
   const bridge = `
 <script>
   (function(){
@@ -437,16 +445,45 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         parent.postMessage({ type: 'html', html: document.body.innerHTML }, '*');
       }
     });
-    // Disable the scrollbar on the body when in editing mode — the iframe
-    // owns scrolling.
-    document.body.setAttribute('contenteditable', 'true');
-    document.body.style.minHeight = '100vh';
-    // Light blue outline on focus so customers see what they're editing.
+
+    // Inline tags that are safe to live inside a contenteditable leaf.
+    const INLINE_OK = new Set([
+      'A','SPAN','EM','STRONG','B','I','U','CODE','SMALL','MARK','SUB','SUP','TIME','ABBR','BR'
+    ]);
+    function isTextLeaf(el) {
+      let hasText = false;
+      for (const child of el.childNodes) {
+        if (child.nodeType === 3) {
+          if (child.textContent && child.textContent.trim().length > 0) hasText = true;
+        } else if (child.nodeType === 1) {
+          if (!INLINE_OK.has(child.tagName)) return false;
+        }
+      }
+      return hasText;
+    }
+    // Candidate selectors — any element type that typically holds editable text.
+    const SELECTOR = 'h1,h2,h3,h4,h5,h6,p,li,blockquote,a,button,figcaption,label,dt,dd,th,td,address';
+    document.querySelectorAll(SELECTOR).forEach((el) => {
+      if (!isTextLeaf(el)) return;
+      // plaintext-only: edits only the visible text, preserves the
+      // element type + attributes + child structure.
+      el.setAttribute('contenteditable', 'plaintext-only');
+      // Preserve clicks on links/buttons that ALSO have hrefs we don't
+      // want navigation away from while editing.
+      if (el.tagName === 'A') {
+        el.addEventListener('click', (ev) => ev.preventDefault());
+      }
+      if (el.tagName === 'BUTTON') {
+        el.setAttribute('type', 'button');
+      }
+    });
+
+    // Visual cue: dashed outline on focus, plus image hover affordance.
     const editStyle = document.createElement('style');
-    editStyle.textContent = \`
-      [contenteditable]:focus { outline: 2px dashed rgba(91,143,185,0.55); outline-offset: 2px; }
-      img:hover { outline: 2px dashed rgba(91,143,185,0.55); outline-offset: 2px; cursor: pointer; }
-    \`;
+    editStyle.textContent =
+      '[contenteditable="plaintext-only"]:focus { outline: 2px dashed rgba(91,143,185,0.6); outline-offset: 2px; border-radius: 2px; }' +
+      '[contenteditable="plaintext-only"]:hover:not(:focus) { outline: 1px dashed rgba(91,143,185,0.3); outline-offset: 2px; cursor: text; }' +
+      'img:hover { outline: 2px dashed rgba(91,143,185,0.55); outline-offset: 2px; cursor: pointer; }';
     document.head.appendChild(editStyle);
   })();
 </script>`;
