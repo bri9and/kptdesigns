@@ -789,12 +789,71 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       'img:not([data-studio-overlay]):hover { outline: 2px dashed rgba(91,143,185,0.55); outline-offset: 2px; cursor: pointer; }';
     document.head.appendChild(editStyle);
 
+    /* ---------- Detect the customer's CSS variable prefix(es) ----------
+     * The freeform agent scopes its CSS variables to a per-customer slug
+     * (e.g. --cirigliano-primary). The studio's swatches send --brand-*
+     * keys; we need to also fan out to whichever --<slug>-<role> the
+     * agent actually used so picker changes show up.
+     *
+     * Strategy: parse every embedded <style>'s :root rule, collect all
+     * declarations matching --<anything>-<role> for the roles we care
+     * about. Build a map: role -> [varNames]. When a set-vars message
+     * arrives, fan the value out to all variants.
+     */
+    const ROLE_KEYWORDS = {
+      primary: ['primary'],
+      'primary-strong': ['primary-strong','primary-dark','primary-deep','primary-active'],
+      'primary-soft': ['primary-soft','primary-light','primary-pale','primary-tint'],
+      'accent-1': ['accent-1','accent','accent-red','accent-secondary','accent-orange','accent-warm'],
+      'accent-2': ['accent-2','accent-blue','accent-yellow','accent-cool'],
+      'accent-3': ['accent-3','accent-green','accent-success'],
+      ink: ['ink','text','text-strong','text-primary','foreground','fg'],
+      canvas: ['canvas','bg','background','surface-base'],
+      surface: ['surface','surface-soft','surface-1'],
+    };
+    const customerVarMap = {};
+    function collectVars() {
+      const decls = [];
+      document.querySelectorAll('style').forEach((s) => {
+        const txt = s.textContent || '';
+        const re = /--([a-zA-Z0-9_-]+)\\s*:/g;
+        let m2;
+        while ((m2 = re.exec(txt)) !== null) {
+          const fullName = '--' + m2[1];
+          if (!decls.includes(fullName)) decls.push(fullName);
+        }
+      });
+      for (const role of Object.keys(ROLE_KEYWORDS)) {
+        customerVarMap[role] = [];
+        const keywords = ROLE_KEYWORDS[role];
+        for (const v of decls) {
+          const tail = v.replace(/^--/, '').toLowerCase();
+          if (keywords.some((k) => tail === k || tail.endsWith('-' + k))) {
+            customerVarMap[role].push(v);
+          }
+        }
+      }
+    }
+    collectVars();
+
+    function fanOutVar(brandKey, value) {
+      // brandKey is "--brand-primary" — strip prefix to find the role
+      const role = brandKey.replace(/^--brand-/, '');
+      const varList = customerVarMap[role] || [];
+      // Always set the canonical brand-* var
+      root.style.setProperty(brandKey, value);
+      // Fan out to every customer-scoped variant for that role
+      for (const v of varList) {
+        root.style.setProperty(v, value);
+      }
+    }
+
     /* ---------- Studio → iframe messages ---------- */
     window.addEventListener('message', (e) => {
       const m = e.data || {};
       if (m.type === 'set-vars' && m.vars) {
         for (const [k, v] of Object.entries(m.vars)) {
-          root.style.setProperty(k, v);
+          fanOutVar(k, v);
         }
       } else if (m.type === 'get-html') {
         // Strip our overlay buttons from the snapshot we hand back so the
@@ -803,14 +862,16 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
         clone.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
         clone.querySelectorAll('[contenteditable]').forEach((n) => n.removeAttribute('contenteditable'));
         clone.querySelectorAll('[data-edit-id]').forEach((n) => n.removeAttribute('data-edit-id'));
-        // Capture any --brand-* CSS variable overrides the customer set
-        // via the sidebar color picker. Those live on documentElement.style;
-        // the body snapshot wouldn't include them. Inject a tiny <style>
-        // block so saved HTML reproduces the customer's chosen palette.
+        // Capture every CSS variable override the customer set via the
+        // sidebar color picker — both the canonical --brand-* and the
+        // fanned-out customer-scoped --<slug>-* variants. Those live on
+        // documentElement.style; the body snapshot wouldn't include them.
+        // Inject a tiny <style> block so the saved HTML reproduces the
+        // customer's chosen palette on next load.
         const overrides = [];
         for (let i = 0; i < root.style.length; i++) {
           const prop = root.style.item(i);
-          if (prop && prop.startsWith('--brand-')) {
+          if (prop && prop.startsWith('--')) {
             overrides.push(prop + ':' + root.style.getPropertyValue(prop) + ';');
           }
         }
