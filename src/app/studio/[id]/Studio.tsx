@@ -807,11 +807,30 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       } else if (m.type === 'set-image-src' && m.editId && typeof m.src === 'string') {
         const img = document.querySelector('img[data-edit-id="' + m.editId + '"]');
         if (img) {
+          // Capture the slot's CURRENT rendered size BEFORE swapping so we
+          // can lock the replacement to the same footprint. Without this,
+          // dropping a 1200x800 photo into a 114x84 logo slot leaves the
+          // browser to layout-shift and either stretch or shrink awkwardly.
+          const rect = img.getBoundingClientRect();
+          const slotW = Math.round(rect.width);
+          const slotH = Math.round(rect.height);
+          if (slotW > 0 && slotH > 0) {
+            img.setAttribute('width', String(slotW));
+            img.setAttribute('height', String(slotH));
+            // Compose object-fit on top of any existing inline style.
+            const existing = img.getAttribute('style') || '';
+            const cleaned = existing.replace(/object-fit:[^;]*;?/gi, '').replace(/object-position:[^;]*;?/gi, '');
+            img.setAttribute(
+              'style',
+              cleaned + ';object-fit:cover;object-position:center;width:' + slotW + 'px;height:' + slotH + 'px;'
+            );
+          }
           img.setAttribute('src', m.src);
-          // Strip srcset so it doesn't override the new src
+          // Strip srcset / lazy-load attrs so the new src actually wins.
           img.removeAttribute('srcset');
           img.removeAttribute('data-lazy-src');
           img.removeAttribute('data-lazy-srcset');
+          img.removeAttribute('sizes');
           // Trigger save tracking
           document.dispatchEvent(new Event('input', { bubbles: true }));
         }
