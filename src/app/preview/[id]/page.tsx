@@ -40,6 +40,15 @@ async function safeReadIntakeJob(id: string): Promise<IntakeJob | null> {
   }
 }
 
+function stripEditorArtifacts(html: string): string {
+  return html
+    .replace(/<script[^>]*data-studio-injected[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*data-studio-injected[\s\S]*?<\/style>/gi, "")
+    .replace(/<link[^>]*data-studio-injected[^>]*>/gi, "")
+    .replace(/<script>\s*\(function\(\)\{[\s\S]*?\}\)\(\);?\s*<\/script>/gi, "")
+    .replace(/<style>\s*\[contenteditable[\s\S]*?<\/style>/gi, "");
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
   const job = await safeReadIntakeJob(id);
@@ -89,8 +98,10 @@ export default async function PreviewPage({ params }: PageProps) {
 
       {job.generated_html ? (
         // We trust the freeform agent's HTML output for the spike. For
-        // production this should be DOMPurify-sanitized.
-        <main dangerouslySetInnerHTML={{ __html: job.generated_html }} />
+        // production this should be DOMPurify-sanitized. Also strip any
+        // editor artifacts (data-studio-injected scripts/styles) that may
+        // have been baked in by an older save.
+        <main dangerouslySetInnerHTML={{ __html: stripEditorArtifacts(job.generated_html) }} />
       ) : job.puck_data ? (
         <main
           className="customer-brand-themed"

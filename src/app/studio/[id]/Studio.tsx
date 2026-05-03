@@ -210,7 +210,7 @@ export function Studio({
           : { type: "set-image-src", editId: picker.editId, src: newSrc },
         "*",
       );
-      setDirty(true);
+      markDirty();
       setPicker(null);
     },
     [picker],
@@ -236,7 +236,7 @@ export function Studio({
         },
         "*",
       );
-      setDirty(true);
+      markDirty();
       setSizePopover(null);
     },
     [sizePopover],
@@ -1041,8 +1041,12 @@ const GOOGLE_FONTS_BODY = [
 
 function buildIframeDoc(html: string, fontsHref: string | null): string {
   const fontsLink = fontsHref
-    ? `<link rel="stylesheet" href="${fontsHref}" crossorigin>`
+    ? `<link rel="stylesheet" href="${fontsHref}" data-studio-injected crossorigin>`
     : "";
+  // Wrap the bridge script in a tagged <script data-studio-injected>...</script>
+  // so get-html can strip it from the saved HTML cleanly. Without the tag, the
+  // bridge gets baked into every save and accumulates copies in the persisted
+  // HTML (4 copies after just a few saves in our last test).
   // Bridge script for editor interactions inside the iframe.
   // Three responsibilities:
   //   1. TEXT EDITING — scoped contenteditable=plaintext-only on leaf
@@ -1052,7 +1056,7 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
   //   3. SECTION REORDER — every direct top-level child of <body> gets
   //      a small ↑ / ↓ overlay; click swaps with the adjacent sibling.
   const bridge = `
-<script>
+<script data-studio-injected>
   (function(){
     const root = document.documentElement;
     const debounce = (fn, ms) => {
@@ -1261,8 +1265,84 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
       });
     }
 
+    /* ---------- Reposition badge for swapped images ----------
+     * Swapped images (those with inline object-fit:cover) get a small
+     * "↔ Reposition" badge that, when clicked, arms a "click-the-image-
+     * to-set-object-position" mode. The next click on the image sets
+     * object-position to that x,y as percentages, sliding the visible
+     * crop window. Click outside the image to cancel without changing.
+     */
+    function enableReposition(img) {
+      if (img.hasAttribute('data-studio-reposition-wired')) return;
+      img.setAttribute('data-studio-reposition-wired', 'true');
+      const wrap = img.parentElement;
+      if (!wrap) return;
+      const wrapCs = getComputedStyle(wrap);
+      if (wrapCs.position === 'static') wrap.style.position = 'relative';
+
+      const badge = document.createElement('button');
+      badge.type = 'button';
+      badge.setAttribute('data-studio-overlay', 'true');
+      badge.title = 'Drag the crop position';
+      badge.textContent = '↔ Reposition';
+      badge.style.cssText = [
+        'position:absolute','top:8px','right:8px','z-index:99999',
+        'padding:4px 8px','border:none','border-radius:6px',
+        'background:rgba(91,143,185,0.92)','color:#fff','font:600 11px/1 system-ui,sans-serif',
+        'cursor:pointer','box-shadow:0 1px 4px rgba(0,0,0,0.25)',
+        'opacity:0','transition:opacity 0.15s','letter-spacing:0.04em',
+      ].join(';');
+      wrap.appendChild(badge);
+      img.addEventListener('mouseenter', () => { badge.style.opacity = '1'; });
+      wrap.addEventListener('mouseleave', () => { badge.style.opacity = '0'; });
+
+      let armed = false;
+      let onImgClick;
+      let onCancel;
+      function arm() {
+        armed = true;
+        img.style.outline = '2px solid rgba(91,143,185,0.85)';
+        img.style.cursor = 'crosshair';
+        badge.textContent = 'click image…';
+        onImgClick = (ev) => {
+          if (!armed) return;
+          const r = img.getBoundingClientRect();
+          const x = Math.max(0, Math.min(100, ((ev.clientX - r.left) / r.width) * 100));
+          const y = Math.max(0, Math.min(100, ((ev.clientY - r.top) / r.height) * 100));
+          const existing = img.getAttribute('style') || '';
+          const cleaned = existing.replace(/object-position:[^;]*;?/gi, '');
+          img.setAttribute('style', cleaned + ';object-position:' + x.toFixed(1) + '% ' + y.toFixed(1) + '%;');
+          disarm();
+          document.dispatchEvent(new Event('input', { bubbles: true }));
+          ev.preventDefault();
+          ev.stopPropagation();
+        };
+        onCancel = (ev) => {
+          if (ev.target === img || ev.target === badge) return;
+          disarm();
+        };
+        img.addEventListener('click', onImgClick, true);
+        setTimeout(() => document.addEventListener('click', onCancel, true), 0);
+      }
+      function disarm() {
+        armed = false;
+        img.style.outline = '';
+        img.style.cursor = 'pointer';
+        badge.textContent = '↔ Reposition';
+        if (onImgClick) img.removeEventListener('click', onImgClick, true);
+        if (onCancel) document.removeEventListener('click', onCancel, true);
+      }
+      badge.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        if (armed) disarm(); else arm();
+      });
+    }
+    document.querySelectorAll('img[style*="object-fit"]').forEach((img) => enableReposition(img));
+
     /* ---------- Visual styles ---------- */
     const editStyle = document.createElement('style');
+    editStyle.setAttribute('data-studio-injected', 'true');
     editStyle.textContent =
       '[contenteditable="plaintext-only"]:focus { outline: 2px dashed rgba(91,143,185,0.6); outline-offset: 2px; border-radius: 2px; }' +
       '[contenteditable="plaintext-only"]:hover:not(:focus) { outline: 1px dashed rgba(91,143,185,0.3); outline-offset: 2px; cursor: text; }' +
@@ -1336,12 +1416,16 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
           fanOutVar(k, v);
         }
       } else if (m.type === 'get-html') {
-        // Strip our overlay buttons from the snapshot we hand back so the
-        // saved HTML doesn't bake in editor chrome.
+        // Strip every editor artifact from the snapshot we hand back so the
+        // saved HTML doesn't bake in editor chrome OR the bridge script
+        // itself (which would re-run on next load and accumulate copies).
         const clone = document.body.cloneNode(true);
         clone.querySelectorAll('[data-studio-overlay]').forEach((n) => n.remove());
+        clone.querySelectorAll('[data-studio-injected]').forEach((n) => n.remove());
         clone.querySelectorAll('[contenteditable]').forEach((n) => n.removeAttribute('contenteditable'));
         clone.querySelectorAll('[data-edit-id]').forEach((n) => n.removeAttribute('data-edit-id'));
+        clone.querySelectorAll('[data-edit-bg-id]').forEach((n) => n.removeAttribute('data-edit-bg-id'));
+        clone.querySelectorAll('[data-edit-size-id]').forEach((n) => n.removeAttribute('data-edit-size-id'));
         // Capture every CSS variable override the customer set via the
         // sidebar color picker — both the canonical --brand-* and the
         // fanned-out customer-scoped --<slug>-* variants. Those live on
@@ -1384,8 +1468,14 @@ function buildIframeDoc(html: string, fontsHref: string | null): string {
           img.removeAttribute('data-lazy-src');
           img.removeAttribute('data-lazy-srcset');
           img.removeAttribute('sizes');
+          // Attach a one-shot click-to-reposition handler so the customer
+          // can shift the crop window by clicking somewhere on the image.
+          enableReposition(img);
           document.dispatchEvent(new Event('input', { bubbles: true }));
         }
+      } else if (m.type === 'enter-reposition' && m.editId) {
+        const img = document.querySelector('img[data-edit-id="' + m.editId + '"]');
+        if (img) enableReposition(img);
       } else if (m.type === 'set-background' && m.editId && typeof m.src === 'string') {
         const target = document.querySelector('[data-edit-bg-id="' + m.editId + '"]');
         if (target) {

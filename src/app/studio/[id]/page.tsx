@@ -76,10 +76,20 @@ export default async function StudioPage({ params }: PageProps) {
   const fontsHref = profile ? buildGoogleFontsHref(profile.fonts) : null;
   const curatedAssets = job.findings?.curatedAssets ?? [];
 
+  // Scrub any editor artifacts that may have been baked into the saved HTML
+  // by an older version of the bridge (which appended itself in <body> and
+  // got captured in body.innerHTML on every save). We strip:
+  //   - <script data-studio-injected>...</script>  (the bridge itself)
+  //   - <style data-studio-injected>...</style>    (editor focus/hover styles)
+  //   - <link data-studio-injected ...>            (studio-injected font links)
+  // We KEEP <style data-studio-brand-overrides> — that one IS the customer's
+  // saved palette and must persist.
+  const cleanHtml = stripEditorArtifacts(job.generated_html);
+
   return (
     <Studio
       jobId={id}
-      generatedHtml={job.generated_html}
+      generatedHtml={cleanHtml}
       brandProfile={profile ?? null}
       sourceUrl={job.source_url ?? null}
       businessName={job.business_name ?? null}
@@ -88,4 +98,17 @@ export default async function StudioPage({ params }: PageProps) {
       logoKey={job.findings?.logoKey ?? null}
     />
   );
+}
+
+function stripEditorArtifacts(html: string): string {
+  return html
+    .replace(/<script[^>]*data-studio-injected[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*data-studio-injected[\s\S]*?<\/style>/gi, "")
+    .replace(/<link[^>]*data-studio-injected[^>]*>/gi, "")
+    // Older saves may have added bridge scripts WITHOUT the data attribute —
+    // those start with `(function(){` somewhere near the top. Strip <script>
+    // blocks whose body opens with that signature.
+    .replace(/<script>\s*\(function\(\)\{[\s\S]*?\}\)\(\);?\s*<\/script>/gi, "")
+    // Older saves may also have un-tagged contenteditable focus styles.
+    .replace(/<style>\s*\[contenteditable[\s\S]*?<\/style>/gi, "");
 }
