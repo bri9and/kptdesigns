@@ -120,7 +120,9 @@ export function Studio({
   );
 
   // Push brand-var overrides into the iframe whenever the customer
-  // changes a swatch.
+  // changes a swatch. Also flips the dirty flag so Save lights up.
+  // Skip on the very first run (initial state == brand profile defaults).
+  const initialColorRef = useRef({ primary, accent, ink, canvas });
   useEffect(() => {
     const win = iframeRef.current?.contentWindow;
     if (!win) return;
@@ -128,8 +130,6 @@ export function Studio({
       {
         type: "set-vars",
         vars: {
-          // Both kinds of selector — branded namespace and any vendor-set vars
-          // the AI may have used in the generated CSS.
           "--brand-primary": primary,
           "--brand-accent-1": accent,
           "--brand-ink": ink,
@@ -138,6 +138,16 @@ export function Studio({
       },
       "*",
     );
+    const init = initialColorRef.current;
+    if (
+      primary !== init.primary ||
+      accent !== init.accent ||
+      ink !== init.ink ||
+      canvas !== init.canvas
+    ) {
+      setDirty(true);
+      setSaveState("idle");
+    }
   }, [primary, accent, ink, canvas]);
 
   const handleSave = useCallback(async () => {
