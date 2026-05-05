@@ -21,7 +21,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
   },
   refunded: {
     label: "Refunded",
-    className: "bg-white/5 text-white/50 border-white/10",
+    className: "bg-earthy-stone-100 text-earthy-stone-600 border-earthy-stone-200",
   },
 };
 
@@ -34,7 +34,7 @@ const typeLabels: Record<string, string> = {
 function StatusBadge({ status }: { status: string }) {
   const style = statusStyles[status] ?? {
     label: status,
-    className: "bg-white/5 text-white/50 border-white/10",
+    className: "bg-earthy-stone-100 text-earthy-stone-600 border-earthy-stone-200",
   };
   return (
     <span
@@ -91,32 +91,32 @@ export default function OrdersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Orders</h1>
-        <p className="text-sm text-white/50 mt-1">
+        <h1 className="text-2xl font-bold text-earthy-ink">Orders</h1>
+        <p className="text-sm text-earthy-stone-600 mt-1">
           Your billing and order history.
         </p>
       </div>
 
       {/* Content */}
       {loading ? (
-        <div className="rounded-xl bg-qblack-light border border-white/10 p-12 flex justify-center">
-          <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 flex justify-center">
+          <Loader2 className="w-6 h-6 text-earthy-stone-500 animate-spin" />
         </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-xl bg-qblack-light border border-white/10 p-12 text-center">
-          <ShoppingCart className="w-12 h-12 text-white/15 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-1">
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 text-center">
+          <ShoppingCart className="w-12 h-12 text-earthy-stone-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-earthy-ink mb-1">
             No orders yet
           </h3>
-          <p className="text-sm text-white/40 max-w-sm mx-auto">
+          <p className="text-sm text-earthy-stone-500 max-w-sm mx-auto">
             When you purchase domains, site designs, or hosting, your orders
             will appear here.
           </p>
         </div>
       ) : (
-        <div className="rounded-xl bg-qblack-light border border-white/10 overflow-hidden">
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 overflow-hidden">
           {/* Table header — desktop only */}
-          <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_100px] gap-4 px-5 py-3 border-b border-white/5 text-xs font-medium text-white/40 uppercase tracking-wider">
+          <div className="hidden sm:grid sm:grid-cols-[1fr_120px_100px_100px] gap-4 px-5 py-3 border-b border-earthy-stone-100 text-xs font-medium text-earthy-stone-500 uppercase tracking-wider">
             <span>Date</span>
             <span>Type</span>
             <span className="text-right">Amount</span>
@@ -131,21 +131,21 @@ export default function OrdersPage() {
               >
                 {/* Date */}
                 <div>
-                  <p className="text-sm text-white">
+                  <p className="text-sm text-earthy-ink">
                     {formatDate(order.created_at)}
                   </p>
-                  <p className="text-xs text-white/30 sm:hidden mt-0.5">
+                  <p className="text-xs text-earthy-stone-500 sm:hidden mt-0.5">
                     {typeLabels[order.type] ?? order.type}
                   </p>
                 </div>
 
                 {/* Type — desktop */}
-                <p className="hidden sm:block text-sm text-white/70">
+                <p className="hidden sm:block text-sm text-earthy-stone-700">
                   {typeLabels[order.type] ?? order.type}
                 </p>
 
                 {/* Amount */}
-                <p className="text-sm font-medium text-white sm:text-right mt-1 sm:mt-0">
+                <p className="text-sm font-medium text-earthy-ink sm:text-right mt-1 sm:mt-0">
                   {formatAmount(order.amount_cents, order.currency)}
                 </p>
 

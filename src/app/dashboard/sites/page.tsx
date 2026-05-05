@@ -40,7 +40,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
 function StatusBadge({ status }: { status: string }) {
   const style = statusStyles[status] ?? {
     label: status,
-    className: "bg-white/5 text-white/50 border-white/10",
+    className: "bg-earthy-stone-100 text-earthy-stone-600 border-earthy-stone-200",
   };
   return (
     <span
@@ -75,8 +75,8 @@ function HostingBadge({ order }: { order: Order }) {
 export default function SitesPage() {
   return (
     <Suspense fallback={
-      <div className="rounded-xl bg-qblack-light border border-white/10 p-12 flex justify-center">
-        <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+      <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 flex justify-center">
+        <Loader2 className="w-6 h-6 text-earthy-stone-500 animate-spin" />
       </div>
     }>
       <SitesContent />
@@ -141,14 +141,14 @@ function SitesContent() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Sites</h1>
-          <p className="text-sm text-white/50 mt-1">
+          <h1 className="text-2xl font-bold text-earthy-ink">My Sites</h1>
+          <p className="text-sm text-earthy-stone-600 mt-1">
             View and manage your websites.
           </p>
         </div>
         <Link
           href="/contact"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-qyellow hover:bg-qyellow-light text-white font-medium text-sm transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-qyellow hover:bg-qyellow-light text-earthy-ink font-medium text-sm transition-colors"
         >
           <Plus className="w-4 h-4" />
           Request New Site
@@ -170,22 +170,22 @@ function SitesContent() {
 
       {/* Content */}
       {loading ? (
-        <div className="rounded-xl bg-qblack-light border border-white/10 p-12 flex justify-center">
-          <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 flex justify-center">
+          <Loader2 className="w-6 h-6 text-earthy-stone-500 animate-spin" />
         </div>
       ) : sites.length === 0 ? (
-        <div className="rounded-xl bg-qblack-light border border-white/10 p-12 text-center">
-          <Monitor className="w-12 h-12 text-white/15 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-1">
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 text-center">
+          <Monitor className="w-12 h-12 text-earthy-stone-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-earthy-ink mb-1">
             No sites yet
           </h3>
-          <p className="text-sm text-white/40 mb-6 max-w-sm mx-auto">
+          <p className="text-sm text-earthy-stone-500 mb-6 max-w-sm mx-auto">
             Once you purchase a domain and site design, your sites will appear
             here.
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-qyellow hover:bg-qyellow-light text-white font-medium text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-qyellow hover:bg-qyellow-light text-earthy-ink font-medium text-sm transition-colors"
           >
             Get Started
           </Link>
@@ -197,7 +197,7 @@ function SitesContent() {
             return (
               <div
                 key={site.id}
-                className="rounded-xl bg-qblack-light border border-white/10 p-5 hover:border-white/20 transition-colors"
+                className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-5 hover:border-earthy-stone-200 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3 min-w-0">
@@ -206,7 +206,7 @@ function SitesContent() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium text-white truncate">
+                        <p className="font-medium text-earthy-ink truncate">
                           {site.name}
                         </p>
                         <StatusBadge status={site.status} />
@@ -218,7 +218,7 @@ function SitesContent() {
                             href={site.vercel_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-white/40 hover:text-qyellow transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-earthy-stone-500 hover:text-qyellow transition-colors"
                           >
                             <ExternalLink className="w-3 h-3" />
                             {site.vercel_url.replace(/^https?:\/\//, "")}
@@ -229,7 +229,7 @@ function SitesContent() {
                             href={`https://github.com/${site.github_repo}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-white/40 hover:text-qyellow transition-colors"
+                            className="inline-flex items-center gap-1 text-xs text-earthy-stone-500 hover:text-qyellow transition-colors"
                           >
                             <Github className="w-3 h-3" />
                             {site.github_repo}
@@ -258,7 +258,7 @@ function SitesContent() {
                     )}
                     <Link
                       href={`/dashboard/sites/${site.id}/edit`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/10 text-xs text-white/60 hover:text-white hover:border-white/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-earthy-stone-200 text-xs text-earthy-stone-600 hover:text-earthy-ink hover:border-earthy-stone-200 transition-colors"
                     >
                       <Pencil className="w-3 h-3" />
                       Request Changes

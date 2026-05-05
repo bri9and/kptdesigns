@@ -29,7 +29,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
 function StatusBadge({ status }: { status: string }) {
   const style = statusStyles[status] ?? {
     label: status,
-    className: "bg-white/5 text-white/50 border-white/10",
+    className: "bg-earthy-stone-100 text-earthy-stone-600 border-earthy-stone-200",
   };
   return (
     <span
@@ -82,14 +82,14 @@ export default function DomainsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Domains</h1>
-          <p className="text-sm text-white/50 mt-1">
+          <h1 className="text-2xl font-bold text-earthy-ink">My Domains</h1>
+          <p className="text-sm text-earthy-stone-600 mt-1">
             Manage your registered domains.
           </p>
         </div>
         <Link
           href="/domains"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-qyellow hover:bg-qyellow-light text-white font-medium text-sm transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-qyellow hover:bg-qyellow-light text-earthy-ink font-medium text-sm transition-colors"
         >
           <Plus className="w-4 h-4" />
           Buy New Domain
@@ -98,21 +98,21 @@ export default function DomainsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="rounded-xl bg-qblack-light border border-white/10 p-12 flex justify-center">
-          <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 flex justify-center">
+          <Loader2 className="w-6 h-6 text-earthy-stone-500 animate-spin" />
         </div>
       ) : domains.length === 0 ? (
-        <div className="rounded-xl bg-qblack-light border border-white/10 p-12 text-center">
-          <Globe className="w-12 h-12 text-white/15 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-1">
+        <div className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-12 text-center">
+          <Globe className="w-12 h-12 text-earthy-stone-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-earthy-ink mb-1">
             No domains yet
           </h3>
-          <p className="text-sm text-white/40 mb-6 max-w-sm mx-auto">
+          <p className="text-sm text-earthy-stone-500 mb-6 max-w-sm mx-auto">
             Search and register your perfect domain name to get started.
           </p>
           <Link
             href="/domains"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-qyellow hover:bg-qyellow-light text-white font-medium text-sm transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-qyellow hover:bg-qyellow-light text-earthy-ink font-medium text-sm transition-colors"
           >
             <Plus className="w-4 h-4" />
             Browse Domains
@@ -123,7 +123,7 @@ export default function DomainsPage() {
           {domains.map((domain) => (
             <div
               key={domain.id}
-              className="rounded-xl bg-qblack-light border border-white/10 p-5 hover:border-white/20 transition-colors"
+              className="rounded-xl bg-qblack-light border border-earthy-stone-200 p-5 hover:border-earthy-stone-200 transition-colors"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -132,18 +132,18 @@ export default function DomainsPage() {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-white">
+                      <p className="font-medium text-earthy-ink">
                         {domain.domain_name}
                       </p>
                       <StatusBadge status={domain.status} />
                     </div>
                     <div className="flex items-center gap-4 mt-1">
-                      <span className="flex items-center gap-1 text-xs text-white/40">
+                      <span className="flex items-center gap-1 text-xs text-earthy-stone-500">
                         <Calendar className="w-3 h-3" />
                         Purchased {formatDate(domain.purchased_at)}
                       </span>
                       {domain.expires_at && (
-                        <span className="flex items-center gap-1 text-xs text-white/40">
+                        <span className="flex items-center gap-1 text-xs text-earthy-stone-500">
                           <Calendar className="w-3 h-3" />
                           Expires {formatDate(domain.expires_at)}
                         </span>
@@ -155,7 +155,7 @@ export default function DomainsPage() {
                   href={`https://${domain.domain_name}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-white/40 hover:text-qyellow transition-colors"
+                  className="inline-flex items-center gap-1.5 text-xs text-earthy-stone-500 hover:text-qyellow transition-colors"
                 >
                   Visit <ExternalLink className="w-3 h-3" />
                 </a>

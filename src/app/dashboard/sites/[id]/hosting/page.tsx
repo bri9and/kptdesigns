@@ -29,7 +29,7 @@ export default function HostingPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+        <Loader2 className="w-6 h-6 text-earthy-stone-500 animate-spin" />
       </div>
     }>
       <HostingContent />
@@ -157,7 +157,7 @@ function HostingContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 text-white/30 animate-spin" />
+        <Loader2 className="w-6 h-6 text-earthy-stone-500 animate-spin" />
       </div>
     );
   }
@@ -165,7 +165,7 @@ function HostingContent() {
   if (!site) {
     return (
       <div className="text-center py-20">
-        <p className="text-white/50">Site not found.</p>
+        <p className="text-earthy-stone-600">Site not found.</p>
         <button
           onClick={() => router.push("/dashboard/sites")}
           className="mt-4 text-sm text-qyellow hover:text-qyellow-light transition-colors"
@@ -182,24 +182,24 @@ function HostingContent() {
       <div>
         <button
           onClick={() => router.push("/dashboard/sites")}
-          className="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors mb-4"
+          className="flex items-center gap-2 text-sm text-earthy-stone-600 hover:text-earthy-ink transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Sites
         </button>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Hosting Plans</h1>
-            <p className="text-sm text-white/50 mt-1">
+            <h1 className="text-2xl font-bold text-earthy-ink">Hosting Plans</h1>
+            <p className="text-sm text-earthy-stone-600 mt-1">
               Choose a hosting plan for{" "}
-              <span className="text-white/70 font-medium">{site.name}</span>
+              <span className="text-earthy-stone-700 font-medium">{site.name}</span>
             </p>
           </div>
           {activeOrder && (
             <button
               onClick={handleManage}
               disabled={manageLoading}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 text-sm text-white/70 hover:text-white hover:border-white/20 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-earthy-stone-200 text-sm text-earthy-stone-700 hover:text-earthy-ink hover:border-earthy-stone-200 transition-colors"
             >
               {manageLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -249,7 +249,7 @@ function HostingContent() {
                   ? "border-emerald-500/40 bg-emerald-500/5 ring-1 ring-emerald-500/20"
                   : isPopular
                     ? "border-qyellow/40 bg-qblack-light ring-1 ring-qyellow/20"
-                    : "border-white/10 bg-qblack-light/50 hover:border-white/20"
+                    : "border-earthy-stone-200 bg-qblack-light/50 hover:border-earthy-stone-200"
               )}
             >
               {/* Badge */}
@@ -292,13 +292,13 @@ function HostingContent() {
                     )}
                   />
                 </div>
-                <h3 className="font-semibold text-white text-lg">{plan.name}</h3>
-                <p className="text-sm text-white/50 mt-1">{plan.tagline}</p>
+                <h3 className="font-semibold text-earthy-ink text-lg">{plan.name}</h3>
+                <p className="text-sm text-earthy-stone-600 mt-1">{plan.tagline}</p>
                 <div className="mt-3">
-                  <span className="text-3xl font-bold text-white">
+                  <span className="text-3xl font-bold text-earthy-ink">
                     {plan.priceDisplay}
                   </span>
-                  <span className="text-sm text-white/40">/mo</span>
+                  <span className="text-sm text-earthy-stone-500">/mo</span>
                 </div>
               </div>
 
@@ -307,7 +307,7 @@ function HostingContent() {
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
-                    className="flex items-start gap-2 text-sm text-white/70"
+                    className="flex items-start gap-2 text-sm text-earthy-stone-700"
                   >
                     <Check className="w-4 h-4 text-qyellow mt-0.5 shrink-0" />
                     <span>{feature}</span>
@@ -337,7 +337,7 @@ function HostingContent() {
                     "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50",
                     isPopular
                       ? "bg-qyellow hover:bg-qyellow-light text-qblack-dark"
-                      : "bg-white/10 hover:bg-white/15 text-white border border-white/10"
+                      : "bg-earthy-stone-100 hover:bg-earthy-stone-200 text-earthy-ink border border-earthy-stone-200"
                   )}
                 >
                   {checkoutLoading === slug ? (
@@ -352,7 +352,7 @@ function HostingContent() {
       </div>
 
       {/* Footer note */}
-      <div className="text-center text-xs text-white/30 pt-4">
+      <div className="text-center text-xs text-earthy-stone-500 pt-4">
         All plans include a 14-day money-back guarantee. Cancel anytime from the
         billing portal.
       </div>
