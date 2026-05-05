@@ -186,6 +186,25 @@ function buildUserPrompt(profile: BrandProfile, findings: Findings): string {
   lines.push("```");
   lines.push("");
 
+  if (findings.googlePlace) {
+    const gp = findings.googlePlace;
+    lines.push(`## Public business data (Google)`);
+    lines.push("");
+    lines.push(`Use these facts in headers, footers, and contact sections. Do NOT invent contact info beyond what's listed here.`);
+    lines.push("");
+    if (gp.formattedAddress) lines.push(`- Address: ${gp.formattedAddress}`);
+    if (gp.phone) lines.push(`- Phone: ${gp.phone}`);
+    if (gp.website) lines.push(`- Website: ${gp.website}`);
+    if (gp.hours?.length) {
+      lines.push(`- Hours:`);
+      gp.hours.forEach((h) => lines.push(`  - ${h}`));
+    }
+    if (gp.rating)
+      lines.push(`- Rating: ${gp.rating}/5 from ${gp.userRatingCount ?? 0} reviews`);
+    if (gp.editorialSummary) lines.push(`- Editorial summary: ${gp.editorialSummary}`);
+    lines.push("");
+  }
+
   // Available assets — strictly enumerated
   const logoUrl = findings.logoUrl;
   const curated = findings.curatedAssets ?? [];
