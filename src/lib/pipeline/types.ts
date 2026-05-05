@@ -30,6 +30,7 @@ export type StageId =
   | "stack"
   | "social"
   | "domain"
+  | "google"
   // synthesis
   | "brand-profile"
   | "site-plan"
@@ -125,6 +126,25 @@ export type Findings = {
   techStack?: { framework?: string; cms?: string; host?: string };
   socials?: { facebook?: string; instagram?: string; google?: string; yelp?: string; linkedin?: string };
   domainAge?: { registrar?: string; createdAt?: string };
+
+  /** Structured business data from the Google Places API — only populated
+   *  when the no-URL admin flow provides a businessName + serviceArea. */
+  googlePlace?: {
+    placeId: string;
+    name: string;
+    formattedAddress?: string;
+    phone?: string;
+    website?: string;
+    hours?: string[];
+    rating?: number;
+    userRatingCount?: number;
+    photoKeys?: string[];
+    editorialSummary?: string;
+    primaryType?: string;
+  };
+
+  /** Linode keys for files an admin uploaded directly via /api/admin/uploads. */
+  uploadedAssetKeys?: string[];
 
   /* synthesis */
   brandProfile?: BrandProfile;
