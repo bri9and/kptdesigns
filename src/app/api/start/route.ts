@@ -17,6 +17,7 @@
  * we'll move the runner to a Vercel Sandbox or Queue worker.
  */
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 
 import { createIntakeJob, updateIntakeJob } from "@/lib/intake-store";
 import { runPipeline } from "@/lib/pipeline/runner";
@@ -31,6 +32,14 @@ type StartRequestBody = {
 };
 
 export async function POST(req: Request) {
+  const user = await currentUser();
+  if (!user) {
+    return NextResponse.json(
+      { error: "Sign in required to start a build." },
+      { status: 401 },
+    );
+  }
+
   let body: StartRequestBody;
   try {
     body = (await req.json()) as StartRequestBody;

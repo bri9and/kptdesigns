@@ -16,7 +16,6 @@ const isPublicRoute = createRouteMatcher([
   "/api/contact(.*)",
   "/start(.*)",
   "/preview/(.*)",
-  "/api/start(.*)",
   "/api/diag/(.*)",
   "/api/asset/(.*)",
   "/studio/(.*)",
