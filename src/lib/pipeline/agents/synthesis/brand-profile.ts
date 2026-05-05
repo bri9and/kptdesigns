@@ -136,6 +136,34 @@ function buildPrompt(
     lines.push(JSON.stringify(findings.detectedVoice, null, 2));
   }
 
+  if (findings.googlePlace) {
+    const gp = findings.googlePlace;
+    lines.push(`\nGoogle Place data:`);
+    lines.push(`  Name: ${gp.name}`);
+    if (gp.primaryType) lines.push(`  Type: ${gp.primaryType}`);
+    if (gp.formattedAddress) lines.push(`  Address: ${gp.formattedAddress}`);
+    if (gp.phone) lines.push(`  Phone: ${gp.phone}`);
+    if (gp.hours?.length) {
+      lines.push(`  Hours:`);
+      gp.hours.forEach((h) => lines.push(`    ${h}`));
+    }
+    if (gp.rating) lines.push(`  Rating: ${gp.rating} (${gp.userRatingCount ?? 0} reviews)`);
+    if (gp.editorialSummary) lines.push(`  Editorial summary: ${gp.editorialSummary}`);
+  }
+
+  if (findings.socials) {
+    const s = findings.socials;
+    const lines2: string[] = [];
+    if (s.facebook) lines2.push(`Facebook: ${s.facebook}`);
+    if (s.instagram) lines2.push(`Instagram: ${s.instagram}`);
+    if (s.yelp) lines2.push(`Yelp: ${s.yelp}`);
+    if (s.linkedin) lines2.push(`LinkedIn: ${s.linkedin}`);
+    if (lines2.length > 0) {
+      lines.push(`\nSocial profiles (URLs only, content not yet scraped):`);
+      lines2.forEach((l) => lines.push(`  ${l}`));
+    }
+  }
+
   const pages = findings.pages ?? [];
   lines.push(`\nCrawled pages (${pages.length}):`);
   for (const p of pages.slice(0, 8)) {
