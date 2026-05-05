@@ -16,6 +16,7 @@ import {
   socialStubAgent,
   domainStubAgent,
 } from "./discovery/stubs";
+import { googleAgent } from "./discovery/google";
 
 import { brandProfileAgent } from "./synthesis/brand-profile";
 import { assetCurateAgent } from "./synthesis/asset-curate";
@@ -43,6 +44,7 @@ export const allAgents: Agent[] = [
   stackStubAgent,
   socialStubAgent,
   domainStubAgent,
+  googleAgent,
   // synthesis
   brandProfileAgent,
   assetCurateAgent,
