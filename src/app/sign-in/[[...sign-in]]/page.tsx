@@ -5,7 +5,7 @@ import { useSignIn } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ArrowRight, Eye, EyeOff, Loader2, Shield } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const testimonials = [
   {
@@ -33,6 +33,14 @@ export default function SignInPage() {
 
   const loading = fetchStatus === "fetching";
   const needs2FA = signIn.status === "needs_second_factor";
+
+  // If we land on /sign-in with a stale needs_second_factor state from a prior
+  // attempt (e.g. after a fresh navigation), reset so the password form shows.
+  useEffect(() => {
+    if (signIn?.status === "needs_second_factor" && !document.referrer) {
+      signIn.reset();
+    }
+  }, [signIn]);
 
   async function handleSubmit(formData: FormData) {
     const emailAddress = formData.get("email") as string;
