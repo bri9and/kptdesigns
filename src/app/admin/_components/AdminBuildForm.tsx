@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 
 type StartResponse = {
   id?: string;
-  status?: string;
+  status: string;
   error?: string;
 };
 
@@ -44,6 +44,7 @@ export function AdminBuildForm() {
         return;
       }
 
+      setBusy(false);
       router.push(`/preview/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Network error");
@@ -58,7 +59,7 @@ export function AdminBuildForm() {
         <Input
           id="admin-url"
           type="url"
-          placeholder="acmeplumbing.com"
+          placeholder="https://acmeplumbing.com"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={busy}
